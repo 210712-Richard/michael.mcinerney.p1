@@ -11,7 +11,7 @@ public class CassandraUtil {
 	private static final Logger log = LogManager.getLogger(CassandraUtil.class);
 	
 	private CqlSession session = null;
-	private final String keyspaceName = "";
+	private final String keyspaceName = "Project1";
 	
 	private CassandraUtil() {
 		log.trace("Connecting to Cassandra...");
