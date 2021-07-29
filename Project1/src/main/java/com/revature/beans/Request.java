@@ -14,8 +14,14 @@ public interface Request {
 	//The amount of time each approver has to respond to the Request
 	TemporalAmount TIME_LIMIT = Duration.of(30, ChronoUnit.MINUTES);
 	
-	UUID getId();
-	void setId(UUID id);
+	Integer getId();
+	void setId(Integer id);
+	
+	String getUsername();
+	void setUsername(String username);
+	
+	RequestStatus getStatus();
+	void setStatus(RequestStatus status);
 	
 	//TODO: Add basic user details getters and setters
 	LocalDate getDate();
