@@ -44,8 +44,8 @@ public class User {
 	public User() {
 		super();
 		this.id = UUID.randomUUID();
-		this.pendingBalance = 0.0;
-		this.awardedBalance = 0.0;
+		this.pendingBalance = 0.00;
+		this.awardedBalance = 0.00;
 		this.requests = new ArrayList<>();
 		this.reviewRequests = new ArrayList<>();
 	}
@@ -149,6 +149,10 @@ public class User {
 
 	public void setAwardedBalance(Double awardedBalance) {
 		this.awardedBalance = awardedBalance;
+	}
+	
+	public Double getTotalBalance() {
+		return pendingBalance + awardedBalance;
 	}
 
 	public List<Request> getRequests() {
