@@ -28,6 +28,7 @@ Note: "completed" means that the functionality has been implemented and tested.
 
 ## Friday 8/6/2021
 * Ensure the respective Controllers for the above methods are implemented and have an endpoint.
+* UserController.logout has been implemented
 
 ## Saturday 8/7/2021
 * Break from project if possible
@@ -36,16 +37,17 @@ Note: "completed" means that the functionality has been implemented and tested.
 # Week 3 (Need to finalize this Week still)
 
 ## Sunday 8/8/2021
-* Ensure the auto escalation works
+* Ensure the auto escalation is completed
 
 ## Monday 8/9/2021
-* Ensure that auto approval works
+* Ensure that auto approval is completed
 
 ## Tuesday 8/10/2021
-* Ensure that final approval works
+* Ensure that final approval is completed
 
 ## Wednesday 8/11/2021
-* Ensure that final employee approval works
+* Ensure that final employee approval is completed
+* Ensure that the respective Controllers for the above methods are implemented and have an endpoint.
 
 ## Thursday 8/12/2021
 * Use this day to catch up if behind
