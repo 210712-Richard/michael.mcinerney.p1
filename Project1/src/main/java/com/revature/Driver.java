@@ -5,6 +5,7 @@ import com.revature.controllers.RequestControllerImpl;
 import com.revature.controllers.UserController;
 import com.revature.controllers.UserControllerImpl;
 import com.revature.factory.BeanFactory;
+import com.revature.util.DatabaseCreator;
 
 public class Driver {
 
@@ -18,7 +19,19 @@ public class Driver {
 	 * Used to setup the initial tables and populate with default rows
 	 */
 	private static void setupDatabase() {
-		
+		DatabaseCreator.dropTables();
+		try {
+			Thread.sleep(40000);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		DatabaseCreator.createTables();
+		try {
+			Thread.sleep(20000);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		System.exit(0);
 	}
 	
 	/**

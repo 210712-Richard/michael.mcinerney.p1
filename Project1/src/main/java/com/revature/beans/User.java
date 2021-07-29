@@ -29,7 +29,7 @@ public class User {
 	// The balance the user has already been awarded
 	private Double awardedBalance;
 	// The List of Requests the user has made
-	// In the database, this is a list of UUIDs of the Requests
+	// In the database, this is a list of ints of the Requests
 	private List<Request> requests;
 	// The List of Requests the user has to approve
 	// For Employees, this is for their requests they need to review if the balance
