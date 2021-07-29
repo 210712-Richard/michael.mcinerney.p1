@@ -20,10 +20,18 @@ public interface Request {
 	String getUsername();
 	void setUsername(String username);
 	
+	String getFirstName();
+	void setFirstName(String firstName);
+	
+	String getLastName();
+	void setLastName(String lastName);
+	
+	DepartmentName getDeptName();
+	void setDeptName(DepartmentName deptName);
+	
 	RequestStatus getStatus();
 	void setStatus(RequestStatus status);
 	
-	//TODO: Add basic user details getters and setters
 	LocalDate getDate();
 	void setDate(LocalDate date);
 	
@@ -41,9 +49,6 @@ public interface Request {
 	
 	GradingFormat getGradingFormat();
 	void setGradingFormat(GradingFormat gradingFormat);
-	
-	String getPassingGrade();
-	void setPassingGrade(String passingGrade);
 	
 	EventType getType();
 	void setType(EventType type);
@@ -80,4 +85,21 @@ public interface Request {
 	
 	UUID getBenCoID();
 	void setBenCoID(UUID benCoID);
+	
+	String getFinalGrade();
+	void setFinalGrade(String finalGrade);
+	
+	Approval getFinalApproval();
+	void setFinalApproval(Approval finalApproval);
+	void setFinalApprovalStatus(ApprovalStatus status, String reason);
+	
+	UUID getFinalApprovalID();
+	void setFinalApprovalID(UUID finalApprovalID);
+	
+	Double getFinalReimburseAmount();
+	void setFinalReimburseAmount(Double finalReimburseAmount);
+	
+	Boolean getNeedsEmployeeReview();
+	void setNeedsEmployeeReview(Boolean needsEmployeeReview);
+	
 }

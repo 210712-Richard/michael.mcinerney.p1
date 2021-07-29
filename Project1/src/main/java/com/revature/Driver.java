@@ -9,8 +9,9 @@ import com.revature.factory.BeanFactory;
 public class Driver {
 
 	public static void main(String[] args) {
-		setupDatabase();
-		launchJavalin();
+//		setupDatabase();
+//		launchJavalin();
+		
 	}
 	
 	/**
