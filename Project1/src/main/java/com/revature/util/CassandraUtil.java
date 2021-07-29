@@ -11,7 +11,6 @@ public class CassandraUtil {
 	private static final Logger log = LogManager.getLogger(CassandraUtil.class);
 	
 	private CqlSession session = null;
-	private final String keyspaceName = "Project1";
 	
 	private CassandraUtil() {
 		log.trace("Connecting to Cassandra...");
@@ -20,7 +19,7 @@ public class CassandraUtil {
 		
 		try {
 			//Build the CqlSession
-			this.session = CqlSession.builder().withConfigLoader(loader).withKeyspace(keyspaceName).build();
+			this.session = CqlSession.builder().withConfigLoader(loader).withKeyspace("project1").build();
 		} catch(Exception e) {
 			//Log the error and the stack trace.
 			log.error("CassandraUtil constructor threw exception: " + e);
