@@ -4,9 +4,9 @@
 **Beans and Tables should be implemented by the end of the week.**
 
 ## Friday 7/30/2021
-- [ ] https://github.com/210712-Richard/michael.mcinerney.p1/issues/2 
-- [ ] https://github.com/210712-Richard/michael.mcinerney.p1/issues/3
-- [ ] https://github.com/210712-Richard/michael.mcinerney.p1/issues/4
+- [ ] Beans and Table Fully Implemented
+- [ ] Tables are Added to the Database
+- [ ] Data, Service, and Controller Layers Ready to Go
 
 ## Saturday 7/31/2021
 * Flex Day: Take a break from the project. If need to, use this day to catch up.
@@ -16,9 +16,9 @@
 **Basic Functionality should be completed by the end of the week.**
 
 ## Sunday 8/1/2021
-- [ ] https://github.com/210712-Richard/michael.mcinerney.p1/issues/1
-- [ ] https://github.com/210712-Richard/michael.mcinerney.p1/issues/6
-- [ ] https://github.com/210712-Richard/michael.mcinerney.p1/issues/5
+- [ ] UserDao should be completed
+- [ ] RequestDao should be completed
+- [ ] DepartmentDao should be completed
 
 ## Monday 8/2/2021
 - [ ] Research Amazon S3 and have it implemented in a Util
