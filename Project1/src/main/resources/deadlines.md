@@ -1,13 +1,19 @@
-Note: "completed" means that the functionality has been implemented and tested.
+**Note**: "completed" means that the functionality has been implemented and tested.
 
 # Week 1
+**Beans and Tables should be implemented by the end of the week.**
 
 ## Friday 7/30/2021
 * All Beans and Tables should be implemented. 
 * Tables should be added to Database and can correctly be translated to the correct Bean.
 * All data, service, and controller layer classes should be ready to be implemented.
 
+## Saturday 7/31/2021
+* Flex Day: Take a break from the project. Use
+
 # Week 2
+**Basic Functionality should be completed by the end of the week.**
+
 ## Sunday 8/1/2021
 * UserDao should be completed
 * DepartmentDao should be completed
@@ -35,6 +41,7 @@ Note: "completed" means that the functionality has been implemented and tested.
 * Otherwise, if behind, use this day to catch up
 
 # Week 3 (Need to finalize this Week still)
+**Advanced Functionality and Presentation should be completed by Thursday.**
 
 ## Sunday 8/8/2021
 * Ensure the auto escalation is completed
