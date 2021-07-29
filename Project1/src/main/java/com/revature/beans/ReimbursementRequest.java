@@ -42,6 +42,7 @@ public class ReimbursementRequest implements Request {
 
 	// The final step fields
 	private String finalGrade;
+	private Boolean isPassing;
 	private String presFileName;
 	private Approval finalApproval;
 	private UUID finalApprovalID;
@@ -324,12 +325,28 @@ public class ReimbursementRequest implements Request {
 		this.needsEmployeeReview = needsEmployeeReview;
 	}
 
+	public Boolean getIsPassing() {
+		return isPassing;
+	}
+
+	public void setIsPassing(Boolean isPassing) {
+		this.isPassing = isPassing;
+	}
+
+	public String getPresFileName() {
+		return presFileName;
+	}
+
+	public void setPresFileName(String presFileName) {
+		this.presFileName = presFileName;
+	}
+
 	@Override
 	public int hashCode() {
 		return Objects.hash(approvalMsgsURIs, benCoApproval, benCoID, cost, date, deptHeadApproval, deptHeadID,
 				deptName, description, fileURIs, finalApproval, finalApprovalID, finalGrade, finalReimburseAmount,
-				firstName, gradingFormat, id, lastName, location, needsEmployeeReview, presFileName, reimburseAmount,
-				status, supervisorApproval, supervisorID, time, type, username, workTimeMissed);
+				firstName, gradingFormat, id, isPassing, lastName, location, needsEmployeeReview, presFileName,
+				reimburseAmount, status, supervisorApproval, supervisorID, time, type, username, workTimeMissed);
 	}
 
 	@Override
@@ -352,8 +369,8 @@ public class ReimbursementRequest implements Request {
 				&& Objects.equals(finalGrade, other.finalGrade)
 				&& Objects.equals(finalReimburseAmount, other.finalReimburseAmount)
 				&& Objects.equals(firstName, other.firstName) && Objects.equals(gradingFormat, other.gradingFormat)
-				&& Objects.equals(id, other.id) && Objects.equals(lastName, other.lastName)
-				&& Objects.equals(location, other.location)
+				&& Objects.equals(id, other.id) && Objects.equals(isPassing, other.isPassing)
+				&& Objects.equals(lastName, other.lastName) && Objects.equals(location, other.location)
 				&& Objects.equals(needsEmployeeReview, other.needsEmployeeReview)
 				&& Objects.equals(presFileName, other.presFileName)
 				&& Objects.equals(reimburseAmount, other.reimburseAmount) && status == other.status
@@ -372,8 +389,9 @@ public class ReimbursementRequest implements Request {
 				+ ", workTimeMissed=" + workTimeMissed + ", reimburseAmount=" + reimburseAmount
 				+ ", supervisorApproval=" + supervisorApproval + ", supervisorID=" + supervisorID
 				+ ", deptHeadApproval=" + deptHeadApproval + ", deptHeadID=" + deptHeadID + ", benCoApproval="
-				+ benCoApproval + ", benCoID=" + benCoID + ", finalGrade=" + finalGrade + ", finalApproval="
-				+ finalApproval + ", finalApprovalID=" + finalApprovalID + ", finalReimburseAmount="
-				+ finalReimburseAmount + ", needsEmployeeReview=" + needsEmployeeReview + "]";
+				+ benCoApproval + ", benCoID=" + benCoID + ", finalGrade=" + finalGrade + ", isPassing=" + isPassing
+				+ ", presFileName=" + presFileName + ", finalApproval=" + finalApproval + ", finalApprovalID="
+				+ finalApprovalID + ", finalReimburseAmount=" + finalReimburseAmount + ", needsEmployeeReview="
+				+ needsEmployeeReview + "]";
 	}
 }

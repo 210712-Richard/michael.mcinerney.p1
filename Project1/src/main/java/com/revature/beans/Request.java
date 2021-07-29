@@ -89,6 +89,9 @@ public interface Request {
 	String getFinalGrade();
 	void setFinalGrade(String finalGrade);
 	
+	Boolean getIsPassing();
+	void setIsPassing(Boolean isPassing);
+	
 	Approval getFinalApproval();
 	void setFinalApproval(Approval finalApproval);
 	void setFinalApprovalStatus(ApprovalStatus status, String reason);
