@@ -15,9 +15,9 @@ import com.revature.beans.UserType;
 import com.revature.util.MockitoHelper;
 
 public class UserDaoTest {
-	UserDao userDao = null;
-	CqlSession session = null;
-	User user = null;
+	private UserDao userDao = null;
+	private CqlSession session = null;
+	private User user = null;
 
 	MockitoHelper<CqlSession> mock;
 
