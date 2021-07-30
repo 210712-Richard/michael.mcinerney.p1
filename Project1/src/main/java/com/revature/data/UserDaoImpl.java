@@ -10,7 +10,7 @@ import com.revature.util.CassandraUtil;
 @TraceLog
 public class UserDaoImpl implements UserDao {
 	private CqlSession session = CassandraUtil.getInstance().getSession();
-
+	
 	@Override
 	public User getUser(UUID id) {
 		return null;
