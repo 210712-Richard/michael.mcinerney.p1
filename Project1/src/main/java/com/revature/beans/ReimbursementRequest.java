@@ -15,7 +15,7 @@ public class ReimbursementRequest implements Request {
 	// Required Fields
 	private String firstName;
 	private String lastName;
-	private DepartmentName deptName;
+	private String deptName;
 	private LocalDate date;
 	private LocalTime time;
 	private String location;
@@ -55,7 +55,7 @@ public class ReimbursementRequest implements Request {
 	}
 
 	public ReimbursementRequest(Integer id, String username, RequestStatus status, String firstName, String lastName,
-			DepartmentName deptName, LocalDate date, LocalTime time, String location, String description, Double cost,
+			String deptName, LocalDate date, LocalTime time, String location, String description, Double cost,
 			GradingFormat gradingFormat, EventType type, List<String> fileURIs,
 			List<String> approvalMsgsURIs, String workTimeMissed) {
 		this();
@@ -109,11 +109,11 @@ public class ReimbursementRequest implements Request {
 		this.lastName = lastName;
 	}
 
-	public DepartmentName getDeptName() {
+	public String getDeptName() {
 		return deptName;
 	}
 
-	public void setDeptName(DepartmentName deptName) {
+	public void setDeptName(String deptName) {
 		this.deptName = deptName;
 	}
 

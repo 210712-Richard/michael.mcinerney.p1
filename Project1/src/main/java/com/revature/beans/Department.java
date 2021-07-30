@@ -7,7 +7,7 @@ public class Department {
 	/**
 	 * The name of the department
 	 */
-	private DepartmentName name;
+	private String name;
 	/**
 	 * The User ID of the department head
 	 */
@@ -17,17 +17,17 @@ public class Department {
 		super();
 	}
 
-	public Department(DepartmentName name, UUID deptHeadId) {
+	public Department(String name, UUID deptHeadId) {
 		super();
 		this.name = name;
 		this.deptHeadId = deptHeadId;
 	}
 
-	public DepartmentName getName() {
+	public String getName() {
 		return name;
 	}
 
-	public void setName(DepartmentName name) {
+	public void setName(String name) {
 		this.name = name;
 	}
 

@@ -1,7 +1,5 @@
 package com.revature.data;
 
-import static org.mockito.Mockito.mockitoSession;
-
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -12,7 +10,6 @@ import org.mockito.Mockito;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
-import com.revature.beans.DepartmentName;
 import com.revature.beans.User;
 import com.revature.beans.UserType;
 import com.revature.util.MockitoHelper;
@@ -42,7 +39,7 @@ public class UserDaoTest {
 		//Set up mock and input
 		session = mock.setPrivateMock(userDao, "session");
 		User newUser = new User("newUser", "password", "email@user.com", "New", "User", UserType.EMPLOYEE,
-				DepartmentName.ART, UUID.fromString("0"));
+				"Test", UUID.fromString("0"));
 		
 		//Use the argument captor
 		ArgumentCaptor<BoundStatement> captor = ArgumentCaptor.forClass(BoundStatement.class);

@@ -21,7 +21,7 @@ public class User {
 	// The user's role in the organization
 	private UserType type;
 	// The name of the department the user belongs to
-	private DepartmentName departmentName;
+	private String departmentName;
 	// The ID of the user's direct supervisor
 	private UUID supervisorID;
 	// The balance the user is waiting to get approved
@@ -51,7 +51,7 @@ public class User {
 	}
 
 	public User(String username, String password, String email, String firstName, String lastName, UserType type,
-			DepartmentName departmentName, UUID supervisorID) {
+			String departmentName, UUID supervisorID) {
 		this();
 		this.username = username;
 		this.password = password;
@@ -119,11 +119,11 @@ public class User {
 		this.type = type;
 	}
 
-	public DepartmentName getDepartmentName() {
+	public String getDepartmentName() {
 		return departmentName;
 	}
 
-	public void setDepartmentName(DepartmentName departmentName) {
+	public void setDepartmentName(String departmentName) {
 		this.departmentName = departmentName;
 	}
 
