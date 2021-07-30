@@ -26,8 +26,8 @@ public interface Request {
 	String getLastName();
 	void setLastName(String lastName);
 	
-	DepartmentName getDeptName();
-	void setDeptName(DepartmentName deptName);
+	String getDeptName();
+	void setDeptName(String deptName);
 	
 	RequestStatus getStatus();
 	void setStatus(RequestStatus status);

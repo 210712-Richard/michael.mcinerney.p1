@@ -1,5 +1,11 @@
 package com.revature.util;
 
+import java.util.UUID;
+
+import com.revature.beans.Department;
+import com.revature.data.DepartmentDao;
+import com.revature.data.DepartmentDaoImpl;
+
 public class DatabaseCreator {
 	
 	
@@ -40,5 +46,19 @@ public class DatabaseCreator {
 				.append("name text PRIMARY KEY, deptHeadId uuid")
 				.append(");");
 		CassandraUtil.getInstance().getSession().execute(query.toString());
+	}
+	
+	public static void populateDepartment() {
+		DepartmentDao dao = new DepartmentDaoImpl();
+		Department dept = new Department("Test", UUID.fromString("21d2e98b-0bd8-455a-bbff-f3ae5119dd24"));
+		dao.createDepartment(dept);
+	}
+	
+	public static void populateUser() {
+		
+	}
+	
+	public static void populateRequest() {
+		
 	}
 }

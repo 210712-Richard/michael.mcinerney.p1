@@ -9,6 +9,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 public class CassandraUtil {
 	private static CassandraUtil instance = null;
 	private static final Logger log = LogManager.getLogger(CassandraUtil.class);
+	private static final String KEYSPACE = "project1test";
 	
 	private CqlSession session = null;
 	
@@ -19,7 +20,7 @@ public class CassandraUtil {
 		
 		try {
 			//Build the CqlSession
-			this.session = CqlSession.builder().withConfigLoader(loader).withKeyspace("project1").build();
+			this.session = CqlSession.builder().withConfigLoader(loader).withKeyspace(KEYSPACE).build();
 		} catch(Exception e) {
 			//Log the error and the stack trace.
 			log.error("CassandraUtil constructor threw exception: " + e);
