@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 
 public class ReimbursementRequest implements Request {
 	// Identifiers (Primary keys in the database)
@@ -34,18 +33,18 @@ public class ReimbursementRequest implements Request {
 	// Each Approval will be saved as a tuple in the database
 	private Double reimburseAmount;
 	private Approval supervisorApproval;
-	private UUID supervisorID;
+	private String supervisorUsername;
 	private Approval deptHeadApproval;
-	private UUID deptHeadID;
+	private String deptHeadUsername;
 	private Approval benCoApproval;
-	private UUID benCoID;
+	private String benCoUsername;
 
 	// The final step fields
 	private String finalGrade;
 	private Boolean isPassing;
 	private String presFileName;
 	private Approval finalApproval;
-	private UUID finalApprovalID;
+	private String finalApprovalUsername;
 	private Double finalReimburseAmount;
 	private Boolean needsEmployeeReview;
 
@@ -56,8 +55,8 @@ public class ReimbursementRequest implements Request {
 
 	public ReimbursementRequest(Integer id, String username, RequestStatus status, String firstName, String lastName,
 			String deptName, LocalDate date, LocalTime time, String location, String description, Double cost,
-			GradingFormat gradingFormat, EventType type, List<String> fileURIs,
-			List<String> approvalMsgsURIs, String workTimeMissed) {
+			GradingFormat gradingFormat, EventType type, List<String> fileURIs, List<String> approvalMsgsURIs,
+			String workTimeMissed) {
 		this();
 		this.id = id;
 		this.username = username;
@@ -221,14 +220,6 @@ public class ReimbursementRequest implements Request {
 		this.supervisorApproval = supervisorApproval;
 	}
 
-	public UUID getSupervisorID() {
-		return supervisorID;
-	}
-
-	public void setSupervisorID(UUID supervisorID) {
-		this.supervisorID = supervisorID;
-	}
-
 	public Approval getDeptHeadApproval() {
 		return deptHeadApproval;
 	}
@@ -237,28 +228,12 @@ public class ReimbursementRequest implements Request {
 		this.deptHeadApproval = deptHeadApproval;
 	}
 
-	public UUID getDeptHeadID() {
-		return deptHeadID;
-	}
-
-	public void setDeptHeadID(UUID deptHeadID) {
-		this.deptHeadID = deptHeadID;
-	}
-
 	public Approval getBenCoApproval() {
 		return benCoApproval;
 	}
 
 	public void setBenCoApproval(Approval benCoApproval) {
 		this.benCoApproval = benCoApproval;
-	}
-
-	public UUID getBenCoID() {
-		return benCoID;
-	}
-
-	public void setBenCoID(UUID benCoID) {
-		this.benCoID = benCoID;
 	}
 
 	@Override
@@ -301,14 +276,6 @@ public class ReimbursementRequest implements Request {
 		this.finalApproval.setReason(reason);
 	}
 
-	public UUID getFinalApprovalID() {
-		return finalApprovalID;
-	}
-
-	public void setFinalApprovalID(UUID finalApprovalID) {
-		this.finalApprovalID = finalApprovalID;
-	}
-
 	public Double getFinalReimburseAmount() {
 		return finalReimburseAmount;
 	}
@@ -341,12 +308,45 @@ public class ReimbursementRequest implements Request {
 		this.presFileName = presFileName;
 	}
 
+	public String getSupervisorUsername() {
+		return supervisorUsername;
+	}
+
+	public void setSupervisorUsername(String supervisorUsername) {
+		this.supervisorUsername = supervisorUsername;
+	}
+
+	public String getDeptHeadUsername() {
+		return deptHeadUsername;
+	}
+
+	public void setDeptHeadUsername(String deptHeadUsername) {
+		this.deptHeadUsername = deptHeadUsername;
+	}
+
+	public String getBenCoUsername() {
+		return benCoUsername;
+	}
+
+	public void setBenCoUsername(String benCoUsername) {
+		this.benCoUsername = benCoUsername;
+	}
+
+	public String getFinalApprovalUsername() {
+		return finalApprovalUsername;
+	}
+
+	public void setFinalApprovalUsername(String finalApprovalUsername) {
+		this.finalApprovalUsername = finalApprovalUsername;
+	}
+
 	@Override
 	public int hashCode() {
-		return Objects.hash(approvalMsgsURIs, benCoApproval, benCoID, cost, date, deptHeadApproval, deptHeadID,
-				deptName, description, fileURIs, finalApproval, finalApprovalID, finalGrade, finalReimburseAmount,
-				firstName, gradingFormat, id, isPassing, lastName, location, needsEmployeeReview, presFileName,
-				reimburseAmount, status, supervisorApproval, supervisorID, time, type, username, workTimeMissed);
+		return Objects.hash(approvalMsgsURIs, benCoApproval, benCoUsername, cost, date, deptHeadApproval,
+				deptHeadUsername, deptName, description, fileURIs, finalApproval, finalApprovalUsername, finalGrade,
+				finalReimburseAmount, firstName, gradingFormat, id, isPassing, lastName, location, needsEmployeeReview,
+				presFileName, reimburseAmount, status, supervisorApproval, supervisorUsername, time, type, username,
+				workTimeMissed);
 	}
 
 	@Override
@@ -359,13 +359,13 @@ public class ReimbursementRequest implements Request {
 			return false;
 		ReimbursementRequest other = (ReimbursementRequest) obj;
 		return Objects.equals(approvalMsgsURIs, other.approvalMsgsURIs)
-				&& Objects.equals(benCoApproval, other.benCoApproval) && Objects.equals(benCoID, other.benCoID)
-				&& Objects.equals(cost, other.cost) && Objects.equals(date, other.date)
-				&& Objects.equals(deptHeadApproval, other.deptHeadApproval)
-				&& Objects.equals(deptHeadID, other.deptHeadID) && deptName == other.deptName
+				&& Objects.equals(benCoApproval, other.benCoApproval)
+				&& Objects.equals(benCoUsername, other.benCoUsername) && Objects.equals(cost, other.cost)
+				&& Objects.equals(date, other.date) && Objects.equals(deptHeadApproval, other.deptHeadApproval)
+				&& Objects.equals(deptHeadUsername, other.deptHeadUsername) && Objects.equals(deptName, other.deptName)
 				&& Objects.equals(description, other.description) && Objects.equals(fileURIs, other.fileURIs)
 				&& Objects.equals(finalApproval, other.finalApproval)
-				&& Objects.equals(finalApprovalID, other.finalApprovalID)
+				&& Objects.equals(finalApprovalUsername, other.finalApprovalUsername)
 				&& Objects.equals(finalGrade, other.finalGrade)
 				&& Objects.equals(finalReimburseAmount, other.finalReimburseAmount)
 				&& Objects.equals(firstName, other.firstName) && Objects.equals(gradingFormat, other.gradingFormat)
@@ -375,7 +375,7 @@ public class ReimbursementRequest implements Request {
 				&& Objects.equals(presFileName, other.presFileName)
 				&& Objects.equals(reimburseAmount, other.reimburseAmount) && status == other.status
 				&& Objects.equals(supervisorApproval, other.supervisorApproval)
-				&& Objects.equals(supervisorID, other.supervisorID) && Objects.equals(time, other.time)
+				&& Objects.equals(supervisorUsername, other.supervisorUsername) && Objects.equals(time, other.time)
 				&& type == other.type && Objects.equals(username, other.username)
 				&& Objects.equals(workTimeMissed, other.workTimeMissed);
 	}
@@ -387,11 +387,12 @@ public class ReimbursementRequest implements Request {
 				+ ", location=" + location + ", description=" + description + ", cost=" + cost + ", gradingFormat="
 				+ gradingFormat + ", type=" + type + ", fileURIs=" + fileURIs + ", approvalMsgsURIs=" + approvalMsgsURIs
 				+ ", workTimeMissed=" + workTimeMissed + ", reimburseAmount=" + reimburseAmount
-				+ ", supervisorApproval=" + supervisorApproval + ", supervisorID=" + supervisorID
-				+ ", deptHeadApproval=" + deptHeadApproval + ", deptHeadID=" + deptHeadID + ", benCoApproval="
-				+ benCoApproval + ", benCoID=" + benCoID + ", finalGrade=" + finalGrade + ", isPassing=" + isPassing
-				+ ", presFileName=" + presFileName + ", finalApproval=" + finalApproval + ", finalApprovalID="
-				+ finalApprovalID + ", finalReimburseAmount=" + finalReimburseAmount + ", needsEmployeeReview="
-				+ needsEmployeeReview + "]";
+				+ ", supervisorApproval=" + supervisorApproval + ", supervisorUsername=" + supervisorUsername
+				+ ", deptHeadApproval=" + deptHeadApproval + ", deptHeadUsername=" + deptHeadUsername
+				+ ", benCoApproval=" + benCoApproval + ", benCoUsername=" + benCoUsername + ", finalGrade=" + finalGrade
+				+ ", isPassing=" + isPassing + ", presFileName=" + presFileName + ", finalApproval=" + finalApproval
+				+ ", finalApprovalUsername=" + finalApprovalUsername + ", finalReimburseAmount=" + finalReimburseAmount
+				+ ", needsEmployeeReview=" + needsEmployeeReview + "]";
 	}
+
 }

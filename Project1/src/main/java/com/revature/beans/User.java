@@ -3,11 +3,8 @@ package com.revature.beans;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 
 public class User {
-	// The unique ID of the user
-	private UUID id;
 	// The username of the user
 	private String username;
 	// The password of the user
@@ -23,27 +20,22 @@ public class User {
 	// The name of the department the user belongs to
 	private String departmentName;
 	// The ID of the user's direct supervisor
-	private UUID supervisorID;
+	private String supervisorUsername;
 	// The balance the user is waiting to get approved
 	private Double pendingBalance;
 	// The balance the user has already been awarded
 	private Double awardedBalance;
-	// The List of Requests the user has made
-	// In the database, this is a list of ints of the Requests
-	private List<Request> requests;
-	// The List of Requests the user has to approve
-	// For Employees, this is for their requests they need to review if the balance
-	// changed by BenCo
-	// In the database, this is a list of UUIDs of the Requests
-	private List<Request> reviewRequests;
+	// The List of Request IDs from requests the user has made
+	private List<Integer> requests;
+	// The list of request IDs the user has to review
+	private List<Integer> reviewRequests;
 
 	/**
-	 * Generates a random id and sets the balances to 0 and the Request Lists to a empty
-	 * Lists
+	 * Generates a random id and sets the balances to 0 and the Request Lists to a
+	 * empty Lists
 	 */
 	public User() {
 		super();
-		this.id = UUID.randomUUID();
 		this.pendingBalance = 0.00;
 		this.awardedBalance = 0.00;
 		this.requests = new ArrayList<>();
@@ -51,7 +43,7 @@ public class User {
 	}
 
 	public User(String username, String password, String email, String firstName, String lastName, UserType type,
-			String departmentName, UUID supervisorID) {
+			String departmentName, String supervisorUsername) {
 		this();
 		this.username = username;
 		this.password = password;
@@ -60,15 +52,7 @@ public class User {
 		this.lastName = lastName;
 		this.type = type;
 		this.departmentName = departmentName;
-		this.supervisorID = supervisorID;
-	}
-
-	public UUID getId() {
-		return id;
-	}
-
-	public void setId(UUID id) {
-		this.id = id;
+		this.supervisorUsername = supervisorUsername;
 	}
 
 	public String getUsername() {
@@ -127,12 +111,12 @@ public class User {
 		this.departmentName = departmentName;
 	}
 
-	public UUID getSupervisorID() {
-		return supervisorID;
+	public String getSupervisorUsername() {
+		return supervisorUsername;
 	}
 
-	public void setSupervisorID(UUID supervisorID) {
-		this.supervisorID = supervisorID;
+	public void setSupervisorUsername(String supervisorUsername) {
+		this.supervisorUsername = supervisorUsername;
 	}
 
 	public Double getPendingBalance() {
@@ -150,39 +134,40 @@ public class User {
 	public void setAwardedBalance(Double awardedBalance) {
 		this.awardedBalance = awardedBalance;
 	}
-	
+
 	public Double getTotalBalance() {
 		return pendingBalance + awardedBalance;
 	}
 
-	public List<Request> getRequests() {
+	public List<Integer> getRequests() {
 		return requests;
 	}
 
-	public void setRequests(List<Request> requests) {
+	public void setRequests(List<Integer> requests) {
 		this.requests = requests;
 	}
 
-	public List<Request> getReviewRequests() {
+	public List<Integer> getReviewRequests() {
 		return reviewRequests;
 	}
 
-	public void setReviewRequests(List<Request> reviewRequests) {
+	public void setReviewRequests(List<Integer> reviewRequests) {
 		this.reviewRequests = reviewRequests;
 	}
 
 	@Override
 	public String toString() {
-		return "User [id=" + id + ", username=" + username + ", password=" + password + ", email=" + email
-				+ ", firstName=" + firstName + ", lastName=" + lastName + ", departmentName=" + departmentName
-				+ ", supervisorID=" + supervisorID + ", pendingBalance=" + pendingBalance + ", awardedBalance="
-				+ awardedBalance + ", requests=" + requests + "]";
+		return "User [username=" + username + ", password=" + password + ", email=" + email + ", firstName=" + firstName
+				+ ", lastName=" + lastName + ", type=" + type + ", departmentName=" + departmentName
+				+ ", supervisorUsername=" + supervisorUsername + ", pendingBalance=" + pendingBalance
+				+ ", awardedBalance=" + awardedBalance + ", requests=" + requests + ", reviewRequests=" + reviewRequests
+				+ "]";
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(awardedBalance, departmentName, email, firstName, id, lastName, password, pendingBalance,
-				requests, supervisorID, username);
+		return Objects.hash(awardedBalance, departmentName, email, firstName, lastName, password, pendingBalance,
+				requests, reviewRequests, supervisorUsername, type, username);
 	}
 
 	@Override
@@ -194,11 +179,12 @@ public class User {
 		if (getClass() != obj.getClass())
 			return false;
 		User other = (User) obj;
-		return Objects.equals(awardedBalance, other.awardedBalance) && departmentName == other.departmentName
-				&& Objects.equals(email, other.email) && Objects.equals(firstName, other.firstName)
-				&& Objects.equals(id, other.id) && Objects.equals(lastName, other.lastName)
+		return Objects.equals(awardedBalance, other.awardedBalance)
+				&& Objects.equals(departmentName, other.departmentName) && Objects.equals(email, other.email)
+				&& Objects.equals(firstName, other.firstName) && Objects.equals(lastName, other.lastName)
 				&& Objects.equals(password, other.password) && Objects.equals(pendingBalance, other.pendingBalance)
-				&& Objects.equals(requests, other.requests) && Objects.equals(supervisorID, other.supervisorID)
+				&& Objects.equals(requests, other.requests) && Objects.equals(reviewRequests, other.reviewRequests)
+				&& Objects.equals(supervisorUsername, other.supervisorUsername) && type == other.type
 				&& Objects.equals(username, other.username);
 	}
 

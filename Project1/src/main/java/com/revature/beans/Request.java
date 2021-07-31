@@ -6,7 +6,6 @@ import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAmount;
 import java.util.List;
-import java.util.UUID;
 
 public interface Request {
 	//The maximum amount that can be reimbursed for the user
@@ -69,22 +68,22 @@ public interface Request {
 	void setSupervisorApproval(Approval supervisorApproval);
 	void setSupervisorApprovalStatus(ApprovalStatus status, String reason);
 	
-	UUID getSupervisorID();
-	void setSupervisorID(UUID supervisorID);
+	String getSupervisorUsername();
+	void setSupervisorUsername(String supervisorUsername);
 	
 	Approval getDeptHeadApproval();
 	void setDeptHeadApproval(Approval supervisorApproval);
 	void setDeptHeadApprovalStatus(ApprovalStatus status, String reason);
 	
-	UUID getDeptHeadID();
-	void setDeptHeadID(UUID deptHeadID);
+	String getDeptHeadUsername();
+	void setDeptHeadUsername(String deptHeadUsername);
 	
 	Approval getBenCoApproval();
-	void setBenCoApproval(Approval supervisorApproval);
+	void setBenCoApproval(Approval benCoApproval);
 	void setBenCoApprovalStatus(ApprovalStatus status, String reason);
 	
-	UUID getBenCoID();
-	void setBenCoID(UUID benCoID);
+	String getBenCoUsername();
+	void setBenCoUsername(String benCoUsername);
 	
 	String getFinalGrade();
 	void setFinalGrade(String finalGrade);
@@ -96,8 +95,8 @@ public interface Request {
 	void setFinalApproval(Approval finalApproval);
 	void setFinalApprovalStatus(ApprovalStatus status, String reason);
 	
-	UUID getFinalApprovalID();
-	void setFinalApprovalID(UUID finalApprovalID);
+	String getFinalApprovalUsername();
+	void setFinalApprovalUsername(String finalApprovalUsername);
 	
 	Double getFinalReimburseAmount();
 	void setFinalReimburseAmount(Double finalReimburseAmount);

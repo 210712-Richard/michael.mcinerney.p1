@@ -22,7 +22,7 @@ public class DepartmentDaoImpl implements DepartmentDao {
 		if (deptName == null) {
 			return null;
 		}
-		String query = "SELECT name, deptheadid FROM department WHERE name = ?;";
+		String query = "SELECT name, deptheadusername FROM department WHERE name = ?;";
 		
 		SimpleStatement s = new SimpleStatementBuilder(query).build();
 		BoundStatement bound = session.prepare(s).bind(deptName);
@@ -35,17 +35,17 @@ public class DepartmentDaoImpl implements DepartmentDao {
 		}
 		Department dept = new Department();
 		dept.setName(row.getString("name"));
-		dept.setDeptHeadId(row.getUuid("deptheadid"));
+		dept.setDeptHeadUsername(row.getString("deptheadusername"));
 		return dept;
 	}
 
 	public void createDepartment(Department dept) {
-		String query = "INSERT INTO department (name, deptHeadId) values (?, ?);";
+		String query = "INSERT INTO department (name, deptheadusername) values (?, ?);";
 
 		SimpleStatement s = new SimpleStatementBuilder(query)
 				.setConsistencyLevel(DefaultConsistencyLevel.LOCAL_QUORUM)
 				.build();
-		BoundStatement bound = session.prepare(s).bind(dept.getName(), dept.getDeptHeadId());
+		BoundStatement bound = session.prepare(s).bind(dept.getName(), dept.getDeptHeadUsername());
 		session.execute(bound);
 	}
 
