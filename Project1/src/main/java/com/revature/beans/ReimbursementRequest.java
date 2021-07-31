@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 
 public class ReimbursementRequest implements Request {
 	// Identifiers (Primary keys in the database)

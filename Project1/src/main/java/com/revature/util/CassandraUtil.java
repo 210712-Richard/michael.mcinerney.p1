@@ -9,7 +9,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 public class CassandraUtil {
 	private static CassandraUtil instance = null;
 	private static final Logger log = LogManager.getLogger(CassandraUtil.class);
-	private static final String KEYSPACE = "project1test";
+	private static final String KEYSPACE = "project1";
 	
 	private CqlSession session = null;
 	

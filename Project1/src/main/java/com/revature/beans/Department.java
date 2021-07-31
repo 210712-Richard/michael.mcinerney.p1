@@ -1,7 +1,6 @@
 package com.revature.beans;
 
 import java.util.Objects;
-import java.util.UUID;
 
 public class Department {
 	/**

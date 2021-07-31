@@ -1,7 +1,5 @@
 package com.revature.util;
 
-import java.util.UUID;
-
 import com.revature.beans.Department;
 import com.revature.data.DepartmentDao;
 import com.revature.data.DepartmentDaoImpl;

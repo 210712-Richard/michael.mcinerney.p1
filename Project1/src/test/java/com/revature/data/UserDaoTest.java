@@ -35,9 +35,6 @@ public class UserDaoTest {
 
 	@Test
 	public void testAddUser() {
-		// Set up mock and input
-		User newUser = new User("newUser", "password", "email@user.com", "New", "User", UserType.EMPLOYEE, "Test",
-				"Test");
 		
 		//Make sure a valid user does not throw an exception
 		assertAll("Assert that an exception is not thrown for the creation.", () -> userDao.addUser(user));
@@ -72,11 +69,25 @@ public class UserDaoTest {
 
 	@Test
 	public void testGetUserByNamePasswordValid() {
+		User getUser = userDao.getUser(user.getUsername(), user.getPassword());
 
+		// Make sure the user returned is the same.
+		assertEquals(getUser, user, "Assert that both users are the same.");
 	}
 
 	@Test
 	public void testGetUserByNamePasswordInvalid() {
+		//Make sure an invalid username/password combo results in a null
+		assertNull("Assert that a username and password combo with incorrect username is not in the database returns a null", 
+				userDao.getUser("Wrong User", user.getPassword()));
+		
+		assertNull("Assert that a username and password combo with incorrect password is not in the database returns a null", 
+				userDao.getUser(user.getUsername(), "WrongPassword"));
+		
+		//Make sure a null username or null password returns a null
+		assertNull("Assert that a null username returns a null", userDao.getUser(null, user.getPassword()));
+		
+		assertNull("Assert that a null password returns a null", userDao.getUser(user.getUsername(), null));
 
 	}
 
@@ -84,6 +95,11 @@ public class UserDaoTest {
 
 	@Test
 	public void testUpdateUser() {
+		//Make sure a valid user does not throw an exception
+		assertAll("Assert that an exception is not thrown for the update.", () -> userDao.updateUser(user));
 
+		// Make sure a null department throws an exception.
+		assertThrows(Exception.class, () -> userDao.updateUser(null),
+				"Assert that an exception is thrown for the update of a null user.");
 	}
 }

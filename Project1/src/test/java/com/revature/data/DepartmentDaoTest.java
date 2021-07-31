@@ -29,7 +29,6 @@ public class DepartmentDaoTest {
 	@Test
 	public void testCreateDepartment(){
 		
-		Department newDept = new Department("New", "Head");
 		//Make sure a valid department is passed through to the creation.
 		assertAll("Assert that an exception is not thrown for the creation.", ()-> deptDao.createDepartment(dept));
 		

@@ -1,7 +1,5 @@
 package com.revature.data;
 
-import java.util.UUID;
-
 import com.revature.beans.User;
 
 public interface UserDao {

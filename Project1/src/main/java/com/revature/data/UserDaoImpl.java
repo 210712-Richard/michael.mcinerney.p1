@@ -15,11 +15,10 @@ import com.revature.util.CassandraUtil;
 @TraceLog
 public class UserDaoImpl implements UserDao {
 	private CqlSession session = CassandraUtil.getInstance().getSession();
-	
 
 	@Override
 	public User getUser(String username) {
-		
+
 		if (username == null) {
 			return null;
 		}
@@ -28,17 +27,17 @@ public class UserDaoImpl implements UserDao {
 						+ "reviewrequests FROM user WHERE username = ?;");
 		SimpleStatement s = new SimpleStatementBuilder(query.toString()).build();
 		BoundStatement bound = session.prepare(s).bind(username);
-		
+
 		ResultSet rs = session.execute(bound);
-		
+
 		Row row = rs.one();
-		
+
 		if (row == null) {
 			return null;
 		}
-		
+
 		User user = new User();
-		
+
 		user.setUsername(row.getString("username"));
 		user.setPassword(row.getString("password"));
 		user.setEmail(row.getString("email"));
@@ -51,13 +50,13 @@ public class UserDaoImpl implements UserDao {
 		user.setAwardedBalance(row.getDouble("awardedbalance"));
 		user.setRequests(row.getList("requests", Integer.class));
 		user.setReviewRequests(row.getList("reviewrequests", Integer.class));
-		
+
 		return user;
 	}
 
 	@Override
 	public User getUser(String username, String password) {
-		
+
 		if (username == null || password == null) {
 			return null;
 		}
@@ -66,17 +65,17 @@ public class UserDaoImpl implements UserDao {
 						+ "reviewrequests FROM user WHERE username = ? AND password = ?;");
 		SimpleStatement s = new SimpleStatementBuilder(query.toString()).build();
 		BoundStatement bound = session.prepare(s).bind(username, password);
-		
+
 		ResultSet rs = session.execute(bound);
-		
+
 		Row row = rs.one();
-		
+
 		if (row == null) {
 			return null;
 		}
-		
+
 		User user = new User();
-		
+
 		user.setUsername(row.getString("username"));
 		user.setPassword(row.getString("password"));
 		user.setEmail(row.getString("email"));
@@ -89,8 +88,23 @@ public class UserDaoImpl implements UserDao {
 		user.setAwardedBalance(row.getDouble("awardedbalance"));
 		user.setRequests(row.getList("requests", Integer.class));
 		user.setReviewRequests(row.getList("reviewrequests", Integer.class));
-		
+
 		return user;
+	}
+
+	@Override
+	public void updateUser(User user) {
+		StringBuilder query = new StringBuilder("UPDATE user SET email=?, firstname=?, ").append(
+				"lastname=?, type=?, departmentname=?, supervisorusername=?, pendingbalance=?, awardedbalance=?, requests=?, "
+						+ "reviewrequests=? WHERE username = ? AND password = ?");
+		SimpleStatement s = new SimpleStatementBuilder(query.toString())
+				.setConsistencyLevel(DefaultConsistencyLevel.LOCAL_QUORUM).build();
+		BoundStatement bound = session.prepare(s).bind(user.getEmail(), user.getFirstName(), user.getLastName(),
+				user.getType().toString(), user.getDepartmentName(), user.getSupervisorUsername(),
+				user.getPendingBalance(), user.getAwardedBalance(), user.getRequests(), user.getReviewRequests(),
+				user.getUsername(), user.getPassword());
+
+		session.execute(bound);
 	}
 
 	@Override
@@ -100,17 +114,12 @@ public class UserDaoImpl implements UserDao {
 						+ "reviewrequests")
 				.append(") values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
 		SimpleStatement s = new SimpleStatementBuilder(query.toString())
-				.setConsistencyLevel(DefaultConsistencyLevel.LOCAL_QUORUM)
-				.build();
-		BoundStatement bound = session.prepare(s).bind(user.getUsername(), user.getPassword(), 
-				user.getEmail(), user.getFirstName(), user.getLastName(), user.getType().toString(), user.getDepartmentName(),
-				user.getSupervisorUsername(), user.getPendingBalance(), user.getAwardedBalance(), user.getRequests(), user.getReviewRequests());
-		
-		session.execute(bound);
-	}
+				.setConsistencyLevel(DefaultConsistencyLevel.LOCAL_QUORUM).build();
+		BoundStatement bound = session.prepare(s).bind(user.getUsername(), user.getPassword(), user.getEmail(),
+				user.getFirstName(), user.getLastName(), user.getType().toString(), user.getDepartmentName(),
+				user.getSupervisorUsername(), user.getPendingBalance(), user.getAwardedBalance(), user.getRequests(),
+				user.getReviewRequests());
 
-	@Override
-	public void updateUser(User user) {
-		
+		session.execute(bound);
 	}
 }
