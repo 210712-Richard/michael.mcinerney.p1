@@ -9,18 +9,18 @@ public class Department {
 	 */
 	private String name;
 	/**
-	 * The User ID of the department head
+	 * The Username of the department head
 	 */
-	private UUID deptHeadId;
+	private String deptHeadUsername;
 
 	public Department() {
 		super();
 	}
 
-	public Department(String name, UUID deptHeadId) {
+	public Department(String name, String deptHeadUsername) {
 		super();
 		this.name = name;
-		this.deptHeadId = deptHeadId;
+		this.deptHeadUsername = deptHeadUsername;
 	}
 
 	public String getName() {
@@ -31,17 +31,17 @@ public class Department {
 		this.name = name;
 	}
 
-	public UUID getDeptHeadId() {
-		return deptHeadId;
+	public String getDeptHeadUsername() {
+		return deptHeadUsername;
 	}
 
-	public void setDeptHeadId(UUID deptHeadId) {
-		this.deptHeadId = deptHeadId;
+	public void setDeptHeadUsername(String deptHeadUsername) {
+		this.deptHeadUsername = deptHeadUsername;
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(deptHeadId, name);
+		return Objects.hash(deptHeadUsername, name);
 	}
 
 	@Override
@@ -53,12 +53,12 @@ public class Department {
 		if (getClass() != obj.getClass())
 			return false;
 		Department other = (Department) obj;
-		return Objects.equals(deptHeadId, other.deptHeadId) && name == other.name;
+		return Objects.equals(deptHeadUsername, other.deptHeadUsername) && Objects.equals(name, other.name);
 	}
 
 	@Override
 	public String toString() {
-		return "Department [name=" + name + ", departmentHeadId=" + deptHeadId + "]";
+		return "Department [name=" + name + ", deptHeadName=" + deptHeadUsername + "]";
 	}
 
 }

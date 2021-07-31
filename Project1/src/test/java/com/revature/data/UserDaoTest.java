@@ -1,65 +1,50 @@
 package com.revature.data;
 
-import java.util.UUID;
+import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
 
-import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.revature.beans.User;
 import com.revature.beans.UserType;
-import com.revature.util.MockitoHelper;
 
 public class UserDaoTest {
 	private UserDao userDao = null;
-	private CqlSession session = null;
 	private User user = null;
 
-	MockitoHelper<CqlSession> mock;
-
 	@BeforeAll
-	public void beforeAll() {
-		mock = new MockitoHelper<CqlSession>(CqlSession.class);
+	public static void beforeAll() {
+		
 	}
 
 	@BeforeEach
 	public void beforeTest() {
 		userDao = new UserDaoImpl();
-		user = new User();
+		user = new User("Tester", "TestPass", "user@test.com", "Test", "User", UserType.EMPLOYEE, "Test",
+				"TestSuper");
+
+		// Make sure a valid department is passed through to the creation.
+		
 	}
 
 	/**** addUser(User user) Tests ****/
 
 	@Test
 	public void testAddUser() {
-		//Set up mock and input
-		session = mock.setPrivateMock(userDao, "session");
-		User newUser = new User("newUser", "password", "email@user.com", "New", "User", UserType.EMPLOYEE,
-				"Test", UUID.fromString("0"));
+		// Set up mock and input
+		User newUser = new User("newUser", "password", "email@user.com", "New", "User", UserType.EMPLOYEE, "Test",
+				"Test");
 		
-		//Use the argument captor
-		ArgumentCaptor<BoundStatement> captor = ArgumentCaptor.forClass(BoundStatement.class);
-		
-		//Use mock to verify execute was called.
-		Mockito.verify(session).execute(captor.capture());
-		
-		//Verify that all the arguments were passed in correctly
-		
-	}
+		//Make sure a valid user does not throw an exception
+		assertAll("Assert that an exception is not thrown for the creation.", () -> userDao.addUser(user));
 
-	/**** getUser(UUID id) Tests ****/
-
-	@Test
-	public void testGetUserByIDValid() {
-
-	}
-
-	@Test
-	public void testGetUserByIDInvalid() {
+		// Make sure a null department throws an exception.
+		assertThrows(Exception.class, () -> userDao.addUser(null),
+				"Assert that an exception is thrown for the creation of a null department.");
 
 	}
 
@@ -67,12 +52,20 @@ public class UserDaoTest {
 
 	@Test
 	public void testGetUserByNameValid() {
+		User getUser = userDao.getUser(user.getUsername());
 
+		// Make sure the user returned is the same.
+		assertEquals(getUser, user, "Assert that both users are the same.");
 	}
 
 	@Test
 	public void testGetUserByNameInvalid() {
-
+		
+		//Make sure an invalid username results in a null
+		assertNull("Assert that a username not in the database returns a null", userDao.getUser("WrongUser"));
+		
+		//Make sure a null username returns a null
+		assertNull("Assert that a null username returns a null", userDao.getUser(null));
 	}
 
 	/**** getUser(String username, String password) Tests ****/

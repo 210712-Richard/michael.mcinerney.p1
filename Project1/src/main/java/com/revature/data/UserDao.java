@@ -7,13 +7,6 @@ import com.revature.beans.User;
 public interface UserDao {
 	
 	/**
-	 * Get the user by their ID
-	 * @param id The uuid of the user
-	 * @return The user with the id
-	 */
-	User getUser(UUID id);
-	
-	/**
 	 * Get the user by their username
 	 * @param username The username of the user
 	 * @return The user with the username
