@@ -19,6 +19,9 @@ public interface Request {
 	String getUsername();
 	void setUsername(String username);
 	
+	String getName();
+	void setName(String name);
+	
 	String getFirstName();
 	void setFirstName(String firstName);
 	
@@ -31,11 +34,17 @@ public interface Request {
 	RequestStatus getStatus();
 	void setStatus(RequestStatus status);
 	
-	LocalDate getDate();
-	void setDate(LocalDate date);
+	Boolean getIsUrgent();
+	void setIsUrgent(Boolean isUrgent);
 	
-	LocalTime getTime();
-	void setTime(LocalTime time);
+	Boolean getEmployeeAgrees();
+	void setEmployeeAgrees(Boolean employeeAgrees);
+	
+	LocalDate getStartDate();
+	void setStartDate(LocalDate date);
+	
+	LocalTime getStartTime();
+	void setStartTime(LocalTime time);
 	
 	String getLocation();
 	void setLocation(String location);
@@ -103,5 +112,11 @@ public interface Request {
 	
 	Boolean getNeedsEmployeeReview();
 	void setNeedsEmployeeReview(Boolean needsEmployeeReview);
+	
+	String getPresFileName();
+	void setPresFileName(String presFileName);
+	
+	String getFinalReimburseAmountReason();
+	void setFinalReimburseAmountReason(String finalReimburseAmountReason);
 	
 }

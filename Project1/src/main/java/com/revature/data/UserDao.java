@@ -23,7 +23,7 @@ public interface UserDao {
 	 * Add a user to the database
 	 * @param user The user to add to the database
 	 */
-	void addUser(User user);
+	void createUser(User user);
 	
 	/**
 	 * Update the user in the database

@@ -108,7 +108,7 @@ public class UserDaoImpl implements UserDao {
 	}
 
 	@Override
-	public void addUser(User user) {
+	public void createUser(User user) {
 		StringBuilder query = new StringBuilder("INSERT INTO user (username, password, email, firstname, ")
 				.append("lastname, type, departmentname, supervisorusername, pendingbalance, awardedbalance, requests, "
 						+ "reviewrequests")
