@@ -12,9 +12,19 @@ public class Approval {
 		super();
 		this.status = ApprovalStatus.AWAITING;
 		this.deadline = LocalDateTime.now().plus(Request.TIME_LIMIT);
-		this.reason = null;
 	}
 
+	public Approval(ApprovalStatus status, String reason) {
+		this();
+		this.status = status;
+		this.reason = reason;
+	}
+
+	public Approval(ApprovalStatus status, LocalDateTime deadline, String reason) {
+		this.status = status;
+		this.deadline = deadline;
+		this.reason = reason;
+	}
 
 	public LocalDateTime getDeadline() {
 		return deadline;

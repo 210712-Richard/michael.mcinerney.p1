@@ -1,11 +1,15 @@
 package com.revature.data;
 
+import static org.junit.Assert.assertNull;
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.Period;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,7 +28,7 @@ public class RequestDaoTest {
 	public void beforeTest() {
 		requestDao = new RequestDaoImpl();
 		request = new ReimbursementRequest();
-		
+
 		request.setId(999);
 		request.setUsername("Tester");
 		request.setName("Test Certification");
@@ -49,22 +53,48 @@ public class RequestDaoTest {
 	@Test
 	public void testCreateRequest() {
 		// Make sure a valid request does not throw an exception
-		assertAll("Assert that an exception is not thrown for the creation.", 
-				() -> requestDao.createRequest(request));
+		assertAll("Assert that an exception is not thrown for the creation.", () -> requestDao.createRequest(request));
 
 		// Make sure a null request throws an exception.
 		assertThrows(Exception.class, () -> requestDao.createRequest(null),
 				"Assert that an exception is thrown for the creation of a null department.");
 	}
-	
+
 	@Test
 	public void testUpdateRequest() {
 		// Make sure a valid request does not throw an exception
-		assertAll("Assert that an exception is not thrown for the creation.", 
-				() -> requestDao.updateRequest(request));
+		assertAll("Assert that an exception is not thrown for the creation.", () -> requestDao.updateRequest(request));
 
 		// Make sure a null request throws an exception.
 		assertThrows(Exception.class, () -> requestDao.updateRequest(null),
 				"Assert that an exception is thrown for the creation of a null department.");
+	}
+
+	@Test
+	public void testGetRequestValid() {
+		Request getRequest = requestDao.getRequest(request.getId());
+
+		// Make sure the user returned is the same.
+		assertEquals(getRequest.getId(), request.getId(), "Assert that both request ids are the same.");
+		assertEquals(getRequest.getUsername(), request.getUsername(),
+				"Assert that both request usernames are the same.");
+	}
+
+	@Test
+	public void testGetRequestInvalid() {
+
+		// Make sure an invalid username results in a null
+		assertNull("Assert that a id not in the database returns a null", requestDao.getRequest(-1));
+
+		// Make sure a null username returns a null
+		assertNull("Assert that a null request returns a null", requestDao.getRequest(null));
+	}
+
+	@Test
+	public void testGetRequests() {
+		List<Request> requests = requestDao.getRequests();
+
+		assertTrue(requests != null,
+				"Assert that the request list is not null.");
 	}
 }
