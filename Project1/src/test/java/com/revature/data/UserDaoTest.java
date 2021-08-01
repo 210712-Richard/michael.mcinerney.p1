@@ -34,13 +34,13 @@ public class UserDaoTest {
 	/**** addUser(User user) Tests ****/
 
 	@Test
-	public void testAddUser() {
+	public void testCreateUser() {
 		
 		//Make sure a valid user does not throw an exception
-		assertAll("Assert that an exception is not thrown for the creation.", () -> userDao.addUser(user));
+		assertAll("Assert that an exception is not thrown for the creation.", () -> userDao.createUser(user));
 
-		// Make sure a null department throws an exception.
-		assertThrows(Exception.class, () -> userDao.addUser(null),
+		// Make sure a null user throws an exception.
+		assertThrows(Exception.class, () -> userDao.createUser(null),
 				"Assert that an exception is thrown for the creation of a null department.");
 
 	}
