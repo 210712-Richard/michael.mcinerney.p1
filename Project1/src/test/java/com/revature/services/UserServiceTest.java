@@ -144,5 +144,15 @@ public class UserServiceTest {
 		Mockito.verify(dao).getUser(captor.capture());
 		assertEquals(user.getUsername(), captor.getValue(), "Assert that the username passed in is passed into the getUser.");
 	}
+	
+	@Test
+	public void testUpdateUserValid() {
+		//TODO
+	}
+	
+	@Test
+	public void testUpdateUserInvalid() {
+		//TODO
+	}
 
 }

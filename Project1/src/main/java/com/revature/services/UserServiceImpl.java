@@ -50,4 +50,9 @@ public class UserServiceImpl implements UserService {
 		return true;
 	}
 
+	@Override
+	public User updateUser(User user) {
+		return null;
+	}
+
 }
