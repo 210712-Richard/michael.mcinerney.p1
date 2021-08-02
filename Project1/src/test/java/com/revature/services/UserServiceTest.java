@@ -85,4 +85,14 @@ public class UserServiceTest {
 		nullUser = service.login(null, user.getPassword());
 		assertNull("Assert that a null username returns a null User.", nullUser);
 	}
+	
+	@Test
+	public void testCreateUserValid() {
+		
+	}
+	
+	@Test
+	public void testCreateUserInvalid() {
+		
+	}
 }

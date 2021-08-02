@@ -11,4 +11,10 @@ public interface UserService {
 	 * @return The user with the same username and password; null otherwise
 	 */
 	public User login(String username, String password);
+	
+	/**
+	 * Adds the user to the database
+	 * @param user The user being added to the database
+	 */
+	public void createUser(User user);
 }

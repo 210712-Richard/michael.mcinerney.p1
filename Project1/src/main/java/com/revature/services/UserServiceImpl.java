@@ -24,4 +24,9 @@ public class UserServiceImpl implements UserService {
 		log.debug("User returned: " + user);
 		return user;
 	}
+
+	@Override
+	public void createUser(User user) {
+		
+	}
 }
