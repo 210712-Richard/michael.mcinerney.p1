@@ -97,7 +97,7 @@ public class UserServiceTest {
 		ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
 
 		// Call the method
-		service.createUser(user.getUsername(), user.getPassword(), user.getEmail(), user.getFirstName(),
+		User newUser = service.createUser(user.getUsername(), user.getPassword(), user.getEmail(), user.getFirstName(),
 				user.getLastName(), user.getType(), user.getDepartmentName(), user.getSupervisorUsername());
 
 		// Verify the dao.createUser is called and capture the arguments
@@ -107,6 +107,7 @@ public class UserServiceTest {
 		User capture = captor.getValue();
 		assertEquals(user, capture,
 				"Assert that the user passed in is the same as the user with the details passed in.");
+		assertEquals(user, newUser, "Assert that the new user is the same as the other user.");
 	}
 
 	@Test

@@ -26,13 +26,15 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public void createUser(String username, String password, String email, String firstName, String lastName,
+	public User createUser(String username, String password, String email, String firstName, String lastName,
 			UserType type, String deptName, String supervisorUsername) {
 		// Create the new user
 		User newUser = new User(username, password, email, firstName, lastName, type, deptName, supervisorUsername);
 		log.debug("User being created: " + newUser);
 		
 		userDao.createUser(newUser);
+		
+		return newUser;
 	}
 
 	@Override

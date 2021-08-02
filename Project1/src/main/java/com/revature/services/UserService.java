@@ -23,8 +23,9 @@ public interface UserService {
 	 * @param email The email of the user
 	 * @param type The UserType of the user
 	 * @param supervisorUsername The username of the supervisor of the user
+	 * @return The new User
 	 */
-	public void createUser(String username, String password, String email, String firstName, String lastName, 
+	public User createUser(String username, String password, String email, String firstName, String lastName, 
 			UserType type, String deptName,  String supervisorUsername);
 	
 	/**

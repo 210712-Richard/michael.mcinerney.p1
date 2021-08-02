@@ -45,13 +45,37 @@ public class UserControllerImpl implements UserController {
 
 	@Override
 	public void logout(Context ctx) {
-		//Invalidate the session and send back a no-content response
+		// Invalidate the session and send back a no-content response
 		ctx.req.getSession().invalidate();
 		ctx.status(204);
 	}
 
 	@Override
 	public void createUser(Context ctx) {
-		
+		// Get the username and user from the request
+		User user = ctx.bodyAsClass(User.class);
+		log.debug("User from the body: " + user);
+		String username = ctx.pathParam("username");
+		log.debug("Username from the path: " + username);
+
+		// If the username being added doesn't match the one in the URL
+		if (!user.getUsername().equals(username)) {
+			ctx.status(400);
+			ctx.html("Usernames do not match");
+			return;
+		}
+
+		// If the username is unique
+		if (userService.isUsernameUnique(user.getUsername())) {
+			user = userService.createUser(user.getUsername(), user.getPassword(), user.getEmail(), user.getFirstName(),
+					user.getLastName(), user.getType(), user.getDepartmentName(), user.getSupervisorUsername());
+			log.debug("User added to the database: " + user);
+			ctx.status(201);
+			ctx.json(user);
+		// If the username is not unique
+		} else {
+			ctx.status(409);
+			ctx.html("Username is already taken");
+		}
 	}
 }
