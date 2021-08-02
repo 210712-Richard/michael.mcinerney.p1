@@ -2,10 +2,12 @@ package com.revature.services;
 
 import static org.junit.Assert.assertNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
@@ -13,8 +15,6 @@ import com.revature.beans.User;
 import com.revature.beans.UserType;
 import com.revature.data.UserDao;
 import com.revature.util.MockitoHelper;
-
-import software.amazon.awssdk.core.ServiceConfiguration;
 
 public class UserServiceTest {
 	private UserService service = null;
@@ -96,17 +96,52 @@ public class UserServiceTest {
 		// Have a captor ready to get arguments from Mockito
 		ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
 
-		//Call the method
+		// Call the method
 		service.createUser(user.getUsername(), user.getPassword(), user.getEmail(), user.getFirstName(),
 				user.getLastName(), user.getType(), user.getDepartmentName(), user.getSupervisorUsername());
 
-		//Verify the dao.createUser is called and capture the arguments
+		// Verify the dao.createUser is called and capture the arguments
 		Mockito.verify(dao).createUser(captor.capture());
 
-		//Make sure the argument matches the user
+		// Make sure the argument matches the user
 		User capture = captor.getValue();
 		assertEquals(user, capture,
 				"Assert that the user passed in is the same as the user with the details passed in.");
 	}
-	
+
+	@Test
+	public void testIsUsernameUniqueValid() {
+		String unique = "Unique_Username";
+		// Use captor to get the username
+		ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+
+		// Set up Mockito to return a null user
+		Mockito.when(dao.getUser(unique)).thenReturn(null);
+
+		// Call the method and make sure it returns true.
+		Boolean isUnique = service.isUsernameUnique(unique);
+		assertTrue(isUnique, "Assert that a unique username returns true.");
+		
+		//Verify and make sure the arguments are correct
+		Mockito.verify(dao).getUser(captor.capture());
+		assertEquals(unique, captor.getValue(), "Assert that the username passed in is passed into the getUser.");
+	}
+
+	@Test
+	public void testIsUsernameUniqueInvalid() {
+		// Use captor to get the username
+		ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+
+		// Set up Mockito to return a null user
+		Mockito.when(dao.getUser(user.getUsername())).thenReturn(user);
+
+		// Call the method and make sure it returns false.
+		Boolean isUnique = service.isUsernameUnique(user.getUsername());
+		assertFalse(isUnique, "Assert that a unique username returns true.");
+
+		//Verify and make sure the arguments are correct
+		Mockito.verify(dao).getUser(captor.capture());
+		assertEquals(user.getUsername(), captor.getValue(), "Assert that the username passed in is passed into the getUser.");
+	}
+
 }

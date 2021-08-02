@@ -35,4 +35,17 @@ public class UserServiceImpl implements UserService {
 		userDao.createUser(newUser);
 	}
 
+	@Override
+	public Boolean isUsernameUnique(String username) {
+		User user = userDao.getUser(username);
+		log.debug("User returned: " + user);
+		
+		//If the user is in the database, return false.
+		if (user != null) {
+			return false;
+		}
+		//Otherwise, return true
+		return true;
+	}
+
 }

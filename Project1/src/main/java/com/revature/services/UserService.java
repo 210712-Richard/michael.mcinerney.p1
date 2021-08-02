@@ -26,4 +26,11 @@ public interface UserService {
 	 */
 	public void createUser(String username, String password, String email, String firstName, String lastName, 
 			UserType type, String deptName,  String supervisorUsername);
+	
+	/**
+	 * Checks to see if a username is already in the database
+	 * @param username The username to check and see if it is in the database
+	 * @return true if the user is not in the database; false otherwise
+	 */
+	public Boolean isUsernameUnique(String username);
 }
