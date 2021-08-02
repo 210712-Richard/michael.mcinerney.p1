@@ -17,4 +17,12 @@ public interface UserController {
 	 * Should have nothing in the body.
 	 */
 	public void logout(Context ctx);
+	
+	/**
+	 * Create a user
+	 * @param ctx The Context.<br>
+	 * Should have a username, password, firstname, lastname, email, type, 
+	 * deptname, and supervisorusername in the body.
+	 */
+	public void createUser(Context ctx);
 }

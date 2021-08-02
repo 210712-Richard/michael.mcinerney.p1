@@ -49,6 +49,9 @@ public class Driver {
 		//As a user, I can logout
 		app.delete("/users", userControl::logout);
 		
+		//Create user, mostly for testing purposes
+		app.put("/users/:username", userControl::createUser);
+		
 		//As an employee, I can create a reimbursement request.
 		
 		//As an employee, I can cancel my reimbursement request.
