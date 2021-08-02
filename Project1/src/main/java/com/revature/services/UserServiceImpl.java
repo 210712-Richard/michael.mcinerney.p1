@@ -17,6 +17,9 @@ public class UserServiceImpl implements UserService {
 	
 	@Override
 	public User login(String username, String password) {
+		if (username == null || username.isBlank() || password == null || password.isBlank()) {
+			return null;
+		}
 		User user = userDao.getUser(username, password);
 		log.debug("User returned: " + user);
 		return user;
