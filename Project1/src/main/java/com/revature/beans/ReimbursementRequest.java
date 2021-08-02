@@ -2,6 +2,7 @@ package com.revature.beans;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -11,10 +12,9 @@ public class ReimbursementRequest implements Request {
 	private UUID id;
 	private String username;
 	private RequestStatus status;
-	
-	//Fields set by the service
-	private Boolean isUrgent;
 
+	// Fields set by the service
+	private Boolean isUrgent;
 
 	// Required Fields
 	private String name;
@@ -55,24 +55,29 @@ public class ReimbursementRequest implements Request {
 	private Boolean needsEmployeeReview;
 	private Boolean employeeAgrees;
 
-
-
 	public ReimbursementRequest() {
 		super();
 		status = RequestStatus.ACTIVE;
 		isUrgent = false;
+
+		fileURIs = new ArrayList<>();
+		approvalMsgsURIs = new ArrayList<>();
+
+		supervisorApproval = new Approval();
+		deptHeadApproval = new Approval();
+		benCoApproval = new Approval();
+		finalApproval = new Approval();
 	}
 
-	public ReimbursementRequest(String username, RequestStatus status, String firstName, String lastName,
-			String deptName, LocalDate date, LocalTime time, String location, String description, Double cost,
-			GradingFormat gradingFormat, EventType type, List<String> fileURIs, List<String> approvalMsgsURIs,
-			String workTimeMissed) {
+	public ReimbursementRequest(String username, String firstName, String lastName, String deptName, String name, LocalDate date,
+			LocalTime time, String location, String description, Double cost, GradingFormat gradingFormat,
+			EventType type) {
 		this();
 		this.username = username;
-		this.status = status;
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.deptName = deptName;
+		this.name = name;
 		this.startDate = date;
 		this.startTime = time;
 		this.location = location;
@@ -80,9 +85,6 @@ public class ReimbursementRequest implements Request {
 		this.cost = cost;
 		this.gradingFormat = gradingFormat;
 		this.type = type;
-		this.fileURIs = fileURIs;
-		this.approvalMsgsURIs = approvalMsgsURIs;
-		this.workTimeMissed = workTimeMissed;
 	}
 
 	public UUID getId() {
@@ -92,7 +94,7 @@ public class ReimbursementRequest implements Request {
 	public void setId(UUID id) {
 		this.id = id;
 	}
-	
+
 	public Boolean getEmployeeAgrees() {
 		return employeeAgrees;
 	}
@@ -108,7 +110,7 @@ public class ReimbursementRequest implements Request {
 	public void setUsername(String username) {
 		this.username = username;
 	}
-	
+
 	public Boolean getIsUrgent() {
 		return isUrgent;
 	}
@@ -116,7 +118,6 @@ public class ReimbursementRequest implements Request {
 	public void setIsUrgent(Boolean isUrgent) {
 		this.isUrgent = isUrgent;
 	}
-
 
 	public String getName() {
 		return name;
@@ -429,14 +430,14 @@ public class ReimbursementRequest implements Request {
 	public String toString() {
 		return "ReimbursementRequest [id=" + id + ", username=" + username + ", status=" + status + ", isUrgent="
 				+ isUrgent + ", firstName=" + firstName + ", lastName=" + lastName + ", deptName=" + deptName
-				+ ", date=" + startDate + ", time=" + startTime + ", location=" + location + ", description=" + description
-				+ ", cost=" + cost + ", gradingFormat=" + gradingFormat + ", type=" + type + ", fileURIs=" + fileURIs
-				+ ", approvalMsgsURIs=" + approvalMsgsURIs + ", workTimeMissed=" + workTimeMissed + ", reimburseAmount="
-				+ reimburseAmount + ", supervisorApproval=" + supervisorApproval + ", supervisorUsername="
-				+ supervisorUsername + ", deptHeadApproval=" + deptHeadApproval + ", deptHeadUsername="
-				+ deptHeadUsername + ", benCoApproval=" + benCoApproval + ", benCoUsername=" + benCoUsername
-				+ ", finalGrade=" + finalGrade + ", isPassing=" + isPassing + ", presFileName=" + presFileName
-				+ ", finalApproval=" + finalApproval + ", finalApprovalUsername=" + finalApprovalUsername
+				+ ", date=" + startDate + ", time=" + startTime + ", location=" + location + ", description="
+				+ description + ", cost=" + cost + ", gradingFormat=" + gradingFormat + ", type=" + type + ", fileURIs="
+				+ fileURIs + ", approvalMsgsURIs=" + approvalMsgsURIs + ", workTimeMissed=" + workTimeMissed
+				+ ", reimburseAmount=" + reimburseAmount + ", supervisorApproval=" + supervisorApproval
+				+ ", supervisorUsername=" + supervisorUsername + ", deptHeadApproval=" + deptHeadApproval
+				+ ", deptHeadUsername=" + deptHeadUsername + ", benCoApproval=" + benCoApproval + ", benCoUsername="
+				+ benCoUsername + ", finalGrade=" + finalGrade + ", isPassing=" + isPassing + ", presFileName="
+				+ presFileName + ", finalApproval=" + finalApproval + ", finalApprovalUsername=" + finalApprovalUsername
 				+ ", finalReimburseAmount=" + finalReimburseAmount + ", finalReimburseAmountReason="
 				+ finalReimburseAmountReason + ", needsEmployeeReview=" + needsEmployeeReview + ", employeeAgrees="
 				+ employeeAgrees + "]";

@@ -53,6 +53,7 @@ public class Driver {
 		app.put("/users/:username", userControl::createUser);
 		
 		//As an employee, I can create a reimbursement request.
+		app.post("/requests/", reqControl::createRequest);
 		
 		//As an employee, I can cancel my reimbursement request.
 		
