@@ -147,12 +147,30 @@ public class UserServiceTest {
 	
 	@Test
 	public void testUpdateUserValid() {
-		//TODO
+		//Set the argument captor
+		ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+		
+		//Change a field and call the method
+		user.setEmail("newEmail@email.com");
+		User updated = service.updateUser(user);
+		
+		//Make sure the updated User is the same as the current user
+		assertEquals(user, updated, "Assert that the updated user is the same as the user.");
+		
+		//Verify that the dao.updateUser is called and that it is passing in the user
+		Mockito.verify(dao).updateUser(captor.capture());
+		assertEquals(user, captor.getValue(), "Assert that the user is passed in.");
+		
 	}
 	
 	@Test
 	public void testUpdateUserInvalid() {
-		//TODO
+		
+		//Null user should return null
+		User updated = service.updateUser(null);
+		
+		assertNull("Assert that a null user argument returns a null user", updated);
+		
 	}
 
 }

@@ -52,7 +52,11 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public User updateUser(User user) {
-		return null;
+		if (user == null) {
+			return null;
+		}
+		userDao.updateUser(user);
+		return user;
 	}
 
 }
