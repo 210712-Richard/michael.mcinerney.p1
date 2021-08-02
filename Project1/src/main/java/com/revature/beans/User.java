@@ -3,6 +3,7 @@ package com.revature.beans;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 public class User {
 	// The username of the user
@@ -26,9 +27,9 @@ public class User {
 	// The balance the user has already been awarded
 	private Double awardedBalance;
 	// The List of Request IDs from requests the user has made
-	private List<Integer> requests;
+	private List<UUID> requests;
 	// The list of request IDs the user has to review
-	private List<Integer> reviewRequests;
+	private List<UUID> reviewRequests;
 
 	/**
 	 * Generates a random id and sets the balances to 0 and the Request Lists to a
@@ -139,19 +140,19 @@ public class User {
 		return pendingBalance + awardedBalance;
 	}
 
-	public List<Integer> getRequests() {
+	public List<UUID> getRequests() {
 		return requests;
 	}
 
-	public void setRequests(List<Integer> requests) {
+	public void setRequests(List<UUID> requests) {
 		this.requests = requests;
 	}
 
-	public List<Integer> getReviewRequests() {
+	public List<UUID> getReviewRequests() {
 		return reviewRequests;
 	}
 
-	public void setReviewRequests(List<Integer> reviewRequests) {
+	public void setReviewRequests(List<UUID> reviewRequests) {
 		this.reviewRequests = reviewRequests;
 	}
 

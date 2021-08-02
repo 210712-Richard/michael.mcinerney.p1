@@ -1,5 +1,7 @@
 package com.revature.data;
 
+import java.util.UUID;
+
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
@@ -48,8 +50,8 @@ public class UserDaoImpl implements UserDao {
 		user.setSupervisorUsername(row.getString("supervisorusername"));
 		user.setPendingBalance(row.getDouble("pendingbalance"));
 		user.setAwardedBalance(row.getDouble("awardedbalance"));
-		user.setRequests(row.getList("requests", Integer.class));
-		user.setReviewRequests(row.getList("reviewrequests", Integer.class));
+		user.setRequests(row.getList("requests", UUID.class));
+		user.setReviewRequests(row.getList("reviewrequests", UUID.class));
 
 		return user;
 	}
@@ -86,8 +88,8 @@ public class UserDaoImpl implements UserDao {
 		user.setSupervisorUsername(row.getString("supervisorusername"));
 		user.setPendingBalance(row.getDouble("pendingbalance"));
 		user.setAwardedBalance(row.getDouble("awardedbalance"));
-		user.setRequests(row.getList("requests", Integer.class));
-		user.setReviewRequests(row.getList("reviewrequests", Integer.class));
+		user.setRequests(row.getList("requests", UUID.class));
+		user.setReviewRequests(row.getList("reviewrequests", UUID.class));
 
 		return user;
 	}

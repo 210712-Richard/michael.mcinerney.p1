@@ -1,8 +1,12 @@
 package com.revature.util;
 
 import com.revature.beans.Department;
+import com.revature.beans.User;
+import com.revature.beans.UserType;
 import com.revature.data.DepartmentDao;
 import com.revature.data.DepartmentDaoImpl;
+import com.revature.data.UserDao;
+import com.revature.data.UserDaoImpl;
 
 public class DatabaseCreator {
 	
@@ -22,8 +26,8 @@ public class DatabaseCreator {
 		StringBuilder query = new StringBuilder("CREATE TABLE IF NOT EXISTS User (")
 				.append("username text, password text, email text, firstName text, ")
 				.append("lastName text, type text, departmentName text, supervisorUsername text, ")
-				.append("pendingBalance double, awardedBalance double, requests list<int>, ")
-				.append("reviewRequests list<int>,")
+				.append("pendingBalance double, awardedBalance double, requests list<UUID>, ")
+				.append("reviewRequests list<UUID>,")
 				.append("primary key(username, password));");
 		CassandraUtil.getInstance().getSession().execute(query.toString());
 		
@@ -49,14 +53,31 @@ public class DatabaseCreator {
 	public static void populateDepartment() {
 		DepartmentDao dao = new DepartmentDaoImpl();
 		Department dept = new Department("Test", "TestHead");
+		
 		dao.createDepartment(dept);
+		dept = new Department("Business", "john-doe");
+		
+		dao.createDepartment(dept);
+		dept = new Department("Math", "jane-doe");
+		
+		dao.createDepartment(dept);
+		dept = new Department("Engineering", "daniel-tubb");
+		
+		dao.createDepartment(dept);
+		dept = new Department("Science", "shirly-cord");
 	}
 	
 	public static void populateUser() {
+		UserDao dao = new UserDaoImpl();
 		
-	}
-	
-	public static void populateRequest() {
+		User user = new User("geoff-beesos", "password", "geoff.besos@test.com", "Geoff", "Besos", UserType.SUPERVISOR, "Organization",
+				null);
+		dao.createUser(user);
 		
+		user = new User("john-doe", "password", "john.doe@test.com", "John", "Doe", UserType.SUPERVISOR, "Business",
+				"geoff-beesos");
+		
+		user = new User("john-doe", "password", "john.doe@test.com", "John", "Doe", UserType.SUPERVISOR, "Business",
+				"geoff-beesos");
 	}
 }
