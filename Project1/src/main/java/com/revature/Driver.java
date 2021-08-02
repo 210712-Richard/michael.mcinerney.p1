@@ -27,10 +27,12 @@ public class Driver {
 		}
 		DatabaseCreator.createTables();
 		try {
-			Thread.sleep(20000);
+			Thread.sleep(90000);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		DatabaseCreator.populateUser();
+		DatabaseCreator.populateDepartment();
 		System.exit(0);
 	}
 	
