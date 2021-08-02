@@ -20,7 +20,8 @@ import com.datastax.oss.driver.api.core.type.TupleType;
 import com.revature.beans.Approval;
 import com.revature.beans.ApprovalStatus;
 import com.revature.beans.EventType;
-import com.revature.beans.GradingFormatFactory;
+import com.revature.beans.Format;
+import com.revature.beans.GradingFormat;
 import com.revature.beans.ReimbursementRequest;
 import com.revature.beans.Request;
 import com.revature.beans.RequestStatus;
@@ -73,7 +74,7 @@ public class RequestDaoImpl implements RequestDao {
 		request.setDescription(row.getString("description"));
 		request.setCost(row.getDouble("cost"));
 		request.setGradingFormat(
-				new GradingFormatFactory().getGradingFormat(row.getTupleValue("gradingformat").get(0, String.class),
+				new GradingFormat(Format.valueOf(row.getTupleValue("gradingformat").get(0, String.class)),
 						row.getTupleValue("gradingformat").get(1, String.class)));
 		request.setType(EventType.valueOf(row.getString("type")));
 		request.setFileURIs(row.getList("fileuris", String.class));
@@ -90,19 +91,21 @@ public class RequestDaoImpl implements RequestDao {
 				LocalDateTime.ofInstant(row.getTupleValue("deptheadapproval").get(1, Instant.class), ZoneOffset.UTC),
 				row.getTupleValue("deptheadapproval").get(2, String.class)));
 		request.setDeptHeadUsername(row.getString("deptheadusername"));
-		request.setBenCoApproval(new Approval(
-				ApprovalStatus.valueOf(row.getTupleValue("bencoapproval").get(0, String.class)),
-				LocalDateTime.ofInstant(row.getTupleValue("bencoapproval").get(1, Instant.class), ZoneOffset.UTC),
-				row.getTupleValue("bencoapproval").get(2, String.class)));
+		request.setBenCoApproval(
+				new Approval(
+						ApprovalStatus.valueOf(row.getTupleValue("bencoapproval").get(0, String.class)), LocalDateTime
+								.ofInstant(row.getTupleValue("bencoapproval").get(1, Instant.class), ZoneOffset.UTC),
+						row.getTupleValue("bencoapproval").get(2, String.class)));
 		request.setBenCoUsername(row.getString("bencousername"));
-		
+
 		request.setFinalGrade(row.getString("finalgrade"));
 		request.setIsPassing(row.getBoolean("ispassing"));
 		request.setPresFileName(row.getString("presfilename"));
-		request.setFinalApproval(new Approval(
-				ApprovalStatus.valueOf(row.getTupleValue("finalapproval").get(0, String.class)),
-				LocalDateTime.ofInstant(row.getTupleValue("finalapproval").get(1, Instant.class), ZoneOffset.UTC),
-				row.getTupleValue("finalapproval").get(2, String.class)));
+		request.setFinalApproval(
+				new Approval(
+						ApprovalStatus.valueOf(row.getTupleValue("finalapproval").get(0, String.class)), LocalDateTime
+								.ofInstant(row.getTupleValue("finalapproval").get(1, Instant.class), ZoneOffset.UTC),
+						row.getTupleValue("finalapproval").get(2, String.class)));
 		request.setFinalApprovalUsername(row.getString("finalapprovalusername"));
 		request.setFinalReimburseAmount(row.getDouble("finalreimburseamount"));
 		request.setFinalReimburseAmountReason(row.getString("finalreimburseamountreason"));
@@ -119,13 +122,12 @@ public class RequestDaoImpl implements RequestDao {
 				.append("type, fileuris, approvalmsgsuris, worktimemissed, reimburseamount, supervisorapproval, ")
 				.append("supervisorusername, deptheadapproval, deptheadusername, bencoapproval, bencousername, ")
 				.append("finalgrade, ispassing, presfilename, finalapproval, finalapprovalusername, finalreimburseamount, ")
-				.append("finalreimburseamountreason, needsemployeereview, employeeagrees ")
-				.append("FROM request;");
+				.append("finalreimburseamountreason, needsemployeereview, employeeagrees ").append("FROM request;");
 		SimpleStatement s = new SimpleStatementBuilder(query.toString()).build();
 
 		ResultSet rs = session.execute(s);
-		
-		rs.forEach((row)->{
+
+		rs.forEach((row) -> {
 			Request request = new ReimbursementRequest();
 			request.setId(row.getUuid("id"));
 			request.setUsername(row.getString("username"));
@@ -141,7 +143,7 @@ public class RequestDaoImpl implements RequestDao {
 			request.setDescription(row.getString("description"));
 			request.setCost(row.getDouble("cost"));
 			request.setGradingFormat(
-					new GradingFormatFactory().getGradingFormat(row.getTupleValue("gradingformat").get(0, String.class),
+					new GradingFormat(Format.valueOf(row.getTupleValue("gradingformat").get(0, String.class)),
 							row.getTupleValue("gradingformat").get(1, String.class)));
 			request.setType(EventType.valueOf(row.getString("type")));
 			request.setFileURIs(row.getList("fileuris", String.class));
@@ -149,13 +151,13 @@ public class RequestDaoImpl implements RequestDao {
 			request.setWorkTimeMissed(row.getString("worktimemissed"));
 			request.setReimburseAmount(row.getDouble("reimburseamount"));
 			request.setSupervisorApproval(new Approval(
-					ApprovalStatus.valueOf(row.getTupleValue("supervisorapproval").get(0, String.class)),
-					LocalDateTime.ofInstant(row.getTupleValue("supervisorapproval").get(1, Instant.class), ZoneOffset.UTC),
+					ApprovalStatus.valueOf(row.getTupleValue("supervisorapproval").get(0, String.class)), LocalDateTime
+							.ofInstant(row.getTupleValue("supervisorapproval").get(1, Instant.class), ZoneOffset.UTC),
 					row.getTupleValue("supervisorapproval").get(2, String.class)));
 			request.setSupervisorUsername(row.getString("supervisorusername"));
 			request.setDeptHeadApproval(new Approval(
-					ApprovalStatus.valueOf(row.getTupleValue("deptheadapproval").get(0, String.class)),
-					LocalDateTime.ofInstant(row.getTupleValue("deptheadapproval").get(1, Instant.class), ZoneOffset.UTC),
+					ApprovalStatus.valueOf(row.getTupleValue("deptheadapproval").get(0, String.class)), LocalDateTime
+							.ofInstant(row.getTupleValue("deptheadapproval").get(1, Instant.class), ZoneOffset.UTC),
 					row.getTupleValue("deptheadapproval").get(2, String.class)));
 			request.setDeptHeadUsername(row.getString("deptheadusername"));
 			request.setBenCoApproval(new Approval(
@@ -163,7 +165,7 @@ public class RequestDaoImpl implements RequestDao {
 					LocalDateTime.ofInstant(row.getTupleValue("bencoapproval").get(1, Instant.class), ZoneOffset.UTC),
 					row.getTupleValue("bencoapproval").get(2, String.class)));
 			request.setBenCoUsername(row.getString("bencousername"));
-			
+
 			request.setFinalGrade(row.getString("finalgrade"));
 			request.setIsPassing(row.getBoolean("ispassing"));
 			request.setPresFileName(row.getString("presfilename"));
@@ -178,7 +180,7 @@ public class RequestDaoImpl implements RequestDao {
 			request.setEmployeeAgrees(row.getBoolean("employeeagrees"));
 			requests.add(request);
 		});
-		
+
 		return requests;
 	}
 
@@ -261,7 +263,7 @@ public class RequestDaoImpl implements RequestDao {
 		TupleValue finalApproval = APPROVAL_TUPLE.newValue(request.getFinalApproval().getStatus().toString(),
 				request.getFinalApproval().getDeadline().toInstant(ZoneOffset.UTC),
 				request.getFinalApproval().getReason());
-		
+
 		BoundStatement bound = session.prepare(s).bind(request.getId(), request.getUsername(),
 				request.getStatus().toString(), request.getIsUrgent(), request.getName(), request.getFirstName(),
 				request.getLastName(), request.getDeptName(), request.getStartDate(), request.getStartTime(),

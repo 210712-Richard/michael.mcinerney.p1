@@ -17,7 +17,8 @@ import org.junit.jupiter.api.Test;
 
 import com.revature.beans.Approval;
 import com.revature.beans.EventType;
-import com.revature.beans.GradingFormatFactory;
+import com.revature.beans.Format;
+import com.revature.beans.GradingFormat;
 import com.revature.beans.ReimbursementRequest;
 import com.revature.beans.Request;
 
@@ -41,7 +42,7 @@ public class RequestDaoTest {
 		request.setLocation("101 Test Dr. Test, VA 99999");
 		request.setDescription("A Test course");
 		request.setCost(200.00);
-		request.setGradingFormat(new GradingFormatFactory().getGradingFormat());
+		request.setGradingFormat(new GradingFormat(Format.LETTER));
 		request.setType(EventType.CERTIFICATION);
 		request.setReimburseAmount(Request.MAX_REIMBURSEMENT * request.getType().getPercent());
 		request.setDeptHeadApproval(new Approval());

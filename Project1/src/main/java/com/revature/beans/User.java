@@ -189,4 +189,13 @@ public class User {
 				&& Objects.equals(username, other.username);
 	}
 
+	public void alterPendingBalance(Double cost) {
+		this.pendingBalance += cost;
+	}
+	
+	public void alterAwardedBalance(Double cost) {
+		this.awardedBalance += cost;
+	}
+	
+
 }
