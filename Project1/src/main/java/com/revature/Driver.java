@@ -47,6 +47,7 @@ public class Driver {
 		app.post("/users", userControl::login);
 		
 		//As a user, I can logout
+		app.delete("/users", userControl::logout);
 		
 		//As an employee, I can create a reimbursement request.
 		
