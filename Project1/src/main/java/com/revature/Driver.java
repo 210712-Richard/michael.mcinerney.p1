@@ -63,7 +63,7 @@ public class Driver {
 				RequestControllerImpl.class);
 		
 		//As a user, I can login
-		app.get("/users", userControl::login);
+		app.post("/users", userControl::login);
 		
 		//As a user, I can logout
 		
