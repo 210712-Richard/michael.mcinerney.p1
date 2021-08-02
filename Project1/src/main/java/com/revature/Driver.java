@@ -21,26 +21,7 @@ public class Driver {
 		
 	}
 	
-	/**
-	 * Used to setup the initial tables and populate with default rows
-	 */
-	private static void setupDatabase() {
-		DatabaseCreator.dropTables();
-		try {
-			Thread.sleep(40000);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		DatabaseCreator.createTables();
-		try {
-			Thread.sleep(90000);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		DatabaseCreator.populateUser();
-		DatabaseCreator.populateDepartment();
-		System.exit(0);
-	}
+
 	
 	/**
 	 * Used to launch Javalin to start the REST API
@@ -75,5 +56,24 @@ public class Driver {
 
 	}
 
-
+	/**
+	 * Used to setup the initial tables and populate with default rows
+	 */
+	private static void setupDatabase() {
+		DatabaseCreator.dropTables();
+		try {
+			Thread.sleep(40000);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		DatabaseCreator.createTables();
+		try {
+			Thread.sleep(90000);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		DatabaseCreator.populateUser();
+		DatabaseCreator.populateDepartment();
+		System.exit(0);
+	}
 }
