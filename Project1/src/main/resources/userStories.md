@@ -1,7 +1,7 @@
 # User Stories
 
 ## All Users
-- [ ] **user1**. As a user, I can login.
+- [x] **user1**. As a user, I can login.
 - [ ] **user2**. As a user, I can logout.
 
 ## Employee
