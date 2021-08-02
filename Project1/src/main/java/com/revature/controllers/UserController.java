@@ -1,5 +1,8 @@
 package com.revature.controllers;
 
-public interface UserController {
+import io.javalin.http.Context;
 
+public interface UserController {
+	
+	public void login(Context ctx);
 }

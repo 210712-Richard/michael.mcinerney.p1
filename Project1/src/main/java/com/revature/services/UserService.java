@@ -1,5 +1,8 @@
 package com.revature.services;
 
-public interface UserService {
+import com.revature.beans.User;
 
+public interface UserService {
+	
+	public User login(String username, String password);
 }
