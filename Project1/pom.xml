@@ -69,7 +69,6 @@
 			<artifactId>java-driver-core</artifactId>
 			<version>4.11.0</version>
 		</dependency>
-		
 		<dependency>
 			<groupId>software.aws.mcs</groupId>
 			<artifactId>aws-sigv4-auth-cassandra-java-driver-plugin</artifactId>
