@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.Period;
 import java.util.List;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,7 +30,7 @@ public class RequestDaoTest {
 		requestDao = new RequestDaoImpl();
 		request = new ReimbursementRequest();
 
-		request.setId(999);
+		request.setId(UUID.fromString("ddd9e879-52d3-47ad-a1b6-87a94cbb321d"));
 		request.setUsername("Tester");
 		request.setName("Test Certification");
 		request.setFirstName("Test");
@@ -83,10 +84,10 @@ public class RequestDaoTest {
 	@Test
 	public void testGetRequestInvalid() {
 
-		// Make sure an invalid username results in a null
-		assertNull("Assert that a id not in the database returns a null", requestDao.getRequest(-1));
+		// Make sure an invalid id results in a null
+		assertNull("Assert that a id not in the database returns a null", requestDao.getRequest(UUID.fromString("123e4567-e89b-12d3-a456-426614174000")));
 
-		// Make sure a null username returns a null
+		// Make sure a null id returns a null
 		assertNull("Assert that a null request returns a null", requestDao.getRequest(null));
 	}
 

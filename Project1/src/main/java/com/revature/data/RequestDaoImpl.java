@@ -4,8 +4,8 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
@@ -36,7 +36,7 @@ public class RequestDaoImpl implements RequestDao {
 	private static final TupleType APPROVAL_TUPLE = DataTypes.tupleOf(DataTypes.TEXT, DataTypes.TIMESTAMP,
 			DataTypes.TEXT);
 
-	public Request getRequest(Integer id) {
+	public Request getRequest(UUID id) {
 		if (id == null) {
 			return null;
 		}
@@ -59,7 +59,7 @@ public class RequestDaoImpl implements RequestDao {
 		}
 
 		Request request = new ReimbursementRequest();
-		request.setId(row.getInt("id"));
+		request.setId(row.getUuid("id"));
 		request.setUsername(row.getString("username"));
 		request.setStatus(RequestStatus.valueOf(row.getString("status")));
 		request.setIsUrgent(row.getBoolean("isurgent"));
@@ -127,7 +127,7 @@ public class RequestDaoImpl implements RequestDao {
 		
 		rs.forEach((row)->{
 			Request request = new ReimbursementRequest();
-			request.setId(row.getInt("id"));
+			request.setId(row.getUuid("id"));
 			request.setUsername(row.getString("username"));
 			request.setStatus(RequestStatus.valueOf(row.getString("status")));
 			request.setIsUrgent(row.getBoolean("isurgent"));
@@ -261,7 +261,7 @@ public class RequestDaoImpl implements RequestDao {
 		TupleValue finalApproval = APPROVAL_TUPLE.newValue(request.getFinalApproval().getStatus().toString(),
 				request.getFinalApproval().getDeadline().toInstant(ZoneOffset.UTC),
 				request.getFinalApproval().getReason());
-
+		
 		BoundStatement bound = session.prepare(s).bind(request.getId(), request.getUsername(),
 				request.getStatus().toString(), request.getIsUrgent(), request.getName(), request.getFirstName(),
 				request.getLastName(), request.getDeptName(), request.getStartDate(), request.getStartTime(),
