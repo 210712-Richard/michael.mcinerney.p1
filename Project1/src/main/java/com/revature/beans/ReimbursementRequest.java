@@ -4,10 +4,11 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 public class ReimbursementRequest implements Request {
 	// Identifiers (Primary keys in the database)
-	private Integer id;
+	private UUID id;
 	private String username;
 	private RequestStatus status;
 	
@@ -62,12 +63,11 @@ public class ReimbursementRequest implements Request {
 		isUrgent = false;
 	}
 
-	public ReimbursementRequest(Integer id, String username, RequestStatus status, String firstName, String lastName,
+	public ReimbursementRequest(String username, RequestStatus status, String firstName, String lastName,
 			String deptName, LocalDate date, LocalTime time, String location, String description, Double cost,
 			GradingFormat gradingFormat, EventType type, List<String> fileURIs, List<String> approvalMsgsURIs,
 			String workTimeMissed) {
 		this();
-		this.id = id;
 		this.username = username;
 		this.status = status;
 		this.firstName = firstName;
@@ -85,11 +85,11 @@ public class ReimbursementRequest implements Request {
 		this.workTimeMissed = workTimeMissed;
 	}
 
-	public Integer getId() {
+	public UUID getId() {
 		return id;
 	}
 
-	public void setId(Integer id) {
+	public void setId(UUID id) {
 		this.id = id;
 	}
 	

@@ -10,7 +10,7 @@ import com.revature.util.DatabaseCreator;
 public class Driver {
 
 	public static void main(String[] args) {
-//		setupDatabase();
+		setupDatabase();
 //		launchJavalin();
 		
 	}

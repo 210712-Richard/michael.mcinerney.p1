@@ -28,7 +28,7 @@ public class DatabaseCreator {
 		CassandraUtil.getInstance().getSession().execute(query.toString());
 		
 		query = new StringBuilder("CREATE TABLE IF NOT EXISTS Request (")
-				.append("id int, username text, status text, isUrgent boolean, name text, firstName text, lastName text, ")
+				.append("id uuid, username text, status text, isUrgent boolean, name text, firstName text, lastName text, ")
 				.append("deptName text, startDate date, startTime time, location text, ")
 				.append("description text, cost double, gradingFormat tuple<text, text>, ")
 				.append("type text, fileURIs List<text>, approvalMsgsURIs List<text>, workTimeMissed text, ")

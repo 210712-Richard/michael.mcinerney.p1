@@ -6,6 +6,7 @@ import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAmount;
 import java.util.List;
+import java.util.UUID;
 
 public interface Request {
 	//The maximum amount that can be reimbursed for the user
@@ -13,8 +14,8 @@ public interface Request {
 	//The amount of time each approver has to respond to the Request
 	TemporalAmount TIME_LIMIT = Duration.of(30, ChronoUnit.MINUTES);
 	
-	Integer getId();
-	void setId(Integer id);
+	UUID getId();
+	void setId(UUID id);
 	
 	String getUsername();
 	void setUsername(String username);
