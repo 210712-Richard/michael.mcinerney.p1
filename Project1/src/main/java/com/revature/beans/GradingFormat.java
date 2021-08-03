@@ -6,6 +6,11 @@ public class GradingFormat {
 
 	private Format format;
 	private String passingGrade;
+	
+	public GradingFormat() {
+		this.format = Format.LETTER;
+		this.passingGrade = format.getDefaultPassGrade();
+	}
 
 	public GradingFormat(Format format) {
 		this.format = format;

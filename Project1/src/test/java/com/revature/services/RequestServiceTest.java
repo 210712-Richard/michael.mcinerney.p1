@@ -91,7 +91,7 @@ public class RequestServiceTest {
 		assertEquals(request.getStartTime(), newRequest.getStartTime(), "Assert that the startTime is set.");
 		assertEquals(request.getLocation(), newRequest.getLocation(), "Assert that the location is set.");
 		assertEquals(request.getDescription(), newRequest.getDescription(), "Assert that the description is set.");
-		assertEquals(request.getCost(), newRequest.getCost(), "Assert that the cost is set.");
+		assertEquals(request.getCost()*request.getType().getPercent(), newRequest.getCost(), "Assert that the cost is set.");
 		assertEquals(request.getGradingFormat(), newRequest.getGradingFormat(),
 				"Assert that the gradingFormat is set.");
 		assertEquals(request.getType(), newRequest.getType(), "Assert that the type is set.");
@@ -113,7 +113,7 @@ public class RequestServiceTest {
 		// amount alloted but less than the cost,
 		// it should still create the request, but with a different cost.
 		user.setAwardedBalance(800.00);
-		user.setPendingBalance(100.00);
+		user.setPendingBalance(150.00);
 		Double expectedCost = Request.MAX_REIMBURSEMENT - user.getPendingBalance() - user.getAwardedBalance();
 
 		newRequest = service.createRequest(request.getUsername(), request.getFirstName(), request.getLastName(),
