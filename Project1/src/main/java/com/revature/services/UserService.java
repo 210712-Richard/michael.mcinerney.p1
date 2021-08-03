@@ -34,4 +34,11 @@ public interface UserService {
 	 * @return true if the user is not in the database; false otherwise
 	 */
 	public Boolean isUsernameUnique(String username);
+	
+	/**
+	 * Update the user and put them in the database
+	 * @param user The user being updated
+	 * @return The updated user
+	 */
+	public User updateUser(User user);
 }

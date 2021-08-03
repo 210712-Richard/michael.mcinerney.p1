@@ -21,11 +21,11 @@ public class UserServiceTest {
 	private User user = null;
 	private UserDao dao = null;
 
-	private static MockitoHelper<UserDao> mock = null;
+	private static MockitoHelper mock = null;
 
 	@BeforeAll
 	public static void beforeAll() {
-		mock = new MockitoHelper<UserDao>(UserDao.class);
+		mock = new MockitoHelper();
 	}
 
 	@BeforeEach
@@ -34,7 +34,7 @@ public class UserServiceTest {
 
 		user = new User("Tester", "TestPass", "user@test.com", "Test", "User", UserType.EMPLOYEE, "Test", "TestSuper");
 
-		dao = mock.setPrivateMock(service, "userDao");
+		dao = (UserDao) mock.setPrivateMock(service, "userDao", UserDao.class);
 	}
 
 	@Test
@@ -143,6 +143,34 @@ public class UserServiceTest {
 		//Verify and make sure the arguments are correct
 		Mockito.verify(dao).getUser(captor.capture());
 		assertEquals(user.getUsername(), captor.getValue(), "Assert that the username passed in is passed into the getUser.");
+	}
+	
+	@Test
+	public void testUpdateUserValid() {
+		//Set the argument captor
+		ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+		
+		//Change a field and call the method
+		user.setEmail("newEmail@email.com");
+		User updated = service.updateUser(user);
+		
+		//Make sure the updated User is the same as the current user
+		assertEquals(user, updated, "Assert that the updated user is the same as the user.");
+		
+		//Verify that the dao.updateUser is called and that it is passing in the user
+		Mockito.verify(dao).updateUser(captor.capture());
+		assertEquals(user, captor.getValue(), "Assert that the user is passed in.");
+		
+	}
+	
+	@Test
+	public void testUpdateUserInvalid() {
+		
+		//Null user should return null
+		User updated = service.updateUser(null);
+		
+		assertNull("Assert that a null user argument returns a null user", updated);
+		
 	}
 
 }

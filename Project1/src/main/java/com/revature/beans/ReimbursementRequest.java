@@ -2,6 +2,7 @@ package com.revature.beans;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -11,10 +12,9 @@ public class ReimbursementRequest implements Request {
 	private UUID id;
 	private String username;
 	private RequestStatus status;
-	
-	//Fields set by the service
-	private Boolean isUrgent;
 
+	// Fields set by the service
+	private Boolean isUrgent;
 
 	// Required Fields
 	private String name;
@@ -38,11 +38,9 @@ public class ReimbursementRequest implements Request {
 	// Each Approval will be saved as a tuple in the database
 	private Double reimburseAmount;
 	private Approval supervisorApproval;
-	private String supervisorUsername;
 	private Approval deptHeadApproval;
-	private String deptHeadUsername;
 	private Approval benCoApproval;
-	private String benCoUsername;
+	private String reason;
 
 	// The final step fields
 	private String finalGrade;
@@ -55,24 +53,29 @@ public class ReimbursementRequest implements Request {
 	private Boolean needsEmployeeReview;
 	private Boolean employeeAgrees;
 
-
-
 	public ReimbursementRequest() {
 		super();
 		status = RequestStatus.ACTIVE;
 		isUrgent = false;
+
+		fileURIs = new ArrayList<>();
+		approvalMsgsURIs = new ArrayList<>();
+
+		supervisorApproval = new Approval();
+		deptHeadApproval = new Approval();
+		benCoApproval = new Approval();
+		finalApproval = new Approval();
 	}
 
-	public ReimbursementRequest(String username, RequestStatus status, String firstName, String lastName,
-			String deptName, LocalDate date, LocalTime time, String location, String description, Double cost,
-			GradingFormat gradingFormat, EventType type, List<String> fileURIs, List<String> approvalMsgsURIs,
-			String workTimeMissed) {
+	public ReimbursementRequest(String username, String firstName, String lastName, String deptName, String name, LocalDate date,
+			LocalTime time, String location, String description, Double cost, GradingFormat gradingFormat,
+			EventType type) {
 		this();
 		this.username = username;
-		this.status = status;
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.deptName = deptName;
+		this.name = name;
 		this.startDate = date;
 		this.startTime = time;
 		this.location = location;
@@ -80,9 +83,6 @@ public class ReimbursementRequest implements Request {
 		this.cost = cost;
 		this.gradingFormat = gradingFormat;
 		this.type = type;
-		this.fileURIs = fileURIs;
-		this.approvalMsgsURIs = approvalMsgsURIs;
-		this.workTimeMissed = workTimeMissed;
 	}
 
 	public UUID getId() {
@@ -92,7 +92,7 @@ public class ReimbursementRequest implements Request {
 	public void setId(UUID id) {
 		this.id = id;
 	}
-	
+
 	public Boolean getEmployeeAgrees() {
 		return employeeAgrees;
 	}
@@ -108,7 +108,7 @@ public class ReimbursementRequest implements Request {
 	public void setUsername(String username) {
 		this.username = username;
 	}
-	
+
 	public Boolean getIsUrgent() {
 		return isUrgent;
 	}
@@ -116,7 +116,6 @@ public class ReimbursementRequest implements Request {
 	public void setIsUrgent(Boolean isUrgent) {
 		this.isUrgent = isUrgent;
 	}
-
 
 	public String getName() {
 		return name;
@@ -270,22 +269,12 @@ public class ReimbursementRequest implements Request {
 		this.benCoApproval = benCoApproval;
 	}
 
-	@Override
-	public void setSupervisorApprovalStatus(ApprovalStatus status, String reason) {
-		this.supervisorApproval.setStatus(status);
-		this.supervisorApproval.setReason(reason);
+	public String getReason() {
+		return reason;
 	}
 
-	@Override
-	public void setDeptHeadApprovalStatus(ApprovalStatus status, String reason) {
-		this.deptHeadApproval.setStatus(status);
-		this.deptHeadApproval.setReason(reason);
-	}
-
-	@Override
-	public void setBenCoApprovalStatus(ApprovalStatus status, String reason) {
-		this.benCoApproval.setStatus(status);
-		this.benCoApproval.setReason(reason);
+	public void setReason(String reason) {
+		this.reason = reason;
 	}
 
 	public String getFinalGrade() {
@@ -307,7 +296,7 @@ public class ReimbursementRequest implements Request {
 	@Override
 	public void setFinalApprovalStatus(ApprovalStatus status, String reason) {
 		this.finalApproval.setStatus(status);
-		this.finalApproval.setReason(reason);
+		this.finalApproval.setUsername(reason);
 	}
 
 	public Double getFinalReimburseAmount() {
@@ -341,31 +330,7 @@ public class ReimbursementRequest implements Request {
 	public void setPresFileName(String presFileName) {
 		this.presFileName = presFileName;
 	}
-
-	public String getSupervisorUsername() {
-		return supervisorUsername;
-	}
-
-	public void setSupervisorUsername(String supervisorUsername) {
-		this.supervisorUsername = supervisorUsername;
-	}
-
-	public String getDeptHeadUsername() {
-		return deptHeadUsername;
-	}
-
-	public void setDeptHeadUsername(String deptHeadUsername) {
-		this.deptHeadUsername = deptHeadUsername;
-	}
-
-	public String getBenCoUsername() {
-		return benCoUsername;
-	}
-
-	public void setBenCoUsername(String benCoUsername) {
-		this.benCoUsername = benCoUsername;
-	}
-
+	
 	public String getFinalApprovalUsername() {
 		return finalApprovalUsername;
 	}
@@ -384,11 +349,11 @@ public class ReimbursementRequest implements Request {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(approvalMsgsURIs, benCoApproval, benCoUsername, cost, deptHeadApproval, deptHeadUsername,
-				deptName, description, employeeAgrees, fileURIs, finalApproval, finalApprovalUsername, finalGrade,
-				finalReimburseAmount, finalReimburseAmountReason, firstName, gradingFormat, id, isPassing, isUrgent,
-				lastName, location, name, needsEmployeeReview, presFileName, reimburseAmount, startDate, startTime,
-				status, supervisorApproval, supervisorUsername, type, username, workTimeMissed);
+		return Objects.hash(approvalMsgsURIs, benCoApproval, cost, deptHeadApproval, deptName, description,
+				employeeAgrees, fileURIs, finalApproval, finalApprovalUsername, finalGrade, finalReimburseAmount,
+				finalReimburseAmountReason, firstName, gradingFormat, id, isPassing, isUrgent, lastName, location, name,
+				needsEmployeeReview, presFileName, reason, reimburseAmount, startDate, startTime, status,
+				supervisorApproval, type, username, workTimeMissed);
 	}
 
 	@Override
@@ -401,10 +366,8 @@ public class ReimbursementRequest implements Request {
 			return false;
 		ReimbursementRequest other = (ReimbursementRequest) obj;
 		return Objects.equals(approvalMsgsURIs, other.approvalMsgsURIs)
-				&& Objects.equals(benCoApproval, other.benCoApproval)
-				&& Objects.equals(benCoUsername, other.benCoUsername) && Objects.equals(cost, other.cost)
-				&& Objects.equals(deptHeadApproval, other.deptHeadApproval)
-				&& Objects.equals(deptHeadUsername, other.deptHeadUsername) && Objects.equals(deptName, other.deptName)
+				&& Objects.equals(benCoApproval, other.benCoApproval) && Objects.equals(cost, other.cost)
+				&& Objects.equals(deptHeadApproval, other.deptHeadApproval) && Objects.equals(deptName, other.deptName)
 				&& Objects.equals(description, other.description)
 				&& Objects.equals(employeeAgrees, other.employeeAgrees) && Objects.equals(fileURIs, other.fileURIs)
 				&& Objects.equals(finalApproval, other.finalApproval)
@@ -417,24 +380,22 @@ public class ReimbursementRequest implements Request {
 				&& Objects.equals(isUrgent, other.isUrgent) && Objects.equals(lastName, other.lastName)
 				&& Objects.equals(location, other.location) && Objects.equals(name, other.name)
 				&& Objects.equals(needsEmployeeReview, other.needsEmployeeReview)
-				&& Objects.equals(presFileName, other.presFileName)
+				&& Objects.equals(presFileName, other.presFileName) && Objects.equals(reason, other.reason)
 				&& Objects.equals(reimburseAmount, other.reimburseAmount) && Objects.equals(startDate, other.startDate)
 				&& Objects.equals(startTime, other.startTime) && status == other.status
-				&& Objects.equals(supervisorApproval, other.supervisorApproval)
-				&& Objects.equals(supervisorUsername, other.supervisorUsername) && type == other.type
+				&& Objects.equals(supervisorApproval, other.supervisorApproval) && type == other.type
 				&& Objects.equals(username, other.username) && Objects.equals(workTimeMissed, other.workTimeMissed);
 	}
 
 	@Override
 	public String toString() {
 		return "ReimbursementRequest [id=" + id + ", username=" + username + ", status=" + status + ", isUrgent="
-				+ isUrgent + ", firstName=" + firstName + ", lastName=" + lastName + ", deptName=" + deptName
-				+ ", date=" + startDate + ", time=" + startTime + ", location=" + location + ", description=" + description
-				+ ", cost=" + cost + ", gradingFormat=" + gradingFormat + ", type=" + type + ", fileURIs=" + fileURIs
-				+ ", approvalMsgsURIs=" + approvalMsgsURIs + ", workTimeMissed=" + workTimeMissed + ", reimburseAmount="
-				+ reimburseAmount + ", supervisorApproval=" + supervisorApproval + ", supervisorUsername="
-				+ supervisorUsername + ", deptHeadApproval=" + deptHeadApproval + ", deptHeadUsername="
-				+ deptHeadUsername + ", benCoApproval=" + benCoApproval + ", benCoUsername=" + benCoUsername
+				+ isUrgent + ", name=" + name + ", firstName=" + firstName + ", lastName=" + lastName + ", deptName="
+				+ deptName + ", startDate=" + startDate + ", startTime=" + startTime + ", location=" + location
+				+ ", description=" + description + ", cost=" + cost + ", gradingFormat=" + gradingFormat + ", type="
+				+ type + ", fileURIs=" + fileURIs + ", approvalMsgsURIs=" + approvalMsgsURIs + ", workTimeMissed="
+				+ workTimeMissed + ", reimburseAmount=" + reimburseAmount + ", supervisorApproval=" + supervisorApproval
+				+ ", deptHeadApproval=" + deptHeadApproval + ", benCoApproval=" + benCoApproval + ", reason=" + reason
 				+ ", finalGrade=" + finalGrade + ", isPassing=" + isPassing + ", presFileName=" + presFileName
 				+ ", finalApproval=" + finalApproval + ", finalApprovalUsername=" + finalApprovalUsername
 				+ ", finalReimburseAmount=" + finalReimburseAmount + ", finalReimburseAmountReason="

@@ -6,24 +6,24 @@ import java.util.Objects;
 public class Approval {
 	private ApprovalStatus status;
 	private LocalDateTime deadline;
-	private String reason;
+	private String username;
 
 	public Approval() {
 		super();
 		this.status = ApprovalStatus.AWAITING;
-		this.deadline = LocalDateTime.now().plus(Request.TIME_LIMIT);
+		this.deadline = Request.PLACEHOLDER;
 	}
 
-	public Approval(ApprovalStatus status, String reason) {
+	public Approval(ApprovalStatus status, String username) {
 		this();
 		this.status = status;
-		this.reason = reason;
+		this.username = username;
 	}
 
 	public Approval(ApprovalStatus status, LocalDateTime deadline, String reason) {
 		this.status = status;
 		this.deadline = deadline;
-		this.reason = reason;
+		this.username = reason;
 	}
 
 	public LocalDateTime getDeadline() {
@@ -32,6 +32,10 @@ public class Approval {
 
 	public void setDeadline(LocalDateTime deadline) {
 		this.deadline = deadline;
+	}
+	
+	public void startDeadline() {
+		this.deadline = LocalDateTime.now().plus(Request.TIME_LIMIT);
 	}
 
 	public ApprovalStatus getStatus() {
@@ -42,22 +46,22 @@ public class Approval {
 		this.status = status;
 	}
 
-	public String getReason() {
-		return reason;
+	public String getUsername() {
+		return username;
 	}
 
-	public void setReason(String reason) {
-		this.reason = reason;
+	public void setUsername(String username) {
+		this.username = username;
 	}
 
 	@Override
 	public String toString() {
-		return "Approval [status=" + status + ", deadline=" + deadline + ", reason=" + reason + "]";
+		return "Approval [status=" + status + ", deadline=" + deadline + ", username=" + username + "]";
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(deadline, reason, status);
+		return Objects.hash(deadline, username, status);
 	}
 
 	@Override
@@ -69,7 +73,7 @@ public class Approval {
 		if (getClass() != obj.getClass())
 			return false;
 		Approval other = (Approval) obj;
-		return Objects.equals(deadline, other.deadline) && Objects.equals(reason, other.reason)
+		return Objects.equals(deadline, other.deadline) && Objects.equals(username, other.username)
 				&& status == other.status;
 	}
 
