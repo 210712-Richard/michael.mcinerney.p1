@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.Period;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,7 +33,7 @@ public class RequestServiceTest {
 	private RequestDao reqDao = null;
 	private UserDao userDao = null;
 
-	User user = null;
+	private User user = null;
 
 	private static MockitoHelper mock = null;
 
@@ -45,7 +46,8 @@ public class RequestServiceTest {
 	@BeforeEach
 	public void beforeTest() {
 		service = new RequestServiceImpl();
-
+		
+		request.setId(UUID.fromString("ddd9e879-52d3-47ad-a1b6-87a94cbb321d"));
 		request.setUsername("Tester");
 		request.setName("Service Certification");
 		request.setFirstName("Test");
@@ -63,14 +65,17 @@ public class RequestServiceTest {
 
 		reqDao = (RequestDao) mock.setPrivateMock(service, "reqDao", RequestDao.class);
 		userDao = (UserDao) mock.setPrivateMock(service, "userDao", UserDao.class);
-	}
+		
+		
+		Mockito.when(userDao.getUser(user.getUsername())).thenReturn(user);
+		Mockito.when(reqDao.getRequest(request.getId())).thenReturn(request);	
+		}
 
 	@Test
 	public void testCreateRequestValid() {
 		// Set up the argument captor
 		ArgumentCaptor<Request> captor = ArgumentCaptor.forClass(Request.class);
 
-		Mockito.when(userDao.getUser(user.getUsername())).thenReturn(user);
 
 		// Call the method
 		Request newRequest = service.createRequest(request.getUsername(), request.getFirstName(), request.getLastName(),
@@ -143,7 +148,6 @@ public class RequestServiceTest {
 	@Test
 	public void testCreateRequestInvalid() {
 
-		Mockito.when(userDao.getUser(user.getUsername())).thenReturn(user);
 
 		// Blank or null username returns a null
 		Request newRequest = service.createRequest(null, request.getFirstName(), request.getLastName(),
@@ -278,5 +282,37 @@ public class RequestServiceTest {
 				request.getLocation(), request.getDescription(), request.getCost(), request.getGradingFormat(), null);
 		assertNull("Assert that a null type returns null", newRequest);
 
+	}
+	
+	@Test
+	public void testChangeApprovalStatusValid() {
+		
+	}
+	
+	@Test
+	public void testChangeApprovalStatusInvalid() {
+		
+	}
+	
+	@Test
+	public void testGetRequestValid() {
+		
+		//This should retrieve the request specified by the ID
+		Request getRequest = service.getRequest(request.getId());
+		assertEquals(request, getRequest, "Assert that the request returned is the same.");
+		
+		// Verify the method for the reqDao was called with the ID
+		ArgumentCaptor<UUID> captor = ArgumentCaptor.forClass(UUID.class);
+		Mockito.verify(reqDao).getRequest(captor.capture());
+		
+		assertEquals(request.getId(), captor.getValue(), "Assert that the ID passed in is the same.");
+	}
+	
+	@Test
+	public void testGetRequestInvalid() {
+		
+		//Should return null if a null request is passed in
+		Request nullRequest = service.getRequest(null);
+		assertNull("Assert that a null was returned from a null id", nullRequest);
 	}
 }

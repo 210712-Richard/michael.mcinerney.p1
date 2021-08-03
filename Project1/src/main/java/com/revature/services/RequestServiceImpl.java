@@ -86,7 +86,7 @@ public class RequestServiceImpl implements RequestService {
 
 	@Override
 	public Request changeApprovalStatus(Request request, ApprovalStatus status, String reason) {
-		
+		//TODO Implement
 		//The controller should have already verified the username, so no more verification needed
 		Request retRequest = null;
 		
@@ -95,6 +95,20 @@ public class RequestServiceImpl implements RequestService {
 		//Else, set the reason in the request.
 		//Save the request either way
 		
+		return retRequest;
+	}
+
+	@Override
+	public Request getRequest(UUID id) {
+		
+		Request retRequest = null;
+		
+		//Make sure the id isn't null
+		if (id != null) {
+			retRequest = reqDao.getRequest(id);
+		}
+		
+		log.debug("The request returned: " + retRequest);
 		return retRequest;
 	}
 }

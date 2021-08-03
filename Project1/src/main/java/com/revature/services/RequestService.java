@@ -2,6 +2,7 @@ package com.revature.services;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.UUID;
 
 import com.revature.beans.ApprovalStatus;
 import com.revature.beans.EventType;
@@ -38,4 +39,11 @@ public interface RequestService {
 	 * @return The request. Will return null if there was an issue
 	 */
 	public Request changeApprovalStatus(Request request, ApprovalStatus status, String reason);
+	
+	/**
+	 * Get the Request based on the ID of the user
+	 * @param id
+	 * @return
+	 */
+	public Request getRequest(UUID id);
 }

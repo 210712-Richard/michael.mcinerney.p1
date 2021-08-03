@@ -9,15 +9,18 @@ import com.revature.data.UserDao;
 import com.revature.data.UserDaoImpl;
 import com.revature.factory.BeanFactory;
 import com.revature.factory.TraceLog;
+import com.revature.util.Verifier;
 
 @TraceLog
 public class UserServiceImpl implements UserService {
 	UserDao userDao = (UserDao) BeanFactory.getFactory().getObject(UserDao.class, UserDaoImpl.class);
 	private static Logger log = LogManager.getLogger(UserServiceImpl.class);
+	
+	private static final Verifier VERIFIER = new Verifier();
 
 	@Override
 	public User login(String username, String password) {
-		if (username == null || username.isBlank() || password == null || password.isBlank()) {
+		if (!VERIFIER.verifyStrings(username, password)) {
 			return null;
 		}
 		User user = userDao.getUser(username, password);
