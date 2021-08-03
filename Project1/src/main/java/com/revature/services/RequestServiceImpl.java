@@ -45,6 +45,7 @@ public class RequestServiceImpl implements RequestService {
 					&& startDate.isAfter(LocalDate.now())) {
 				// Get the user as it will be used to check to make sure they have the balance
 				User user = userDao.getUser(username);
+				
 				Double reimburseMax = (cost > Request.MAX_REIMBURSEMENT) ? Request.MAX_REIMBURSEMENT : cost;
 				reimburseMax -= user.getAwardedBalance() + user.getPendingBalance();
 				log.debug("Maximum amount that can be reimbursed: " + reimburseMax);
@@ -60,9 +61,10 @@ public class RequestServiceImpl implements RequestService {
 					LocalDate twoWeeks = LocalDate.now().plus(Period.of(0, 0, 14));
 					request.setIsUrgent(startDate.isBefore(twoWeeks));
 					
-					//Set the supervisor approval to the user's supervisor
-					request.setSupervisorUsername(user.getSupervisorUsername());
-					
+					//Set the supervisor approval to the user's supervisor and start the deadline
+					request.getSupervisorApproval().setUsername(user.getSupervisorUsername());
+					request.getSupervisorApproval().startDeadline();
+					log.debug("Supervisor's deadline set to " + request.getSupervisorApproval().getDeadline());
 					//Add the request to the database
 					reqDao.createRequest(request);
 					

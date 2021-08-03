@@ -35,8 +35,8 @@ public class DatabaseCreator {
 				.append("description text, cost double, gradingFormat tuple<text, text>, ")
 				.append("type text, fileURIs List<text>, approvalMsgsURIs List<text>, workTimeMissed text, ")
 				.append("reimburseAmount double, supervisorApproval tuple<text, timestamp, text>, ")
-				.append("supervisorUsername text, deptHeadApproval tuple<text, timestamp, text>, ")
-				.append("deptHeadUsername text, benCoApproval tuple<text, timestamp, text>, benCoUsername text, ")
+				.append(", deptHeadApproval tuple<text, timestamp, text>, ")
+				.append(", benCoApproval tuple<text, timestamp, text>, reason text, ")
 				.append("finalGrade text, isPassing boolean, presFileName text, finalApproval tuple<text, timestamp, text>, ")
 				.append("finalApprovalUsername text, finalReimburseAmount double, finalReimburseAmountReason text, needsEmployeeReview boolean, employeeAgrees boolean, ")
 				.append("primary key(id, username));");

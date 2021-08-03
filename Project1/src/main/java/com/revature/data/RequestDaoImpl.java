@@ -45,7 +45,7 @@ public class RequestDaoImpl implements RequestDao {
 				.append("id, username, status, isurgent, name, firstname, lastname, ")
 				.append("deptname, startdate, starttime, location, description, cost, gradingFormat, ")
 				.append("type, fileuris, approvalmsgsuris, worktimemissed, reimburseamount, supervisorapproval, ")
-				.append("supervisorusername, deptheadapproval, deptheadusername, bencoapproval, bencousername, ")
+				.append("deptheadapproval, bencoapproval, reason, ")
 				.append("finalgrade, ispassing, presfilename, finalapproval, finalapprovalusername, finalreimburseamount, ")
 				.append("finalreimburseamountreason, needsemployeereview, employeeagrees ")
 				.append("FROM request WHERE id = ?;");
@@ -85,19 +85,17 @@ public class RequestDaoImpl implements RequestDao {
 				ApprovalStatus.valueOf(row.getTupleValue("supervisorapproval").get(0, String.class)),
 				LocalDateTime.ofInstant(row.getTupleValue("supervisorapproval").get(1, Instant.class), ZoneOffset.UTC),
 				row.getTupleValue("supervisorapproval").get(2, String.class)));
-		request.setSupervisorUsername(row.getString("supervisorusername"));
 		request.setDeptHeadApproval(new Approval(
 				ApprovalStatus.valueOf(row.getTupleValue("deptheadapproval").get(0, String.class)),
 				LocalDateTime.ofInstant(row.getTupleValue("deptheadapproval").get(1, Instant.class), ZoneOffset.UTC),
 				row.getTupleValue("deptheadapproval").get(2, String.class)));
-		request.setDeptHeadUsername(row.getString("deptheadusername"));
 		request.setBenCoApproval(
 				new Approval(
 						ApprovalStatus.valueOf(row.getTupleValue("bencoapproval").get(0, String.class)), LocalDateTime
 								.ofInstant(row.getTupleValue("bencoapproval").get(1, Instant.class), ZoneOffset.UTC),
 						row.getTupleValue("bencoapproval").get(2, String.class)));
-		request.setBenCoUsername(row.getString("bencousername"));
 
+		request.setReason(row.getString("reason"));
 		request.setFinalGrade(row.getString("finalgrade"));
 		request.setIsPassing(row.getBoolean("ispassing"));
 		request.setPresFileName(row.getString("presfilename"));
@@ -120,7 +118,7 @@ public class RequestDaoImpl implements RequestDao {
 				.append("id, username, status, isurgent, name, firstname, lastname, ")
 				.append("deptname, startdate, starttime, location, description, cost, gradingFormat, ")
 				.append("type, fileuris, approvalmsgsuris, worktimemissed, reimburseamount, supervisorapproval, ")
-				.append("supervisorusername, deptheadapproval, deptheadusername, bencoapproval, bencousername, ")
+				.append("deptheadapproval, bencoapproval, reason, ")
 				.append("finalgrade, ispassing, presfilename, finalapproval, finalapprovalusername, finalreimburseamount, ")
 				.append("finalreimburseamountreason, needsemployeereview, employeeagrees ").append("FROM request;");
 		SimpleStatement s = new SimpleStatementBuilder(query.toString()).build();
@@ -154,18 +152,16 @@ public class RequestDaoImpl implements RequestDao {
 					ApprovalStatus.valueOf(row.getTupleValue("supervisorapproval").get(0, String.class)), LocalDateTime
 							.ofInstant(row.getTupleValue("supervisorapproval").get(1, Instant.class), ZoneOffset.UTC),
 					row.getTupleValue("supervisorapproval").get(2, String.class)));
-			request.setSupervisorUsername(row.getString("supervisorusername"));
 			request.setDeptHeadApproval(new Approval(
 					ApprovalStatus.valueOf(row.getTupleValue("deptheadapproval").get(0, String.class)), LocalDateTime
 							.ofInstant(row.getTupleValue("deptheadapproval").get(1, Instant.class), ZoneOffset.UTC),
 					row.getTupleValue("deptheadapproval").get(2, String.class)));
-			request.setDeptHeadUsername(row.getString("deptheadusername"));
 			request.setBenCoApproval(new Approval(
 					ApprovalStatus.valueOf(row.getTupleValue("bencoapproval").get(0, String.class)),
 					LocalDateTime.ofInstant(row.getTupleValue("bencoapproval").get(1, Instant.class), ZoneOffset.UTC),
 					row.getTupleValue("bencoapproval").get(2, String.class)));
-			request.setBenCoUsername(row.getString("bencousername"));
 
+			request.setReason(row.getString("reason"));
 			request.setFinalGrade(row.getString("finalgrade"));
 			request.setIsPassing(row.getBoolean("ispassing"));
 			request.setPresFileName(row.getString("presfilename"));
@@ -189,7 +185,7 @@ public class RequestDaoImpl implements RequestDao {
 				.append("status = ?, isurgent = ?, name = ?, firstname = ?, lastname = ?, ")
 				.append("deptname = ?, startdate = ?, starttime = ?, location = ?, description = ?, cost = ?, gradingFormat = ?, ")
 				.append("type = ?, fileuris = ?, approvalmsgsuris = ?, worktimemissed = ?, reimburseamount = ?, supervisorapproval = ?, ")
-				.append("supervisorusername = ?, deptheadapproval = ?, deptheadusername = ?, bencoapproval = ?, bencousername = ?, ")
+				.append("deptheadapproval = ?, bencoapproval = ?, reason = ?, ")
 				.append("finalgrade = ?, ispassing = ?, presfilename = ?, finalapproval = ?, finalapprovalusername = ?, finalreimburseamount = ?, ")
 				.append("finalreimburseamountreason = ?, needsemployeereview = ?, employeeagrees = ?")
 				.append(" WHERE id = ? AND username = ?;");
@@ -197,34 +193,33 @@ public class RequestDaoImpl implements RequestDao {
 		SimpleStatement s = new SimpleStatementBuilder(query.toString())
 				.setConsistencyLevel(DefaultConsistencyLevel.LOCAL_QUORUM).build();
 		// Set the tuple grade
-		TupleValue grade = GRADE_TUPLE.newValue(request.getGradingFormat().toString(),
+		TupleValue grade = GRADE_TUPLE.newValue(request.getGradingFormat().getFormat().toString(),
 				request.getGradingFormat().getPassingGrade());
 
 		// Set the tuple approvals
 		TupleValue supervisorApproval = APPROVAL_TUPLE.newValue(request.getSupervisorApproval().getStatus().toString(),
 				request.getSupervisorApproval().getDeadline().toInstant(ZoneOffset.UTC),
-				request.getSupervisorApproval().getReason());
+				request.getSupervisorApproval().getUsername());
 
 		TupleValue deptHeadApproval = APPROVAL_TUPLE.newValue(request.getDeptHeadApproval().getStatus().toString(),
 				request.getDeptHeadApproval().getDeadline().toInstant(ZoneOffset.UTC),
-				request.getDeptHeadApproval().getReason());
+				request.getDeptHeadApproval().getUsername());
 
 		TupleValue benCoApproval = APPROVAL_TUPLE.newValue(request.getBenCoApproval().getStatus().toString(),
 				request.getBenCoApproval().getDeadline().toInstant(ZoneOffset.UTC),
-				request.getBenCoApproval().getReason());
+				request.getBenCoApproval().getUsername());
 
 		TupleValue finalApproval = APPROVAL_TUPLE.newValue(request.getFinalApproval().getStatus().toString(),
 				request.getFinalApproval().getDeadline().toInstant(ZoneOffset.UTC),
-				request.getFinalApproval().getReason());
+				request.getFinalApproval().getUsername());
 
 		BoundStatement bound = session.prepare(s).bind(request.getStatus().toString(), request.getIsUrgent(),
 				request.getName(), request.getFirstName(), request.getLastName(), request.getDeptName(),
 				request.getStartDate(), request.getStartTime(), request.getLocation(), request.getDescription(),
 				request.getCost(), grade, request.getType().toString(), request.getFileURIs(),
 				request.getApprovalMsgsURIs(), request.getWorkTimeMissed(), request.getReimburseAmount(),
-				supervisorApproval, request.getSupervisorUsername(), deptHeadApproval, request.getDeptHeadUsername(),
-				benCoApproval, request.getBenCoUsername(), request.getFinalGrade(), request.getIsPassing(),
-				request.getPresFileName(), finalApproval, request.getFinalApprovalUsername(),
+				supervisorApproval, deptHeadApproval, benCoApproval, request.getReason(), request.getFinalGrade(),
+				request.getIsPassing(), request.getPresFileName(), finalApproval, request.getFinalApprovalUsername(),
 				request.getFinalReimburseAmount(), request.getFinalReimburseAmountReason(),
 				request.getNeedsEmployeeReview(), request.getEmployeeAgrees(), request.getId(), request.getUsername());
 
@@ -236,44 +231,43 @@ public class RequestDaoImpl implements RequestDao {
 				.append("id, username, status, isurgent, name, firstname, lastname, ")
 				.append("deptname, startdate, starttime, location, description, cost, gradingFormat, ")
 				.append("type, fileuris, approvalmsgsuris, worktimemissed, reimburseamount, supervisorapproval, ")
-				.append("supervisorusername, deptheadapproval, deptheadusername, bencoapproval, bencousername, ")
+				.append("deptheadapproval, bencoapproval, reason, ")
 				.append("finalgrade, ispassing, presfilename, finalapproval, finalapprovalusername, finalreimburseamount, ")
 				.append("finalreimburseamountreason, needsemployeereview, employeeagrees")
-				.append(") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+				.append(") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
 
 		SimpleStatement s = new SimpleStatementBuilder(query.toString())
 				.setConsistencyLevel(DefaultConsistencyLevel.LOCAL_QUORUM).build();
 		// Set the tuple grade
-		TupleValue grade = GRADE_TUPLE.newValue(request.getGradingFormat().toString(),
+		TupleValue grade = GRADE_TUPLE.newValue(request.getGradingFormat().getFormat().toString(),
 				request.getGradingFormat().getPassingGrade());
 
 		// Set the tuple approvals
 		TupleValue supervisorApproval = APPROVAL_TUPLE.newValue(request.getSupervisorApproval().getStatus().toString(),
 				request.getSupervisorApproval().getDeadline().toInstant(ZoneOffset.UTC),
-				request.getSupervisorApproval().getReason());
+				request.getSupervisorApproval().getUsername());
 
 		TupleValue deptHeadApproval = APPROVAL_TUPLE.newValue(request.getDeptHeadApproval().getStatus().toString(),
 				request.getDeptHeadApproval().getDeadline().toInstant(ZoneOffset.UTC),
-				request.getDeptHeadApproval().getReason());
+				request.getDeptHeadApproval().getUsername());
 
 		TupleValue benCoApproval = APPROVAL_TUPLE.newValue(request.getBenCoApproval().getStatus().toString(),
 				request.getBenCoApproval().getDeadline().toInstant(ZoneOffset.UTC),
-				request.getBenCoApproval().getReason());
+				request.getBenCoApproval().getUsername());
 
 		TupleValue finalApproval = APPROVAL_TUPLE.newValue(request.getFinalApproval().getStatus().toString(),
 				request.getFinalApproval().getDeadline().toInstant(ZoneOffset.UTC),
-				request.getFinalApproval().getReason());
+				request.getFinalApproval().getUsername());
 
 		BoundStatement bound = session.prepare(s).bind(request.getId(), request.getUsername(),
 				request.getStatus().toString(), request.getIsUrgent(), request.getName(), request.getFirstName(),
 				request.getLastName(), request.getDeptName(), request.getStartDate(), request.getStartTime(),
 				request.getLocation(), request.getDescription(), request.getCost(), grade, request.getType().toString(),
 				request.getFileURIs(), request.getApprovalMsgsURIs(), request.getWorkTimeMissed(),
-				request.getReimburseAmount(), supervisorApproval, request.getSupervisorUsername(), deptHeadApproval,
-				request.getDeptHeadUsername(), benCoApproval, request.getBenCoUsername(), request.getFinalGrade(),
-				request.getIsPassing(), request.getPresFileName(), finalApproval, request.getFinalApprovalUsername(),
-				request.getFinalReimburseAmount(), request.getFinalReimburseAmountReason(),
-				request.getNeedsEmployeeReview(), request.getEmployeeAgrees());
+				request.getReimburseAmount(), supervisorApproval, deptHeadApproval, benCoApproval, request.getReason(),
+				request.getFinalGrade(), request.getIsPassing(), request.getPresFileName(), finalApproval,
+				request.getFinalApprovalUsername(), request.getFinalReimburseAmount(),
+				request.getFinalReimburseAmountReason(), request.getNeedsEmployeeReview(), request.getEmployeeAgrees());
 
 		session.execute(bound);
 	}
