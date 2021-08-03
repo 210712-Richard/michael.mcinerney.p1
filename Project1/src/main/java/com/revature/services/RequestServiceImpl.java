@@ -42,7 +42,7 @@ public class RequestServiceImpl implements RequestService {
 			// Make sure the other objects are not null and that the startDate is after the
 			// current date
 			if (VERIFIER.verifyNotNull(startDate, startTime, cost, gradingFormat, type)
-					&& startDate.isAfter(LocalDate.now())) {
+					&& startDate.isAfter(LocalDate.now()) && cost > 0.00) {
 				// Get the user as it will be used to check to make sure they have the balance
 				User user = userDao.getUser(username);
 				

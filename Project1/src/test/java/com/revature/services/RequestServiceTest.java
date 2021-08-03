@@ -1,5 +1,6 @@
 package com.revature.services;
 
+import static org.junit.Assert.assertNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -111,12 +112,10 @@ public class RequestServiceTest {
 		// If the user has a pending and awarded balance that is less than the max
 		// amount alloted but less than the cost,
 		// it should still create the request, but with a different cost.
-
 		user.setAwardedBalance(800.00);
 		user.setPendingBalance(100.00);
-		Double expectedCost = Request.MAX_REIMBURSEMENT - user.getPendingBalance()
-				- user.getAwardedBalance();
-		
+		Double expectedCost = Request.MAX_REIMBURSEMENT - user.getPendingBalance() - user.getAwardedBalance();
+
 		newRequest = service.createRequest(request.getUsername(), request.getFirstName(), request.getLastName(),
 				request.getDeptName(), request.getName(), request.getStartDate(), request.getStartTime(),
 				request.getLocation(), request.getDescription(), request.getCost(), request.getGradingFormat(),
@@ -143,37 +142,141 @@ public class RequestServiceTest {
 
 	@Test
 	public void testCreateRequestInvalid() {
-		// Set the user's pending and awarded balance to make sure it works
-		user.setPendingBalance(500.00);
-		user.setAwardedBalance(500.00);
+
 		Mockito.when(userDao.getUser(user.getUsername())).thenReturn(user);
 
+		// Blank or null username returns a null
 		Request newRequest = service.createRequest(null, request.getFirstName(), request.getLastName(),
 				request.getDeptName(), request.getName(), request.getStartDate(), request.getStartTime(),
 				request.getLocation(), request.getDescription(), request.getCost(), request.getGradingFormat(),
 				request.getType());
+		assertNull("Assert that a null username returns null", newRequest);
 
-		// Blank or null username returns a null
+		newRequest = service.createRequest(" ", request.getFirstName(), request.getLastName(), request.getDeptName(),
+				request.getName(), request.getStartDate(), request.getStartTime(), request.getLocation(),
+				request.getDescription(), request.getCost(), request.getGradingFormat(), request.getType());
+		assertNull("Assert that a blank username returns null", newRequest);
 
 		// Blank or null firstName returns a null
+		newRequest = service.createRequest(request.getUsername(), null, request.getLastName(), request.getDeptName(),
+				request.getName(), request.getStartDate(), request.getStartTime(), request.getLocation(),
+				request.getDescription(), request.getCost(), request.getGradingFormat(), request.getType());
+		assertNull("Assert that a null firstName returns null", newRequest);
+
+		newRequest = service.createRequest(request.getUsername(), "", request.getLastName(), request.getDeptName(),
+				request.getName(), request.getStartDate(), request.getStartTime(), request.getLocation(),
+				request.getDescription(), request.getCost(), request.getGradingFormat(), request.getType());
+		assertNull("Assert that a blank firstName returns null", newRequest);
 
 		// Blank or null lastName returns a null
+		newRequest = service.createRequest(request.getUsername(), request.getFirstName(), null, request.getDeptName(),
+				request.getName(), request.getStartDate(), request.getStartTime(), request.getLocation(),
+				request.getDescription(), request.getCost(), request.getGradingFormat(), request.getType());
+		assertNull("Assert that a null lastName returns null", newRequest);
+
+		newRequest = service.createRequest(request.getUsername(), request.getFirstName(), " ", request.getDeptName(),
+				request.getName(), request.getStartDate(), request.getStartTime(), request.getLocation(),
+				request.getDescription(), request.getCost(), request.getGradingFormat(), request.getType());
+		assertNull("Assert that a blank lastName returns null", newRequest);
+
+		// Blank or null deptName returns a null
+		newRequest = service.createRequest(request.getUsername(), request.getFirstName(), request.getLastName(), null,
+				request.getName(), request.getStartDate(), request.getStartTime(), request.getLocation(),
+				request.getDescription(), request.getCost(), request.getGradingFormat(), request.getType());
+		assertNull("Assert that a null deptName returns null", newRequest);
+
+		newRequest = service.createRequest(request.getUsername(), request.getFirstName(), request.getLastName(), " ",
+				request.getName(), request.getStartDate(), request.getStartTime(), request.getLocation(),
+				request.getDescription(), request.getCost(), request.getGradingFormat(), request.getType());
+		assertNull("Assert that a blank deptName returns null", newRequest);
 
 		// Blank or null name returns a null
+		newRequest = service.createRequest(request.getUsername(), request.getFirstName(), request.getLastName(),
+				request.getDeptName(), null, request.getStartDate(), request.getStartTime(), request.getLocation(),
+				request.getDescription(), request.getCost(), request.getGradingFormat(), request.getType());
+		assertNull("Assert that a null name returns null", newRequest);
+
+		newRequest = service.createRequest(request.getUsername(), request.getFirstName(), request.getLastName(),
+				request.getDeptName(), " ", request.getStartDate(), request.getStartTime(), request.getLocation(),
+				request.getDescription(), request.getCost(), request.getGradingFormat(), request.getType());
+		assertNull("Assert that a blank name returns null", newRequest);
 
 		// Late or null startDate returns a null
+		newRequest = service.createRequest(request.getUsername(), request.getFirstName(), request.getLastName(),
+				request.getDeptName(), request.getName(), null, request.getStartTime(), request.getLocation(),
+				request.getDescription(), request.getCost(), request.getGradingFormat(), request.getType());
+		assertNull("Assert that a null startDate returns null", newRequest);
+
+		newRequest = service.createRequest(request.getUsername(), request.getFirstName(), request.getLastName(),
+				request.getDeptName(), request.getName(), LocalDate.now().minus(Period.of(0, 0, 1)),
+				request.getStartTime(), request.getLocation(), request.getDescription(), request.getCost(),
+				request.getGradingFormat(), request.getType());
+		assertNull("Assert that a late startDate returns null", newRequest);
 
 		// Null startTime returns a null
+		newRequest = service.createRequest(request.getUsername(), request.getFirstName(), request.getLastName(),
+				request.getDeptName(), request.getName(), request.getStartDate(), null, request.getLocation(),
+				request.getDescription(), request.getCost(), request.getGradingFormat(), request.getType());
+		assertNull("Assert that a null startTime returns null", newRequest);
 
 		// Blank or null location returns a null
+		newRequest = service.createRequest(request.getUsername(), request.getFirstName(), request.getLastName(),
+				request.getDeptName(), request.getName(), request.getStartDate(), request.getStartTime(), null,
+				request.getDescription(), request.getCost(), request.getGradingFormat(), request.getType());
+		assertNull("Assert that a null location returns null", newRequest);
+
+		newRequest = service.createRequest(request.getUsername(), request.getFirstName(), request.getLastName(),
+				request.getDeptName(), request.getName(), request.getStartDate(), request.getStartTime(), " ",
+				request.getDescription(), request.getCost(), request.getGradingFormat(), request.getType());
+		assertNull("Assert that a blank location returns null", newRequest);
 
 		// Blank or null description returns a null
+		newRequest = service.createRequest(request.getUsername(), request.getFirstName(), request.getLastName(),
+				request.getDeptName(), request.getName(), request.getStartDate(), request.getStartTime(),
+				request.getLocation(), null, request.getCost(), request.getGradingFormat(), request.getType());
+		assertNull("Assert that a null description returns null", newRequest);
 
-		// Null or not-positive cost returns a null
+		newRequest = service.createRequest(request.getUsername(), request.getFirstName(), request.getLastName(),
+				request.getDeptName(), request.getName(), request.getStartDate(), request.getStartTime(),
+				request.getLocation(), " ", request.getCost(), request.getGradingFormat(), request.getType());
+		assertNull("Assert that a blank description returns null", newRequest);
+
+		// Null or not-possible cost returns a null
+		newRequest = service.createRequest(request.getUsername(), request.getFirstName(), request.getLastName(),
+				request.getDeptName(), request.getName(), request.getStartDate(), request.getStartTime(),
+				request.getLocation(), request.getDescription(), null, request.getGradingFormat(), request.getType());
+		assertNull("Assert that a null cost returns null", newRequest);
+
+		newRequest = service.createRequest(request.getUsername(), request.getFirstName(), request.getLastName(),
+				request.getDeptName(), request.getName(), request.getStartDate(), request.getStartTime(),
+				request.getLocation(), request.getDescription(), 0.00, request.getGradingFormat(), request.getType());
+		assertNull("Assert that a zero cost returns null", newRequest);
+
+		newRequest = service.createRequest(request.getUsername(), request.getFirstName(), request.getLastName(),
+				request.getDeptName(), request.getName(), request.getStartDate(), request.getStartTime(),
+				request.getLocation(), request.getDescription(), -1.00, request.getGradingFormat(), request.getType());
+		assertNull("Assert that a negative cost returns null", newRequest);
+
+		// Set the user's pending and awarded balance to make sure it works
+		user.setPendingBalance(500.00);
+		user.setAwardedBalance(500.00);
+		newRequest = service.createRequest(request.getUsername(), request.getFirstName(), request.getLastName(),
+				request.getDeptName(), request.getName(), request.getStartDate(), request.getStartTime(),
+				request.getLocation(), request.getDescription(), request.getCost(), request.getGradingFormat(),
+				request.getType());
+		assertNull("Assert that a user with a maxed out balance returns null", newRequest);
 
 		// Null gradingFormat returns a null
+		newRequest = service.createRequest(request.getUsername(), request.getFirstName(), request.getLastName(),
+				request.getDeptName(), request.getName(), request.getStartDate(), request.getStartTime(),
+				request.getLocation(), request.getDescription(), request.getCost(), null, request.getType());
+		assertNull("Assert that a null gradingFormat returns null", newRequest);
 
 		// Null type returns a null
+		newRequest = service.createRequest(request.getUsername(), request.getFirstName(), request.getLastName(),
+				request.getDeptName(), request.getName(), request.getStartDate(), request.getStartTime(),
+				request.getLocation(), request.getDescription(), request.getCost(), request.getGradingFormat(), null);
+		assertNull("Assert that a null type returns null", newRequest);
 
 	}
 }
