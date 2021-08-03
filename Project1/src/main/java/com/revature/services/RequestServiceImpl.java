@@ -46,14 +46,15 @@ public class RequestServiceImpl implements RequestService {
 				// Get the user as it will be used to check to make sure they have the balance
 				User user = userDao.getUser(username);
 				
-				Double reimburseMax = (cost > Request.MAX_REIMBURSEMENT) ? Request.MAX_REIMBURSEMENT : cost;
-				reimburseMax -= user.getAwardedBalance() + user.getPendingBalance();
+				
+				Double reimburseMax = Request.MAX_REIMBURSEMENT - user.getAwardedBalance() - user.getPendingBalance();
+				reimburseMax = (cost > reimburseMax) ? reimburseMax : cost;
 				log.debug("Maximum amount that can be reimbursed: " + reimburseMax);
 				
 				//If the maximum that can be reimbursed is not less than or equal to zero, the request is valid
-				if (reimburseMax <= 0) {
+				if (reimburseMax > 0) {
 					request = new ReimbursementRequest(username, firstName, lastName, deptName, name, startDate, startTime, location,
-							description, cost, gradingFormat, type);
+							description, reimburseMax, gradingFormat, type);
 					request.setId(UUID.randomUUID());
 					request.setReimburseAmount(reimburseMax);
 					

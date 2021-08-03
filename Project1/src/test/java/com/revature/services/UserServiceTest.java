@@ -21,11 +21,11 @@ public class UserServiceTest {
 	private User user = null;
 	private UserDao dao = null;
 
-	private static MockitoHelper<UserDao> mock = null;
+	private static MockitoHelper mock = null;
 
 	@BeforeAll
 	public static void beforeAll() {
-		mock = new MockitoHelper<UserDao>(UserDao.class);
+		mock = new MockitoHelper();
 	}
 
 	@BeforeEach
@@ -34,7 +34,7 @@ public class UserServiceTest {
 
 		user = new User("Tester", "TestPass", "user@test.com", "Test", "User", UserType.EMPLOYEE, "Test", "TestSuper");
 
-		dao = mock.setPrivateMock(service, "userDao");
+		dao = (UserDao) mock.setPrivateMock(service, "userDao", UserDao.class);
 	}
 
 	@Test
