@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.revature.beans.ApprovalStatus;
 import com.revature.beans.EventType;
 import com.revature.beans.GradingFormat;
 import com.revature.beans.ReimbursementRequest;
@@ -81,5 +82,19 @@ public class RequestServiceImpl implements RequestService {
 		}
 		log.debug("Returning request: " + request);
 		return request;
+	}
+
+	@Override
+	public Request changeApprovalStatus(Request request, ApprovalStatus status, String reason) {
+		
+		//The controller should have already verified the username, so no more verification needed
+		Request retRequest = null;
+		
+		//Change the approval status.
+		//If the approval is APPROVED, escalate the approval
+		//Else, set the reason in the request.
+		//Save the request either way
+		
+		return retRequest;
 	}
 }

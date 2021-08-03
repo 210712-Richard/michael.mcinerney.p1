@@ -49,4 +49,23 @@ public class RequestControllerImpl implements RequestController {
 			ctx.json(request);
 		}
 	}
+
+	@Override
+	public void changeApprovalStatus(Context ctx) {
+		User loggedUser = ctx.sessionAttribute("loggedUser");
+
+		// Make sure the user is logged in
+		if (loggedUser == null) {
+			ctx.status(401);
+			return;
+		}
+		
+		//Get the request
+		
+		//Verify the user is allowed to change the approval status
+		
+		//Change the approval status and prepare the next one
+		
+		//Return the request
+	}
 }
