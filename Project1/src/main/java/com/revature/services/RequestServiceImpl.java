@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.revature.beans.Approval;
 import com.revature.beans.ApprovalStatus;
 import com.revature.beans.Department;
 import com.revature.beans.EventType;
@@ -97,84 +98,51 @@ public class RequestServiceImpl implements RequestService {
 
 	@Override
 	public Request changeApprovalStatus(Request request, ApprovalStatus status, String reason) {
-
+		Request retRequest = null;
 		// If the status is denied and there is a reason, or the request status is
 		// active and the arguments are not empty
 		if (VERIFIER.verifyNotNull(request, status)
 				&& ((status.equals(ApprovalStatus.DENIED) && VERIFIER.verifyStrings(reason))
 						|| request.getStatus().equals(RequestStatus.ACTIVE))) {
+			// Put all of the approvals into an array
+			Approval[] approvals = { request.getSupervisorApproval(), request.getDeptHeadApproval(),
+					request.getBenCoApproval(), request.getFinalApproval() };
 
-			// Check the supervisor approval to see if it needs to be done
-			if (request.getSupervisorApproval().getStatus() == ApprovalStatus.AWAITING) {
+			for (int i = 0; i < approvals.length; i++) {
+				Approval currentApproval = approvals[i];
+				if (currentApproval.getStatus().equals(ApprovalStatus.APPROVED)) {
+					continue;
+				}
+				Approval nextApproval = (i + 1 < approvals.length) ? approvals[i + 1] : null;
+				currentApproval.setStatus(status);
 
-				// Set the status
-				request.getSupervisorApproval().setStatus(status);
-				// If the status is approved, need to escalate
-				if (status == ApprovalStatus.APPROVED || status == ApprovalStatus.BYPASSED) {
+				if (status.equals(ApprovalStatus.DENIED)) {
+					request.setStatus(RequestStatus.DENIED);
+					request.setReason(reason);
+					User user = userDao.getUser(request.getUsername());
+					user.alterPendingBalance(request.getReimburseAmount() * -1.0);
+					reqDao.updateRequest(request);
+					userDao.updateUser(user);
+					retRequest = request;
+					break;
+				}
+
+				// On the supervisor approval
+				if (i == 0) {
 					// Need to check if the supervisor is also the department head
 					Department dept = deptDao.getDepartment(request.getDeptName());
 
-					request.getDeptHeadApproval().setUsername(dept.getDeptHeadUsername());
-					request.getDeptHeadApproval().setStatus(ApprovalStatus.AWAITING);
+					nextApproval.setUsername(dept.getDeptHeadUsername());
+					nextApproval.setStatus(ApprovalStatus.AWAITING);
 
 					// If the supervisor is also a department head, bypass the department approval
-					if (dept.getDeptHeadUsername() == request.getSupervisorApproval().getUsername()) {
+					if (dept.getDeptHeadUsername().equals(request.getSupervisorApproval().getUsername())) {
 						status = ApprovalStatus.BYPASSED;
-					} else { // Otherwise, start the deadline, update and return the request
-						request.getDeptHeadApproval().startDeadline();
-						reqDao.updateRequest(request);
-						return request;
-					}
+						continue;
+					} 
 				}
-				// If the approval status was denied, need to set the request status to denied,
-				// update and return the request and also edit the pending balance of the user
-				else if (status == ApprovalStatus.DENIED) {
-					request.setStatus(RequestStatus.DENIED);
-					request.setReason(reason);
-					User user = userDao.getUser(request.getUsername());
-					user.alterPendingBalance(request.getCost() * -1.0);
-					reqDao.updateRequest(request);
-					userDao.updateUser(user);
-					return request;
-				}
-
-			}
-			if (request.getStatus() != RequestStatus.DENIED
-					&& request.getDeptHeadApproval().getStatus().equals(ApprovalStatus.AWAITING)) {
-
-				request.getDeptHeadApproval().setStatus(status);
-				if (status.equals(ApprovalStatus.APPROVED) || status.equals(ApprovalStatus.BYPASSED)) {
-
-					request.getBenCoApproval().setStatus(ApprovalStatus.AWAITING);
-					request.getBenCoApproval().startDeadline();
-
-					// Can't bypass BenCo, so update and return
-					reqDao.updateRequest(request);
-					return request;
-				}
-
-				// If the approval status was denied, need to set the request status to denied,
-				// update and return the request and also edit the pending balance of the user
-				else if (status == ApprovalStatus.DENIED) {
-					request.setStatus(RequestStatus.DENIED);
-					request.setReason(reason);
-					User user = userDao.getUser(request.getUsername());
-					user.alterPendingBalance(request.getCost() * -1.0);
-					reqDao.updateRequest(request);
-					userDao.updateUser(user);
-					return request;
-				}
-			}
-
-			if (request.getStatus() != RequestStatus.DENIED
-					&& request.getBenCoApproval().getStatus().equals(ApprovalStatus.AWAITING)) {
-
-				request.getBenCoApproval().setStatus(status);
-				if (status.equals(ApprovalStatus.APPROVED)) {
-
-					request.getFinalApproval().setStatus(ApprovalStatus.AWAITING);
-					request.getFinalApproval().startDeadline();
-
+				// On the BenCo approval
+				else if (i == 2) {
 					// If the grading format is a presentation, the supervisor will be set to the
 					// final approval
 					// else, the BenCo will be set to the final approval
@@ -183,55 +151,31 @@ public class RequestServiceImpl implements RequestService {
 					} else {
 						request.getFinalApproval().setUsername(request.getBenCoApproval().getUsername());
 					}
-					// Can't bypass finalApproval, so update and return
-					reqDao.updateRequest(request);
-					return request;
 				}
-
-				// If the approval status was denied, need to set the request status to denied,
-				// update and return the request and also edit the pending balance of the user
-				else if (status == ApprovalStatus.DENIED) {
-					request.setStatus(RequestStatus.DENIED);
-					request.setReason(reason);
-					User user = userDao.getUser(request.getUsername());
-					user.alterPendingBalance(request.getCost() * -1.0);
-					reqDao.updateRequest(request);
-					userDao.updateUser(user);
-					return request;
-				}
-			}
-
-			if (request.getStatus() != RequestStatus.DENIED
-					&& request.getFinalApproval().getStatus().equals(ApprovalStatus.AWAITING)) {
-
-				request.getFinalApproval().setStatus(status);
-				if (status.equals(ApprovalStatus.APPROVED)) {
-
+				// On final approval
+				else if (i == 3) {
 					// Set the user's balances and set the request to approved
 					request.setStatus(RequestStatus.APPROVED);
 					User user = userDao.getUser(request.getUsername());
-					user.alterPendingBalance(request.getCost() * -1.0);
-					user.alterAwardedBalance(request.getCost());
-
+					user.alterPendingBalance(request.getReimburseAmount() * -1.0);
+					user.alterAwardedBalance(request.getReimburseAmount());
 					userDao.updateUser(user);
-					reqDao.updateRequest(request);
-					return request;
+				}
+				
+				//If there is another approval (Only when it is on final approval)
+				if (nextApproval != null) {
+					nextApproval.setStatus(ApprovalStatus.AWAITING);
+					nextApproval.startDeadline();
 				}
 
-				// If the approval status was denied, need to set the request status to denied,
-				// update and return the request and also edit the pending balance of the user
-				else if (status == ApprovalStatus.DENIED) {
-					request.setStatus(RequestStatus.DENIED);
-					request.setReason(reason);
-					User user = userDao.getUser(request.getUsername());
-					user.alterPendingBalance(request.getCost() * -1.0);
-					reqDao.updateRequest(request);
-					userDao.updateUser(user);
-					return request;
-				}
+				reqDao.updateRequest(request);
+				retRequest = request;
+				break;
+
 			}
+			
 		}
-		return null;
+		return retRequest;
 	}
 
 	@Override
