@@ -23,6 +23,7 @@ import com.revature.beans.Format;
 import com.revature.beans.GradingFormat;
 import com.revature.beans.ReimbursementRequest;
 import com.revature.beans.Request;
+import com.revature.beans.RequestStatus;
 import com.revature.beans.User;
 import com.revature.beans.UserType;
 import com.revature.data.DepartmentDao;
@@ -41,7 +42,7 @@ public class RequestServiceTest {
 	private User supervisor = null;
 	private User deptHead = null;
 	private User benCo = null;
-	
+
 	private Department dept = null;
 
 	private static MockitoHelper mock = null;
@@ -49,13 +50,14 @@ public class RequestServiceTest {
 	@BeforeAll
 	public static void beforeAll() {
 		mock = new MockitoHelper();
-		request = new ReimbursementRequest();
+
 	}
 
 	@BeforeEach
 	public void beforeTest() {
 		service = new RequestServiceImpl();
 
+		request = new ReimbursementRequest();
 		request.setId(UUID.fromString("ddd9e879-52d3-47ad-a1b6-87a94cbb321d"));
 		request.setUsername("Tester");
 		request.setName("Service Certification");
@@ -71,12 +73,15 @@ public class RequestServiceTest {
 		request.setType(EventType.CERTIFICATION);
 
 		user = new User("Tester", "TestPass", "user@test.com", "Test", "User", UserType.EMPLOYEE, "Test", "TestSuper");
-		supervisor = new User("TestSuper", "TestPass", "user@test.com", "Test", "Super", UserType.SUPERVISOR, "Test", "TestSuper");
-		deptHead = new User("TestHead", "TestPass", "user@test.com", "Test", "Head", UserType.SUPERVISOR, "Test", "TestCEO");
-		benCo = new User("TestBenCo", "TestPass", "user@test.com", "Test", "BenCo", UserType.BENEFITS_COORDINATOR, "Benefits", "TestCEO");
-		
+		supervisor = new User("TestSuper", "TestPass", "user@test.com", "Test", "Super", UserType.SUPERVISOR, "Test",
+				"TestSuper");
+		deptHead = new User("TestHead", "TestPass", "user@test.com", "Test", "Head", UserType.SUPERVISOR, "Test",
+				"TestCEO");
+		benCo = new User("TestBenCo", "TestPass", "user@test.com", "Test", "BenCo", UserType.BENEFITS_COORDINATOR,
+				"Benefits", "TestCEO");
+
 		dept = new Department("Test", "TestHead");
-		
+
 		reqDao = (RequestDao) mock.setPrivateMock(service, "reqDao", RequestDao.class);
 		userDao = (UserDao) mock.setPrivateMock(service, "userDao", UserDao.class);
 		deptDao = (DepartmentDao) mock.setPrivateMock(service, "deptDao", DepartmentDao.class);
@@ -313,8 +318,32 @@ public class RequestServiceTest {
 	@Test
 	public void testChangeApprovalStatusInvalid() {
 		//Request and status can't be null
-		//If the request has been approved denied, or cancelled already.
+		
+		Request nullRequest = service.changeApprovalStatus(null, ApprovalStatus.APPROVED, "reason");
+		assertNull("Assert that a null request returns a null", nullRequest);
+		
+		nullRequest = service.changeApprovalStatus(request, null, "reason");
+		assertNull("Assert that a null status returns a null", nullRequest);
+		
+		//If the request has been approved, denied, or cancelled already.
+		request.setStatus(RequestStatus.APPROVED);
+		nullRequest = service.changeApprovalStatus(request, ApprovalStatus.APPROVED, "reason");
+		assertNull("Assert that an approved request returns a null", nullRequest);
+		
+		request.setStatus(RequestStatus.DENIED);
+		nullRequest = service.changeApprovalStatus(request, ApprovalStatus.APPROVED, "reason");
+		assertNull("Assert that a denied request returns a null", nullRequest);
+		
+		request.setStatus(RequestStatus.CANCELLED);
+		nullRequest = service.changeApprovalStatus(request, ApprovalStatus.APPROVED, "reason");
+		assertNull("Assert that a cancelled request returns a null", nullRequest);
+		
 		// Request can't be null or blank if status is DENIED
+		nullRequest = service.changeApprovalStatus(request, ApprovalStatus.DENIED, " ");
+		assertNull("Assert that a blank reason with a DENIED approval status returns a null", nullRequest);
+		
+		nullRequest = service.changeApprovalStatus(request, ApprovalStatus.DENIED, null);
+		assertNull("Assert that a null reason with a DENIED approval status returns a null", nullRequest);
 	}
 
 	@Test
