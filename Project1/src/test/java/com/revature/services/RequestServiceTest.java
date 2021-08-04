@@ -16,6 +16,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
+import com.revature.beans.ApprovalStatus;
+import com.revature.beans.Department;
 import com.revature.beans.EventType;
 import com.revature.beans.Format;
 import com.revature.beans.GradingFormat;
@@ -23,6 +25,7 @@ import com.revature.beans.ReimbursementRequest;
 import com.revature.beans.Request;
 import com.revature.beans.User;
 import com.revature.beans.UserType;
+import com.revature.data.DepartmentDao;
 import com.revature.data.RequestDao;
 import com.revature.data.UserDao;
 import com.revature.util.MockitoHelper;
@@ -32,8 +35,14 @@ public class RequestServiceTest {
 	private static Request request = null;
 	private RequestDao reqDao = null;
 	private UserDao userDao = null;
+	private DepartmentDao deptDao = null;
 
 	private User user = null;
+	private User supervisor = null;
+	private User deptHead = null;
+	private User benCo = null;
+	
+	private Department dept = null;
 
 	private static MockitoHelper mock = null;
 
@@ -46,7 +55,7 @@ public class RequestServiceTest {
 	@BeforeEach
 	public void beforeTest() {
 		service = new RequestServiceImpl();
-		
+
 		request.setId(UUID.fromString("ddd9e879-52d3-47ad-a1b6-87a94cbb321d"));
 		request.setUsername("Tester");
 		request.setName("Service Certification");
@@ -62,20 +71,28 @@ public class RequestServiceTest {
 		request.setType(EventType.CERTIFICATION);
 
 		user = new User("Tester", "TestPass", "user@test.com", "Test", "User", UserType.EMPLOYEE, "Test", "TestSuper");
-
+		supervisor = new User("TestSuper", "TestPass", "user@test.com", "Test", "Super", UserType.SUPERVISOR, "Test", "TestSuper");
+		deptHead = new User("TestHead", "TestPass", "user@test.com", "Test", "Head", UserType.SUPERVISOR, "Test", "TestCEO");
+		benCo = new User("TestBenCo", "TestPass", "user@test.com", "Test", "BenCo", UserType.BENEFITS_COORDINATOR, "Benefits", "TestCEO");
+		
+		dept = new Department("Test", "TestHead");
+		
 		reqDao = (RequestDao) mock.setPrivateMock(service, "reqDao", RequestDao.class);
 		userDao = (UserDao) mock.setPrivateMock(service, "userDao", UserDao.class);
-		
-		
+		deptDao = (DepartmentDao) mock.setPrivateMock(service, "deptDao", DepartmentDao.class);
+
 		Mockito.when(userDao.getUser(user.getUsername())).thenReturn(user);
-		Mockito.when(reqDao.getRequest(request.getId())).thenReturn(request);	
-		}
+		Mockito.when(userDao.getUser(supervisor.getUsername())).thenReturn(supervisor);
+		Mockito.when(userDao.getUser(deptHead.getUsername())).thenReturn(deptHead);
+		Mockito.when(userDao.getUser(benCo.getUsername())).thenReturn(benCo);
+		Mockito.when(reqDao.getRequest(request.getId())).thenReturn(request);
+		Mockito.when(deptDao.getDepartment(dept.getName())).thenReturn(dept);
+	}
 
 	@Test
 	public void testCreateRequestValid() {
 		// Set up the argument captor
 		ArgumentCaptor<Request> captor = ArgumentCaptor.forClass(Request.class);
-
 
 		// Call the method
 		Request newRequest = service.createRequest(request.getUsername(), request.getFirstName(), request.getLastName(),
@@ -96,7 +113,8 @@ public class RequestServiceTest {
 		assertEquals(request.getStartTime(), newRequest.getStartTime(), "Assert that the startTime is set.");
 		assertEquals(request.getLocation(), newRequest.getLocation(), "Assert that the location is set.");
 		assertEquals(request.getDescription(), newRequest.getDescription(), "Assert that the description is set.");
-		assertEquals(request.getCost()*request.getType().getPercent(), newRequest.getCost(), "Assert that the cost is set.");
+		assertEquals(request.getCost() * request.getType().getPercent(), newRequest.getCost(),
+				"Assert that the cost is set.");
 		assertEquals(request.getGradingFormat(), newRequest.getGradingFormat(),
 				"Assert that the gradingFormat is set.");
 		assertEquals(request.getType(), newRequest.getType(), "Assert that the type is set.");
@@ -108,6 +126,10 @@ public class RequestServiceTest {
 		// Make sure deadline is not the default value
 		assertTrue(Request.PLACEHOLDER.isBefore(newRequest.getSupervisorApproval().getDeadline()),
 				"Assert that the deadline changed away from the placeholder.");
+
+		// Make sure supervisor status is awaiting
+		assertEquals(ApprovalStatus.AWAITING, newRequest.getSupervisorApproval().getStatus(),
+				"Assert that the supervisor that needs to do the approval is the same as the User's supervisor");
 
 		// Make sure the method was called and passed in the correct argument
 		Mockito.verify(reqDao).createRequest(captor.capture());
@@ -147,7 +169,6 @@ public class RequestServiceTest {
 
 	@Test
 	public void testCreateRequestInvalid() {
-
 
 		// Blank or null username returns a null
 		Request newRequest = service.createRequest(null, request.getFirstName(), request.getLastName(),
@@ -283,35 +304,37 @@ public class RequestServiceTest {
 		assertNull("Assert that a null type returns null", newRequest);
 
 	}
-	
+
 	@Test
 	public void testChangeApprovalStatusValid() {
-		
+
 	}
-	
+
 	@Test
 	public void testChangeApprovalStatusInvalid() {
-		
+		//Request and status can't be null
+		//If the request has been approved denied, or cancelled already.
+		// Request can't be null or blank if status is DENIED
 	}
-	
+
 	@Test
 	public void testGetRequestValid() {
-		
-		//This should retrieve the request specified by the ID
+
+		// This should retrieve the request specified by the ID
 		Request getRequest = service.getRequest(request.getId());
 		assertEquals(request, getRequest, "Assert that the request returned is the same.");
-		
+
 		// Verify the method for the reqDao was called with the ID
 		ArgumentCaptor<UUID> captor = ArgumentCaptor.forClass(UUID.class);
 		Mockito.verify(reqDao).getRequest(captor.capture());
-		
+
 		assertEquals(request.getId(), captor.getValue(), "Assert that the ID passed in is the same.");
 	}
-	
+
 	@Test
 	public void testGetRequestInvalid() {
-		
-		//Should return null if a null request is passed in
+
+		// Should return null if a null request is passed in
 		Request nullRequest = service.getRequest(null);
 		assertNull("Assert that a null was returned from a null id", nullRequest);
 	}

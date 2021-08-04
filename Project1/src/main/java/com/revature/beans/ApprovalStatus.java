@@ -21,5 +21,9 @@ public enum ApprovalStatus {
 	/**
 	 * The specified user did not approve in time so the request went through automatically
 	 */
-	AUTO_APPROVED
+	AUTO_APPROVED,
+	/**
+	 * This Approval has not been assigned yet.
+	 */
+	UNASSIGNED
 }
