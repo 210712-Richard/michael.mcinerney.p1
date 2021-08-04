@@ -126,10 +126,6 @@ public interface Request {
 
 	void setFinalApprovalStatus(ApprovalStatus status, String reason);
 
-	String getFinalApprovalUsername();
-
-	void setFinalApprovalUsername(String finalApprovalUsername);
-
 	Double getFinalReimburseAmount();
 
 	void setFinalReimburseAmount(Double finalReimburseAmount);

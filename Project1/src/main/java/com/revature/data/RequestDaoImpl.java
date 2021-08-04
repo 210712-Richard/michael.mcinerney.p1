@@ -46,7 +46,7 @@ public class RequestDaoImpl implements RequestDao {
 				.append("deptname, startdate, starttime, location, description, cost, gradingFormat, ")
 				.append("type, fileuris, approvalmsgsuris, worktimemissed, reimburseamount, supervisorapproval, ")
 				.append("deptheadapproval, bencoapproval, reason, ")
-				.append("finalgrade, ispassing, presfilename, finalapproval, finalapprovalusername, finalreimburseamount, ")
+				.append("finalgrade, ispassing, presfilename, finalapproval, finalreimburseamount, ")
 				.append("finalreimburseamountreason, needsemployeereview, employeeagrees ")
 				.append("FROM request WHERE id = ?;");
 		SimpleStatement s = new SimpleStatementBuilder(query.toString()).build();
@@ -104,7 +104,6 @@ public class RequestDaoImpl implements RequestDao {
 						ApprovalStatus.valueOf(row.getTupleValue("finalapproval").get(0, String.class)), LocalDateTime
 								.ofInstant(row.getTupleValue("finalapproval").get(1, Instant.class), ZoneOffset.UTC),
 						row.getTupleValue("finalapproval").get(2, String.class)));
-		request.setFinalApprovalUsername(row.getString("finalapprovalusername"));
 		request.setFinalReimburseAmount(row.getDouble("finalreimburseamount"));
 		request.setFinalReimburseAmountReason(row.getString("finalreimburseamountreason"));
 		request.setNeedsEmployeeReview(row.getBoolean("needsemployeereview"));
@@ -119,7 +118,7 @@ public class RequestDaoImpl implements RequestDao {
 				.append("deptname, startdate, starttime, location, description, cost, gradingFormat, ")
 				.append("type, fileuris, approvalmsgsuris, worktimemissed, reimburseamount, supervisorapproval, ")
 				.append("deptheadapproval, bencoapproval, reason, ")
-				.append("finalgrade, ispassing, presfilename, finalapproval, finalapprovalusername, finalreimburseamount, ")
+				.append("finalgrade, ispassing, presfilename, finalapproval, finalreimburseamount, ")
 				.append("finalreimburseamountreason, needsemployeereview, employeeagrees ").append("FROM request;");
 		SimpleStatement s = new SimpleStatementBuilder(query.toString()).build();
 
@@ -169,7 +168,6 @@ public class RequestDaoImpl implements RequestDao {
 					ApprovalStatus.valueOf(row.getTupleValue("finalapproval").get(0, String.class)),
 					LocalDateTime.ofInstant(row.getTupleValue("finalapproval").get(1, Instant.class), ZoneOffset.UTC),
 					row.getTupleValue("finalapproval").get(2, String.class)));
-			request.setFinalApprovalUsername(row.getString("finalapprovalusername"));
 			request.setFinalReimburseAmount(row.getDouble("finalreimburseamount"));
 			request.setFinalReimburseAmountReason(row.getString("finalreimburseamountreason"));
 			request.setNeedsEmployeeReview(row.getBoolean("needsemployeereview"));
@@ -186,7 +184,7 @@ public class RequestDaoImpl implements RequestDao {
 				.append("deptname = ?, startdate = ?, starttime = ?, location = ?, description = ?, cost = ?, gradingFormat = ?, ")
 				.append("type = ?, fileuris = ?, approvalmsgsuris = ?, worktimemissed = ?, reimburseamount = ?, supervisorapproval = ?, ")
 				.append("deptheadapproval = ?, bencoapproval = ?, reason = ?, ")
-				.append("finalgrade = ?, ispassing = ?, presfilename = ?, finalapproval = ?, finalapprovalusername = ?, finalreimburseamount = ?, ")
+				.append("finalgrade = ?, ispassing = ?, presfilename = ?, finalapproval = ?, finalreimburseamount = ?, ")
 				.append("finalreimburseamountreason = ?, needsemployeereview = ?, employeeagrees = ?")
 				.append(" WHERE id = ? AND username = ?;");
 
@@ -219,9 +217,9 @@ public class RequestDaoImpl implements RequestDao {
 				request.getCost(), grade, request.getType().toString(), request.getFileURIs(),
 				request.getApprovalMsgsURIs(), request.getWorkTimeMissed(), request.getReimburseAmount(),
 				supervisorApproval, deptHeadApproval, benCoApproval, request.getReason(), request.getFinalGrade(),
-				request.getIsPassing(), request.getPresFileName(), finalApproval, request.getFinalApprovalUsername(),
-				request.getFinalReimburseAmount(), request.getFinalReimburseAmountReason(),
-				request.getNeedsEmployeeReview(), request.getEmployeeAgrees(), request.getId(), request.getUsername());
+				request.getIsPassing(), request.getPresFileName(), finalApproval, request.getFinalReimburseAmount(),
+				request.getFinalReimburseAmountReason(), request.getNeedsEmployeeReview(), request.getEmployeeAgrees(),
+				request.getId(), request.getUsername());
 
 		session.execute(bound);
 	}
@@ -232,9 +230,9 @@ public class RequestDaoImpl implements RequestDao {
 				.append("deptname, startdate, starttime, location, description, cost, gradingFormat, ")
 				.append("type, fileuris, approvalmsgsuris, worktimemissed, reimburseamount, supervisorapproval, ")
 				.append("deptheadapproval, bencoapproval, reason, ")
-				.append("finalgrade, ispassing, presfilename, finalapproval, finalapprovalusername, finalreimburseamount, ")
+				.append("finalgrade, ispassing, presfilename, finalapproval, finalreimburseamount, ")
 				.append("finalreimburseamountreason, needsemployeereview, employeeagrees")
-				.append(") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+				.append(") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
 
 		SimpleStatement s = new SimpleStatementBuilder(query.toString())
 				.setConsistencyLevel(DefaultConsistencyLevel.LOCAL_QUORUM).build();
@@ -266,8 +264,8 @@ public class RequestDaoImpl implements RequestDao {
 				request.getFileURIs(), request.getApprovalMsgsURIs(), request.getWorkTimeMissed(),
 				request.getReimburseAmount(), supervisorApproval, deptHeadApproval, benCoApproval, request.getReason(),
 				request.getFinalGrade(), request.getIsPassing(), request.getPresFileName(), finalApproval,
-				request.getFinalApprovalUsername(), request.getFinalReimburseAmount(),
-				request.getFinalReimburseAmountReason(), request.getNeedsEmployeeReview(), request.getEmployeeAgrees());
+				request.getFinalReimburseAmount(), request.getFinalReimburseAmountReason(),
+				request.getNeedsEmployeeReview(), request.getEmployeeAgrees());
 
 		session.execute(bound);
 	}

@@ -47,7 +47,6 @@ public class ReimbursementRequest implements Request {
 	private Boolean isPassing;
 	private String presFileName;
 	private Approval finalApproval;
-	private String finalApprovalUsername;
 	private Double finalReimburseAmount;
 	private String finalReimburseAmountReason;
 	private Boolean needsEmployeeReview;
@@ -67,9 +66,9 @@ public class ReimbursementRequest implements Request {
 		finalApproval = new Approval();
 	}
 
-	public ReimbursementRequest(String username, String firstName, String lastName, String deptName, String name, LocalDate date,
-			LocalTime time, String location, String description, Double cost, GradingFormat gradingFormat,
-			EventType type) {
+	public ReimbursementRequest(String username, String firstName, String lastName, String deptName, String name,
+			LocalDate date, LocalTime time, String location, String description, Double cost,
+			GradingFormat gradingFormat, EventType type) {
 		this();
 		this.username = username;
 		this.firstName = firstName;
@@ -330,14 +329,6 @@ public class ReimbursementRequest implements Request {
 	public void setPresFileName(String presFileName) {
 		this.presFileName = presFileName;
 	}
-	
-	public String getFinalApprovalUsername() {
-		return finalApprovalUsername;
-	}
-
-	public void setFinalApprovalUsername(String finalApprovalUsername) {
-		this.finalApprovalUsername = finalApprovalUsername;
-	}
 
 	public String getFinalReimburseAmountReason() {
 		return finalReimburseAmountReason;
@@ -350,10 +341,10 @@ public class ReimbursementRequest implements Request {
 	@Override
 	public int hashCode() {
 		return Objects.hash(approvalMsgsURIs, benCoApproval, cost, deptHeadApproval, deptName, description,
-				employeeAgrees, fileURIs, finalApproval, finalApprovalUsername, finalGrade, finalReimburseAmount,
-				finalReimburseAmountReason, firstName, gradingFormat, id, isPassing, isUrgent, lastName, location, name,
-				needsEmployeeReview, presFileName, reason, reimburseAmount, startDate, startTime, status,
-				supervisorApproval, type, username, workTimeMissed);
+				employeeAgrees, fileURIs, finalApproval, finalGrade, finalReimburseAmount, finalReimburseAmountReason,
+				firstName, gradingFormat, id, isPassing, isUrgent, lastName, location, name, needsEmployeeReview,
+				presFileName, reason, reimburseAmount, startDate, startTime, status, supervisorApproval, type, username,
+				workTimeMissed);
 	}
 
 	@Override
@@ -370,9 +361,7 @@ public class ReimbursementRequest implements Request {
 				&& Objects.equals(deptHeadApproval, other.deptHeadApproval) && Objects.equals(deptName, other.deptName)
 				&& Objects.equals(description, other.description)
 				&& Objects.equals(employeeAgrees, other.employeeAgrees) && Objects.equals(fileURIs, other.fileURIs)
-				&& Objects.equals(finalApproval, other.finalApproval)
-				&& Objects.equals(finalApprovalUsername, other.finalApprovalUsername)
-				&& Objects.equals(finalGrade, other.finalGrade)
+				&& Objects.equals(finalApproval, other.finalApproval) && Objects.equals(finalGrade, other.finalGrade)
 				&& Objects.equals(finalReimburseAmount, other.finalReimburseAmount)
 				&& Objects.equals(finalReimburseAmountReason, other.finalReimburseAmountReason)
 				&& Objects.equals(firstName, other.firstName) && Objects.equals(gradingFormat, other.gradingFormat)
@@ -397,10 +386,9 @@ public class ReimbursementRequest implements Request {
 				+ workTimeMissed + ", reimburseAmount=" + reimburseAmount + ", supervisorApproval=" + supervisorApproval
 				+ ", deptHeadApproval=" + deptHeadApproval + ", benCoApproval=" + benCoApproval + ", reason=" + reason
 				+ ", finalGrade=" + finalGrade + ", isPassing=" + isPassing + ", presFileName=" + presFileName
-				+ ", finalApproval=" + finalApproval + ", finalApprovalUsername=" + finalApprovalUsername
-				+ ", finalReimburseAmount=" + finalReimburseAmount + ", finalReimburseAmountReason="
-				+ finalReimburseAmountReason + ", needsEmployeeReview=" + needsEmployeeReview + ", employeeAgrees="
-				+ employeeAgrees + "]";
+				+ ", finalApproval=" + finalApproval + ", finalReimburseAmount=" + finalReimburseAmount
+				+ ", finalReimburseAmountReason=" + finalReimburseAmountReason + ", needsEmployeeReview="
+				+ needsEmployeeReview + ", employeeAgrees=" + employeeAgrees + "]";
 	}
 
 }

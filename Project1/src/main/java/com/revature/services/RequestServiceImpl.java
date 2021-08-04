@@ -24,6 +24,7 @@ import com.revature.data.RequestDao;
 import com.revature.data.RequestDaoImpl;
 import com.revature.data.UserDao;
 import com.revature.data.UserDaoImpl;
+import com.revature.exceptions.IllegalApprovalAttemptException;
 import com.revature.factory.BeanFactory;
 import com.revature.factory.TraceLog;
 import com.revature.util.Verifier;
@@ -110,8 +111,20 @@ public class RequestServiceImpl implements RequestService {
 
 			for (int i = 0; i < approvals.length; i++) {
 				Approval currentApproval = approvals[i];
-				if (currentApproval.getStatus().equals(ApprovalStatus.APPROVED)) {
+				
+				//If the approval has already been approved, move to the next one
+				if (currentApproval.getStatus().equals(ApprovalStatus.APPROVED)
+						|| currentApproval.getStatus().equals(ApprovalStatus.AUTO_APPROVED)
+						|| currentApproval.getStatus().equals(ApprovalStatus.BYPASSED)) {
 					continue;
+
+				}
+				// If the approval somehow made it to a denied or unassigned approval (this
+				// should not happen, need to throw exception
+				else if (currentApproval.getStatus().equals(ApprovalStatus.DENIED)
+						|| currentApproval.getStatus().equals(ApprovalStatus.UNASSIGNED)) {
+					throw new IllegalApprovalAttemptException(
+							"The approval that is being evaluated is " + currentApproval.getStatus());
 				}
 				Approval nextApproval = (i + 1 < approvals.length) ? approvals[i + 1] : null;
 				currentApproval.setStatus(status);
@@ -139,7 +152,7 @@ public class RequestServiceImpl implements RequestService {
 					if (dept.getDeptHeadUsername().equals(request.getSupervisorApproval().getUsername())) {
 						status = ApprovalStatus.BYPASSED;
 						continue;
-					} 
+					}
 				}
 				// On the BenCo approval
 				else if (i == 2) {
@@ -161,8 +174,8 @@ public class RequestServiceImpl implements RequestService {
 					user.alterAwardedBalance(request.getReimburseAmount());
 					userDao.updateUser(user);
 				}
-				
-				//If there is another approval (Only when it is on final approval)
+
+				// If there is another approval (Only when it is on final approval)
 				if (nextApproval != null) {
 					nextApproval.setStatus(ApprovalStatus.AWAITING);
 					nextApproval.startDeadline();
@@ -173,7 +186,7 @@ public class RequestServiceImpl implements RequestService {
 				break;
 
 			}
-			
+
 		}
 		return retRequest;
 	}

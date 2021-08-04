@@ -38,7 +38,7 @@ public class DatabaseCreator {
 				.append(", deptHeadApproval tuple<text, timestamp, text>, ")
 				.append(", benCoApproval tuple<text, timestamp, text>, reason text, ")
 				.append("finalGrade text, isPassing boolean, presFileName text, finalApproval tuple<text, timestamp, text>, ")
-				.append("finalApprovalUsername text, finalReimburseAmount double, finalReimburseAmountReason text, needsEmployeeReview boolean, employeeAgrees boolean, ")
+				.append("finalReimburseAmount double, finalReimburseAmountReason text, needsEmployeeReview boolean, employeeAgrees boolean, ")
 				.append("primary key(id, username));");
 		CassandraUtil.getInstance().getSession().execute(query.toString());
 

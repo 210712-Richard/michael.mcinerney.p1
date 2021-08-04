@@ -1,6 +1,7 @@
 package com.revature.services;
 
 import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -17,7 +18,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
-import com.revature.beans.Approval;
 import com.revature.beans.ApprovalStatus;
 import com.revature.beans.Department;
 import com.revature.beans.EventType;
@@ -31,6 +31,7 @@ import com.revature.beans.UserType;
 import com.revature.data.DepartmentDao;
 import com.revature.data.RequestDao;
 import com.revature.data.UserDao;
+import com.revature.exceptions.IllegalApprovalAttemptException;
 import com.revature.util.MockitoHelper;
 
 public class RequestServiceTest {
@@ -320,8 +321,6 @@ public class RequestServiceTest {
 		request.setReimburseAmount(request.getCost() * request.getType().getPercent());
 		user.setPendingBalance(request.getReimburseAmount());
 
-		ArgumentCaptor<String> getUserCaptor = ArgumentCaptor.forClass(String.class);
-		ArgumentCaptor<User> updateUserCaptor = ArgumentCaptor.forClass(User.class);
 		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
 		ArgumentCaptor<String> deptNameCaptor = ArgumentCaptor.forClass(String.class);
 
@@ -336,7 +335,7 @@ public class RequestServiceTest {
 				"Assert that the dept head is set to do the approval");
 		assertNotEquals(request.getDeptHeadApproval().getDeadline(), Request.PLACEHOLDER,
 				"Assert that the time limit has changed for the Request from the placeholder");
-		
+
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
 		Mockito.verify(deptDao).getDepartment(deptNameCaptor.capture());
 
@@ -349,7 +348,7 @@ public class RequestServiceTest {
 
 	@Test
 	public void testChangeApprovalStatusSupervisorDenied() {
-		
+
 		request.getSupervisorApproval().setUsername(user.getSupervisorUsername());
 		request.getSupervisorApproval().setStatus(ApprovalStatus.AWAITING);
 		request.setReimburseAmount(request.getCost() * request.getType().getPercent());
@@ -373,7 +372,6 @@ public class RequestServiceTest {
 
 		assertEquals(request, reqCaptor.getValue(),
 				"Assert that the request passed into updateRequest is the same request");
-
 
 		assertEquals(user.getUsername(), getUserCaptor.getValue(),
 				"Assert that the user's username is passed in to get user");
@@ -405,9 +403,8 @@ public class RequestServiceTest {
 		assertEquals(request, reqCaptor.getValue(),
 				"Assert that the request passed into updateRequest is the same request");
 
-		
 	}
-	
+
 	@Test
 	public void testChangeApprovalStatusDeptHeadDenied() {
 		// Set the pending balance to the request cost
@@ -416,11 +413,11 @@ public class RequestServiceTest {
 		request.getDeptHeadApproval().setStatus(ApprovalStatus.AWAITING);
 		request.setReimburseAmount(request.getCost() * request.getType().getPercent());
 		user.setPendingBalance(request.getReimburseAmount());
-		
+
 		ArgumentCaptor<String> getUserCaptor = ArgumentCaptor.forClass(String.class);
 		ArgumentCaptor<User> updateUserCaptor = ArgumentCaptor.forClass(User.class);
 		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
-		
+
 		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.DENIED, "This is a test");
 
 		assertEquals(request, retRequest, "Assert that the request returned is the same request");
@@ -441,21 +438,166 @@ public class RequestServiceTest {
 	}
 
 	@Test
-	public void testChangeApprovalStatusBenCo() {
+	public void testChangeApprovalStatusBenCoApprovedFinalToBenCo() {
 		// Set the pending balance to the request cost
-		user.setPendingBalance(request.getCost());
+		request.getSupervisorApproval().setStatus(ApprovalStatus.APPROVED);
+		request.getDeptHeadApproval().setStatus(ApprovalStatus.APPROVED);
+		request.getBenCoApproval().setUsername(benCo.getUsername());
+		request.getBenCoApproval().setStatus(ApprovalStatus.AWAITING);
+		request.setReimburseAmount(request.getCost() * request.getType().getPercent());
+
+		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
+
+		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.APPROVED, null);
+
+		assertEquals(request, retRequest, "Assert that the request returned is the same request");
+		assertEquals(ApprovalStatus.APPROVED, request.getBenCoApproval().getStatus(),
+				"Assert that the supervisor approved the request.");
+		assertEquals(ApprovalStatus.AWAITING, request.getFinalApproval().getStatus(),
+				"Assert that the BenCo approval is now in awaiting.");
+		assertEquals(request.getBenCoApproval().getUsername(), request.getFinalApproval().getUsername(),
+				"Assert that the finalApproval username is set to the supervisor's username");
+		assertNotEquals(request.getFinalApproval().getDeadline(), Request.PLACEHOLDER,
+				"Assert that the time limit has changed for the Request from the placeholder");
+
+		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
+
+		assertEquals(request, reqCaptor.getValue(),
+				"Assert that the request passed into updateRequest is the same request");
+	}
+
+	@Test
+	public void testChangeApprovalStatusBenCoApprovedFinalToSupervisor() {
+		// Set the pending balance to the request cost
+		request.getSupervisorApproval().setStatus(ApprovalStatus.APPROVED);
+		request.getDeptHeadApproval().setStatus(ApprovalStatus.APPROVED);
+		request.getBenCoApproval().setUsername(benCo.getUsername());
+		request.getBenCoApproval().setStatus(ApprovalStatus.AWAITING);
+		request.setReimburseAmount(request.getCost() * request.getType().getPercent());
+		request.setGradingFormat(new GradingFormat(Format.PRESENTATION));
+
+		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
+
+		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.APPROVED, null);
+
+		assertEquals(request, retRequest, "Assert that the request returned is the same request");
+		assertEquals(ApprovalStatus.APPROVED, request.getBenCoApproval().getStatus(),
+				"Assert that the benCo approved the request.");
+		assertEquals(ApprovalStatus.AWAITING, request.getFinalApproval().getStatus(),
+				"Assert that the final approval is now in awaiting.");
+		assertEquals(request.getSupervisorApproval().getUsername(), request.getFinalApproval().getUsername(),
+				"Assert that the finalApproval username is set to the supervisor's username");
+		assertNotEquals(request.getFinalApproval().getDeadline(), Request.PLACEHOLDER,
+				"Assert that the time limit has changed for the Request from the placeholder");
+
+		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
+
+		assertEquals(request, reqCaptor.getValue(),
+				"Assert that the request passed into updateRequest is the same request");
+	}
+
+	@Test
+	public void testChangeApprovalStatusBenCoDenied() {
+		// Set the pending balance to the request cost
+		request.getSupervisorApproval().setStatus(ApprovalStatus.APPROVED);
+		request.getDeptHeadApproval().setStatus(ApprovalStatus.APPROVED);
+		request.getBenCoApproval().setUsername(benCo.getUsername());
+		request.getBenCoApproval().setStatus(ApprovalStatus.AWAITING);
+		request.setReimburseAmount(request.getCost() * request.getType().getPercent());
+		user.setPendingBalance(request.getReimburseAmount());
+
+		ArgumentCaptor<String> getUserCaptor = ArgumentCaptor.forClass(String.class);
+		ArgumentCaptor<User> updateUserCaptor = ArgumentCaptor.forClass(User.class);
+		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
+
+		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.DENIED, "This is a test");
+
+		assertEquals(request, retRequest, "Assert that the request returned is the same request");
+		assertEquals(ApprovalStatus.DENIED, request.getBenCoApproval().getStatus(),
+				"Assert that the supervisor approved the request.");
+		assertEquals(RequestStatus.DENIED, request.getStatus(), "Assert that the request was denied.");
+		assertEquals(0.0, user.getPendingBalance(), "Assert that the pending balance was set back to zero.");
+
+		Mockito.verify(userDao).getUser(getUserCaptor.capture());
+		Mockito.verify(userDao).updateUser(updateUserCaptor.capture());
+		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
+
+		assertEquals(request, reqCaptor.getValue(),
+				"Assert that the request passed into updateRequest is the same request");
+		assertEquals(user.getUsername(), getUserCaptor.getValue(),
+				"Assert that the user's username is passed in to get user");
+		assertEquals(user, updateUserCaptor.getValue(), "Assert that the the user is updated.");
 	}
 
 	@Test
 	public void testChangeApprovalStatusFinalBenCo() {
 		// Set the pending balance to the request cost
 		user.setPendingBalance(request.getCost());
+		request.getSupervisorApproval().setStatus(ApprovalStatus.APPROVED);
+		request.getDeptHeadApproval().setStatus(ApprovalStatus.APPROVED);
+		request.getBenCoApproval().setStatus(ApprovalStatus.APPROVED);
+		request.getFinalApproval().setUsername(benCo.getUsername());
+		request.getFinalApproval().setStatus(ApprovalStatus.AWAITING);
+		request.setReimburseAmount(request.getCost() * request.getType().getPercent());
+
+		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
+		ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
+		ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+
+		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.APPROVED, null);
+
+		assertEquals(request, retRequest, "Assert that the request returned is the same request");
+		assertEquals(ApprovalStatus.APPROVED, request.getFinalApproval().getStatus(),
+				"Assert that the supervisor approved the request.");
+		assertEquals(RequestStatus.APPROVED, request.getStatus(), "Assert that the request was approved.");
+		assertEquals(0.0, user.getPendingBalance(), "Assert that the pending balance was set back to zero.");
+		assertEquals(request.getReimburseAmount(), user.getAwardedBalance(),
+				"Assert that the awarded balance is equal to the reimbursement amount.");
+
+		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
+		Mockito.verify(userDao).getUser(usernameCaptor.capture());
+		Mockito.verify(userDao).updateUser(userCaptor.capture());
+
+		assertEquals(request, reqCaptor.getValue(),
+				"Assert that the request passed into updateRequest is the same request");
+		assertEquals(user.getUsername(), usernameCaptor.getValue(),
+				"Assert that the user's username is passed in to get user");
+		assertEquals(user, userCaptor.getValue(), "Assert that the the user is updated.");
 	}
 
 	@Test
-	public void testChangeApprovalStatusFinalSupervisor() {
+	public void testChangeApprovalStatusFinalDenied() {
 		// Set the pending balance to the request cost
-		user.setPendingBalance(request.getCost());
+		request.getSupervisorApproval().setStatus(ApprovalStatus.APPROVED);
+		request.getDeptHeadApproval().setStatus(ApprovalStatus.APPROVED);
+		request.getBenCoApproval().setStatus(ApprovalStatus.APPROVED);
+		request.getFinalApproval().setUsername(user.getSupervisorUsername());
+		request.getFinalApproval().setStatus(ApprovalStatus.AWAITING);
+		request.setReimburseAmount(request.getCost() * request.getType().getPercent());
+		user.setPendingBalance(request.getReimburseAmount());
+
+		ArgumentCaptor<String> getUserCaptor = ArgumentCaptor.forClass(String.class);
+		ArgumentCaptor<User> updateUserCaptor = ArgumentCaptor.forClass(User.class);
+		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
+
+		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.DENIED, "This is a test");
+
+		assertEquals(request, retRequest, "Assert that the request returned is the same request");
+		assertEquals(ApprovalStatus.DENIED, request.getFinalApproval().getStatus(),
+				"Assert that the supervisor approved the request.");
+		assertEquals(RequestStatus.DENIED, request.getStatus(), "Assert that the request was denied.");
+		assertEquals(0.0, user.getPendingBalance(), "Assert that the pending balance was set back to zero.");
+
+		Mockito.verify(userDao).getUser(getUserCaptor.capture());
+		Mockito.verify(userDao).updateUser(updateUserCaptor.capture());
+		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
+
+		assertEquals(request, reqCaptor.getValue(),
+				"Assert that the request passed into updateRequest is the same request");
+		assertEquals(user.getUsername(), getUserCaptor.getValue(),
+				"Assert that the user's username is passed in to get user");
+		assertEquals(user, updateUserCaptor.getValue(), "Assert that the the user is updated.");
+
 	}
 
 	@Test
@@ -487,6 +629,19 @@ public class RequestServiceTest {
 
 		nullRequest = service.changeApprovalStatus(request, ApprovalStatus.DENIED, null);
 		assertNull("Assert that a null reason with a DENIED approval status returns a null", nullRequest);
+
+		// Make sure an exception is thrown if an approval has DENIED or AWAITING and is
+		// evaluated
+		request.getSupervisorApproval().setStatus(ApprovalStatus.DENIED);
+		request.setStatus(RequestStatus.ACTIVE);
+		assertThrows(IllegalApprovalAttemptException.class, () -> {
+			service.changeApprovalStatus(request, ApprovalStatus.APPROVED, null);
+		});
+
+		request.getSupervisorApproval().setStatus(ApprovalStatus.UNASSIGNED);
+		assertThrows(IllegalApprovalAttemptException.class, () -> {
+			service.changeApprovalStatus(request, ApprovalStatus.APPROVED, null);
+		});
 	}
 
 	@Test
