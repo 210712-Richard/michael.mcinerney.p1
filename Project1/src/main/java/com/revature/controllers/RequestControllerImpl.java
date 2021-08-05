@@ -175,4 +175,27 @@ public class RequestControllerImpl implements RequestController {
 		
 		ctx.json(request);
 	}
+
+	@Override
+	public void cancelRequest(Context ctx) {
+		User loggedUser = ctx.sessionAttribute("loggedUser");
+		Request request = reqService.getRequest(UUID.fromString(ctx.pathParam("requestId")));
+		
+		//Make sure the Request was found
+		if (request == null) {
+			ctx.status(404);
+			ctx.html("No Request with that ID");
+			return;
+		}
+		
+		// Make sure the user is logged in and owns the Request
+		if (loggedUser == null || !loggedUser.getUsername().equals(request.getUsername())) {
+			ctx.status(403);
+			return;
+		}
+		
+		request.setStatus(RequestStatus.CANCELLED);
+		reqService.updateRequest(request);
+		ctx.status(204);
+	}
 }

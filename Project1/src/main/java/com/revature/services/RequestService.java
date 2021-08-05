@@ -43,8 +43,14 @@ public interface RequestService {
 	
 	/**
 	 * Get the Request based on the ID of the request
-	 * @param id
-	 * @return
+	 * @param id The ID of the request
+	 * @return The Request with the same id; null otherwise
 	 */
 	public Request getRequest(UUID id);
+	
+	/**
+	 * Send the Request to the DAO to save to the database
+	 * @param request The request being saved
+	 */
+	public void updateRequest(Request request);
 }

@@ -23,4 +23,10 @@ public interface RequestController {
 	 * @param ctx The context
 	 */
 	public void getRequest(Context ctx);
+	
+	/**
+	 * Allow the user to cancel their request
+	 * @param ctx The context
+	 */
+	public void cancelRequest(Context ctx);
 }
