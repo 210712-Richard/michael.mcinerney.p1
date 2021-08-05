@@ -86,10 +86,13 @@ public class RequestControllerImpl implements RequestController {
 			return;
 		}
 
+		//If the request in the body is null, or the approval passed in is null,
+		//or the status the used sent in is not approved nor denied or the request is not active
+		//or the employee needs to review the application still
 		if (approval == null || approval.getSupervisorApproval() == null
 				|| (!approval.getSupervisorApproval().getStatus().equals(ApprovalStatus.APPROVED)
 						&& !approval.getSupervisorApproval().getStatus().equals(ApprovalStatus.DENIED))
-				|| !request.getStatus().equals(RequestStatus.ACTIVE)) {
+				|| !request.getStatus().equals(RequestStatus.ACTIVE) || request.getNeedsEmployeeReview() == true) {
 			// TODO check status codes
 			ctx.status(406);
 			ctx.html("This request cannot be approved or denied any further.");
@@ -472,8 +475,8 @@ public class RequestControllerImpl implements RequestController {
 			ctx.html("The presentation wasn't found");
 			return;
 		}
-		
-		//If the user is not the request creator and is not the final approver
+
+		// If the user is not the request creator and is not the final approver
 		if (!loggedUser.getUsername().equals(request.getUsername())
 				&& !loggedUser.getUsername().equals(request.getFinalApproval().getUsername())) {
 			ctx.status(403);

@@ -64,6 +64,8 @@ public class ReimbursementRequest implements Request {
 		deptHeadApproval = new Approval();
 		benCoApproval = new Approval();
 		finalApproval = new Approval();
+		
+		employeeAgrees = true;
 	}
 
 	public ReimbursementRequest(String username, String firstName, String lastName, String deptName, String name,

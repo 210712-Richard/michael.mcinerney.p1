@@ -246,4 +246,10 @@ public class RequestServiceImpl implements RequestService {
 		userDao.updateUser(user);
 		reqDao.updateRequest(request);
 	}
+
+	@Override
+	public void changeReimburseAmount(Request request, Double reimburse, String reason) {
+		// TODO Auto-generated method stub
+		
+	}
 }

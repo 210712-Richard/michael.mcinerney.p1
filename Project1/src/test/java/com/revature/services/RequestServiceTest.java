@@ -752,4 +752,14 @@ public class RequestServiceTest {
 		Mockito.verifyZeroInteractions(reqDao);
 		Mockito.verifyZeroInteractions(userDao);
 	}
+	
+	@Test
+	public void testChangeReimburseAmountValid() {
+		ArgumentCaptor<Request> request = ArgumentCaptor.forClass(Request.class);
+	}
+	
+	@Test
+	public void testChangeReimburseAmountInvalid() {
+		
+	}
 }
