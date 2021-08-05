@@ -5,7 +5,7 @@
 - [x] **user2**. As a user, I can logout.
 
 ## Employee
-- [ ] **emp1**. As an employee, I can create a reimbursement request.
+- [x] **emp1**. As an employee, I can create a reimbursement request.
 - [ ] **emp2**. As an employee, I can cancel my reimbursement request.
 - [ ] **emp3**. As an employee, I can upload the final grade/presentation for the reimbursement request. 
 

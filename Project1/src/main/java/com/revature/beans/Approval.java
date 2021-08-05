@@ -10,7 +10,7 @@ public class Approval {
 
 	public Approval() {
 		super();
-		this.status = ApprovalStatus.AWAITING;
+		this.status = ApprovalStatus.UNASSIGNED;
 		this.deadline = Request.PLACEHOLDER;
 	}
 

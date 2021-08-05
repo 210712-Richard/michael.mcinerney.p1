@@ -58,7 +58,11 @@ public class Driver {
 		//As an employee, I can cancel my reimbursement request.
 		
 		//As an employee, I can upload the final grade/presentation for the reimbursement request. 
-
+		
+		//As a supervisor, I can accept or decline a reimbursement request.
+		//As a department head, I can accept or decline a reimbursement request.
+		//As a Benefits Coordinator, I can accept or decline a reimbursement request.
+		app.put("/requests/:requestId", reqControl::changeApprovalStatus);
 	}
 
 	/**
