@@ -211,4 +211,11 @@ public class RequestServiceImpl implements RequestService {
 		log.debug("The request returned: " + retRequest);
 		return retRequest;
 	}
+
+	@Override
+	public void updateRequest(Request request) {
+		if (request != null) {
+			reqDao.updateRequest(request);
+		}
+	}
 }

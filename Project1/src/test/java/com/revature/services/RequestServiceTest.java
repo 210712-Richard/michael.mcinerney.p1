@@ -665,4 +665,31 @@ public class RequestServiceTest {
 		Request nullRequest = service.getRequest(null);
 		assertNull("Assert that a null was returned from a null id", nullRequest);
 	}
+
+	@Test
+	public void testUpdateRequestValid() {
+		// Capture the Request
+		ArgumentCaptor<Request> captor = ArgumentCaptor.forClass(Request.class);
+		
+		// Call the method
+		service.updateRequest(request);
+		
+		// Verify it reqDao was called
+		Mockito.verify(reqDao).updateRequest(captor.capture());
+		
+		// Make sure the capture is the same request
+		assertEquals(request, captor.getValue(), "Assert that the request passed in is the same request");
+
+	}
+
+	@Test
+	public void testUpdateRequestInvalid() {
+
+		// Call the method
+		service.updateRequest(null);
+
+		// Make sure the reqDao is not called
+		Mockito.verifyZeroInteractions(reqDao);
+
+	}
 }
