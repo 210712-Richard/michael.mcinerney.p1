@@ -59,37 +59,40 @@ public class RequestServiceImpl implements RequestService {
 				Double reimburseAmount = cost * type.getPercent();
 				Double reimburseMax = Request.MAX_REIMBURSEMENT - user.getAwardedBalance() - user.getPendingBalance();
 				reimburseMax = (reimburseAmount > reimburseMax) ? reimburseMax : reimburseAmount;
-				log.debug("Maximum amount that can be reimbursed: " + reimburseMax);
 
 				// If the maximum that can be reimbursed is not less than or equal to zero, the
-				// request is valid
-				if (reimburseMax > 0) {
-					request = new ReimbursementRequest(username, firstName, lastName, deptName, name, startDate,
-							startTime, location, description, cost, gradingFormat, type);
-					request.setId(UUID.randomUUID());
-					request.setReimburseAmount(reimburseMax);
-
-					// If the date that it is starting is less than two weeks away, then need to set
-					// isUrgent to true
-					LocalDate twoWeeks = LocalDate.now().plus(Period.of(0, 0, 14));
-					request.setIsUrgent(startDate.isBefore(twoWeeks));
-
-					// Set the supervisor approval to the user's supervisor and start the deadline
-					request.getSupervisorApproval().setUsername(user.getSupervisorUsername());
-					request.getSupervisorApproval().startDeadline();
-					request.getSupervisorApproval().setStatus(ApprovalStatus.AWAITING);
-					log.debug("Supervisor's deadline set to " + request.getSupervisorApproval().getDeadline());
-					// Add the request to the database
-					reqDao.createRequest(request);
-
-					// Make sure the user's pending amount is changed and the request added to their
-					// requests list.
-					user.getRequests().add(request.getId());
-					user.alterPendingBalance(reimburseMax);
-
-					// Update the user in the database
-					userDao.updateUser(user);
+				// reimburse is set to the original reimburse amount
+				if (reimburseMax <= 0) {
+					reimburseMax = reimburseAmount;
 				}
+				log.debug("Maximum amount that can be reimbursed: " + reimburseMax);
+
+				request = new ReimbursementRequest(username, firstName, lastName, deptName, name, startDate, startTime,
+						location, description, cost, gradingFormat, type);
+				request.setId(UUID.randomUUID());
+				request.setReimburseAmount(reimburseMax);
+
+				// If the date that it is starting is less than two weeks away, then need to set
+				// isUrgent to true
+				LocalDate twoWeeks = LocalDate.now().plus(Period.of(0, 0, 14));
+				request.setIsUrgent(startDate.isBefore(twoWeeks));
+
+				// Set the supervisor approval to the user's supervisor and start the deadline
+				request.getSupervisorApproval().setUsername(user.getSupervisorUsername());
+				request.getSupervisorApproval().startDeadline();
+				request.getSupervisorApproval().setStatus(ApprovalStatus.AWAITING);
+				log.debug("Supervisor's deadline set to " + request.getSupervisorApproval().getDeadline());
+				// Add the request to the database
+				reqDao.createRequest(request);
+
+				// Make sure the user's pending amount is changed and the request added to their
+				// requests list.
+				user.getRequests().add(request.getId());
+				user.alterPendingBalance(reimburseMax);
+
+				// Update the user in the database
+				userDao.updateUser(user);
+
 			}
 
 		}
@@ -129,8 +132,8 @@ public class RequestServiceImpl implements RequestService {
 				currentApproval.setStatus(status);
 				log.debug("Current Approval status changed to " + currentApproval.getStatus());
 				if (status.equals(ApprovalStatus.DENIED)) {
-					
-					//If the reason is blank or null, return null
+
+					// If the reason is blank or null, return null
 					if (!VERIFIER.verifyStrings(reason)) {
 						break;
 					}
@@ -250,21 +253,21 @@ public class RequestServiceImpl implements RequestService {
 	@Override
 	public Request changeReimburseAmount(Request request, Double reimburse, String reason) {
 		Request retRequest = null;
-		//Make sure all the arguments are good
+		// Make sure all the arguments are good
 		if (VERIFIER.verifyNotNull(request, reimburse) && reimburse > 0.0 && VERIFIER.verifyStrings(reason)) {
-			
-			//Set all the request fields
+
+			// Set all the request fields
 			request.setFinalReimburseAmount(reimburse);
 			request.setFinalReimburseAmountReason(reason);
 			request.setNeedsEmployeeReview(true);
 			request.setEmployeeAgrees(false);
-			
-			//Change the user's pending balance
+
+			// Change the user's pending balance
 			User user = userDao.getUser(request.getUsername());
 			user.alterPendingBalance(reimburse - request.getReimburseAmount());
 			userDao.updateUser(user);
-			
-			//Update the request and return it
+
+			// Update the request and return it
 			reqDao.updateRequest(request);
 			retRequest = request;
 		}
@@ -274,19 +277,30 @@ public class RequestServiceImpl implements RequestService {
 	@Override
 	public void changeEmployeeAgrees(Request request, Boolean employeeAgrees) {
 		if (VERIFIER.verifyNotNull(request, employeeAgrees)) {
-			//Set the request
+			// Set the request
 			request.setEmployeeAgrees(employeeAgrees);
 			request.setNeedsEmployeeReview(false);
-			
-			//If the employee doens't agree, cancel the request and change their pending balance
+
+			// If the employee doens't agree, cancel the request and change their pending
+			// balance
 			if (!employeeAgrees) {
 				request.getBenCoApproval().setStatus(ApprovalStatus.UNASSIGNED);
 				cancelRequest(request);
-			} else { //Else, update the request
+			} else { // Else, update the request
 				reqDao.updateRequest(request);
 			}
+
+		}
+	}
+
+	@Override
+	public void addFinalGrade(Request request, String grade) {
+		if (VERIFIER.verifyNotNull(request) && VERIFIER.verifyStrings(grade)) {
 			
-			
+			//Set the grade and make sure it is passing
+			request.setFinalGrade(grade);
+			request.setIsPassing(request.getGradingFormat().isPassing(grade));
+			reqDao.updateRequest(request);
 		}
 	}
 }

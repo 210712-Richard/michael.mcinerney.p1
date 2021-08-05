@@ -292,15 +292,6 @@ public class RequestServiceTest {
 				request.getLocation(), request.getDescription(), -1.00, request.getGradingFormat(), request.getType());
 		assertNull("Assert that a negative cost returns null", newRequest);
 
-		// Set the user's pending and awarded balance to make sure it works
-		user.setPendingBalance(500.00);
-		user.setAwardedBalance(500.00);
-		newRequest = service.createRequest(request.getUsername(), request.getFirstName(), request.getLastName(),
-				request.getDeptName(), request.getName(), request.getStartDate(), request.getStartTime(),
-				request.getLocation(), request.getDescription(), request.getCost(), request.getGradingFormat(),
-				request.getType());
-		assertNull("Assert that a user with a maxed out balance returns null", newRequest);
-
 		// Null gradingFormat returns a null
 		newRequest = service.createRequest(request.getUsername(), request.getFirstName(), request.getLastName(),
 				request.getDeptName(), request.getName(), request.getStartDate(), request.getStartTime(),
@@ -869,5 +860,33 @@ public class RequestServiceTest {
 		
 		Mockito.verifyZeroInteractions(reqDao);
 		Mockito.verifyZeroInteractions(userDao);
+	}
+	
+	@Test
+	public void testAddFinalGradeValid() {
+		String grade = "C";
+		
+		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
+		
+		service.addFinalGrade(request, grade);
+		
+		assertEquals(grade, request.getFinalGrade(), "Assert that the final grade was set");
+		assertNotNull(request.getIsPassing(), "Assert that the isPassing is set");
+		
+		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
+		
+		assertEquals(request, reqCaptor.getValue(), "Assert that the request was passed in");
+	}
+	
+	@Test
+	public void testAddFinalGradeInvalid() {
+		String grade = "C";
+		
+		service.addFinalGrade(null, grade);
+		
+		service.addFinalGrade(request, "");
+		service.addFinalGrade(request, null);
+		
+		Mockito.verifyZeroInteractions(reqDao);
 	}
 }

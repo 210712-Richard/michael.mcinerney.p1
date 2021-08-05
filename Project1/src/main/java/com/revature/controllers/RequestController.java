@@ -77,4 +77,10 @@ public interface RequestController {
 	 * @param ctx The context
 	 */
 	public void finalReimburseCheck(Context ctx);
+	
+	/**
+	 * Set the final grade of the event
+	 * @param ctx The context
+	 */
+	public void putFinalGrade(Context ctx);
 }

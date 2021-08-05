@@ -486,19 +486,19 @@ public class RequestControllerImpl implements RequestController {
 			ctx.status(403);
 			return;
 		}
-		
+
 		Request request = reqService.getRequest(UUID.fromString(ctx.pathParam("requestId")));
 		Request approval = ctx.bodyAsClass(ReimbursementRequest.class);
-		
-		//Make sure the request is awaiting BenCo approval
-		if(!request.getBenCoApproval().getStatus().equals(ApprovalStatus.AWAITING)) {
+
+		// Make sure the request is awaiting BenCo approval
+		if (!request.getBenCoApproval().getStatus().equals(ApprovalStatus.AWAITING)) {
 			ctx.status(403);
 			return;
 		}
 		// If the final reimburseamount was set and is different then the actual
 		// reimburseamount
-		if (request != null && approval.getFinalReimburseAmount() != null && request.getFinalReimburseAmount() != null &&
-				request.getFinalReimburseAmount() <= 0.0
+		if (request != null && approval.getFinalReimburseAmount() != null && request.getFinalReimburseAmount() != null
+				&& request.getFinalReimburseAmount() <= 0.0
 				&& approval.getFinalReimburseAmount() != request.getReimburseAmount()) {
 			// If the user did not provide a reason for why they are changing the reimburse
 			// amount
@@ -532,35 +532,85 @@ public class RequestControllerImpl implements RequestController {
 
 		// Make sure the user is logged in
 		if (loggedUser == null) {
-			ctx.status(403);
+			ctx.status(401);
 			return;
 		}
-		
-		//Get the request
+
+		// Get the request
 		Request request = reqService.getRequest(UUID.fromString(ctx.pathParam("requestId")));
 		log.debug("Request from the requestId path param: " + request);
-		
-		//If the request wasn't found
+
+		// If the request wasn't found
 		if (request == null) {
 			ctx.status(404);
 			ctx.html("No Request Found");
 			return;
 		}
-		//If the user is not the owner of the request or the request does not need their review
+		// If the user is not the owner of the request or the request does not need
+		// their review
 		if (!loggedUser.getUsername().equals(request.getUsername()) || !request.getNeedsEmployeeReview()) {
 			ctx.status(403);
 			return;
 		}
-		
-		//Get the review. If it is null or the getEmployeeAgrees is not a part of it
+
+		// Get the review. If it is null or the getEmployeeAgrees is not a part of it
 		Request review = ctx.bodyAsClass(ReimbursementRequest.class);
-		
+
 		if (review == null || review.getEmployeeAgrees() == null) {
 			ctx.status(400);
 			return;
 		}
-		
+
 		reqService.changeEmployeeAgrees(request, review.getEmployeeAgrees());
+		ctx.status(204);
+	}
+
+	@Override
+	public void putFinalGrade(Context ctx) {
+		User loggedUser = ctx.sessionAttribute("loggedUser");
+
+		// Make sure the user is logged in
+		if (loggedUser == null) {
+			ctx.status(401);
+			return;
+		}
+
+		Request request = reqService.getRequest(UUID.fromString(ctx.pathParam("requestId")));
+
+		// If the request wasn't found
+		if (request == null) {
+			ctx.status(404);
+			ctx.html("No request found");
+			return;
+		}
+
+		// If the user doesn't own the request or request isn't active or if the the
+		// request isn't awaiting
+		if (Format.PRESENTATION.equals(request.getGradingFormat().getFormat())
+				|| !(loggedUser.getUsername().equals(request.getUsername())
+						&& RequestStatus.ACTIVE.equals(request.getStatus())
+						&& ApprovalStatus.AWAITING.equals(request.getFinalApproval().getStatus()))) {
+			ctx.status(403);
+			return;
+		}
+
+		Request grade = ctx.bodyAsClass(ReimbursementRequest.class);
+
+		// If the grade was null
+		if (grade == null) {
+			ctx.status(400);
+			ctx.html("The grade was not entered correctly");
+			return;
+		}
+
+		// If the final grade was not set
+		if (request.getFinalGrade() != null) {
+			ctx.status(409);
+			ctx.html("The final grade has already been sent");
+			return;
+		}
+
+		reqService.addFinalGrade(request, grade.getFinalGrade());
 		ctx.status(204);
 	}
 }
