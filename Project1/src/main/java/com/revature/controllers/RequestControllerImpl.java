@@ -1,6 +1,7 @@
 package com.revature.controllers;
 
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,6 +17,7 @@ import com.revature.factory.BeanFactory;
 import com.revature.factory.TraceLog;
 import com.revature.services.RequestService;
 import com.revature.services.RequestServiceImpl;
+import com.revature.util.S3Util;
 
 import io.javalin.http.Context;
 
@@ -24,6 +26,9 @@ public class RequestControllerImpl implements RequestController {
 	RequestService reqService = (RequestService) BeanFactory.getFactory().getObject(RequestService.class,
 			RequestServiceImpl.class);
 	private static Logger log = LogManager.getLogger(RequestControllerImpl.class);
+
+	private static final String[] FILETYPES = { "pdf", "jpg", "png", "txt", "doc" };
+	private static final S3Util s3Instance = S3Util.getInstance();
 
 	@Override
 	public void createRequest(Context ctx) {
@@ -134,15 +139,14 @@ public class RequestControllerImpl implements RequestController {
 				try {
 					request = reqService.changeApprovalStatus(request, approval.getSupervisorApproval().getStatus(),
 							approval.getReason());
-					
-					//If the request returned null, then the request was bad
+					// If the request returned null, then the request was bad
 					if (request == null) {
 						ctx.status(400);
 						ctx.html("Approval is invalid.");
 					} else {
 						ctx.json(request);
 					}
-					
+
 					return;
 				} catch (IllegalApprovalAttemptException e) {
 					ctx.status(500);
@@ -172,15 +176,16 @@ public class RequestControllerImpl implements RequestController {
 			ctx.html("No request with that ID");
 			return;
 		}
-		
-		//If the user is not authorized to see the final grade, set the return request to null
-		//NOTE: This will not be saved, this is just for returning it
+
+		// If the user is not authorized to see the final grade, set the return request
+		// to null
+		// NOTE: This will not be saved, this is just for returning it
 		if (!loggedUser.getUsername().equals(request.getUsername())
 				&& !loggedUser.getUsername().equals(request.getFinalApproval().getUsername())) {
 			request.setFinalGrade(null);
 			request.setIsPassing(null);
 		}
-		
+
 		ctx.json(request);
 	}
 
@@ -188,20 +193,20 @@ public class RequestControllerImpl implements RequestController {
 	public void cancelRequest(Context ctx) {
 		User loggedUser = ctx.sessionAttribute("loggedUser");
 		Request request = reqService.getRequest(UUID.fromString(ctx.pathParam("requestId")));
-		
-		//Make sure the Request was found
+
+		// Make sure the Request was found
 		if (request == null) {
 			ctx.status(404);
 			ctx.html("No Request with that ID");
 			return;
 		}
-		
+
 		// Make sure the user is logged in and owns the Request
 		if (loggedUser == null || !loggedUser.getUsername().equals(request.getUsername())) {
 			ctx.status(403);
 			return;
 		}
-		
+
 		if (request.getStatus().equals(RequestStatus.ACTIVE)) {
 			reqService.cancelRequest(request);
 			ctx.status(204);
@@ -209,6 +214,119 @@ public class RequestControllerImpl implements RequestController {
 			ctx.status(406);
 			ctx.html("The request cannot be cancelled");
 		}
+
+	}
+
+	@Override
+	public void uploadExtraFile(Context ctx) {
+		User loggedUser = ctx.sessionAttribute("loggedUser");
+		String filetype = ctx.header("filetype");
+		// Make sure the user is logged in
+		if (loggedUser == null) {
+			ctx.status(401);
+			return;
+		}
+
+		// Make sure the filetype is correct
+		Boolean isValidFiletype = Stream.of(FILETYPES).anyMatch((type) -> type.equals(filetype));
+		if (!isValidFiletype) {
+			ctx.status(400);
+			ctx.html("Incorret filetype entered");
+			return;
+		}
+
+		// Get the request from the UUID in the path
+		UUID requestId = UUID.fromString(ctx.pathParam("requestId"));
+		Request request = reqService.getRequest(requestId);
+		log.debug("Request from the requestId" + request);
+
+		// If no request was found with that id
+		if (request == null) {
+			ctx.status(404);
+			ctx.html("No request with that ID");
+			return;
+		}
+
+		// If the request has already been processed by a supervisor or cancelled by the
+		// user
+		if (!request.getStatus().equals(RequestStatus.ACTIVE)
+				|| !request.getSupervisorApproval().getStatus().equals(ApprovalStatus.AWAITING)) {
+			ctx.status(403);
+			return;
+		}
+
+		// If the user is not the owner of the request
+		if (!loggedUser.getUsername().equals(request.getUsername())) {
+			ctx.status(403);
+			return;
+		}
+
+		// Generate the key and upload to the bucket
+		String key = request.getId() + "/files/" + request.getFileURIs().size() + "." + filetype;
+		s3Instance.uploadToBucket(key, ctx.bodyAsBytes());
 		
+		//Add the key to the request, update database, and return request
+		request.getFileURIs().add(key);
+		reqService.updateRequest(request);
+		ctx.json(request);
+	}
+
+	@Override
+	public void uploadMessageFile(Context ctx) {
+		User loggedUser = ctx.sessionAttribute("loggedUser");
+		String filetype = ctx.header("filetype");
+		final String MSG = "msg";
+		// Make sure the user is logged in
+		if (loggedUser == null) {
+			ctx.status(401);
+			return;
+		}
+
+		// Make sure the filetype is correct
+		if (!MSG.equals(filetype)) {
+			ctx.status(400);
+			ctx.html("Incorret filetype entered");
+			return;
+		}
+
+		// Get the request from the UUID in the path
+		UUID requestId = UUID.fromString(ctx.pathParam("requestId"));
+		Request request = reqService.getRequest(requestId);
+		log.debug("Request from the requestId" + request);
+
+		// If no request was found with that id
+		if (request == null) {
+			ctx.status(404);
+			ctx.html("No request with that ID");
+			return;
+		}
+
+		// If the request is ready to be processed by BenCo or cancelled by the
+		// user
+		if (!request.getStatus().equals(RequestStatus.ACTIVE)
+				|| request.getBenCoApproval().getStatus().equals(ApprovalStatus.AWAITING)) {
+			ctx.status(403);
+			return;
+		}
+
+		// If the user is not the owner of the request
+		if (!loggedUser.getUsername().equals(request.getUsername())) {
+			ctx.status(403);
+			return;
+		}
+
+		// Generate the key and upload to the bucket
+		String key = request.getId() + "/messages/" + request.getFileURIs().size() + "." + filetype;
+		s3Instance.uploadToBucket(key, ctx.bodyAsBytes());
+		request.getApprovalMsgsURIs().add(key);
+		
+		// Bypass the request if the supervisor or department head are awaiting
+		if (request.getSupervisorApproval().getStatus().equals(ApprovalStatus.AWAITING)
+				|| request.getDeptHeadApproval().getStatus().equals(ApprovalStatus.AWAITING)) {
+			reqService.changeApprovalStatus(request, ApprovalStatus.BYPASSED, null);
+		}
+		//Return request
+		ctx.json(request);
+			
 	}
 }

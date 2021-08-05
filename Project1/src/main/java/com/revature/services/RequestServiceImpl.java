@@ -102,10 +102,7 @@ public class RequestServiceImpl implements RequestService {
 		Request retRequest = null;
 		// If the status is denied and there is a reason, or the request status is
 		// active and the arguments are not empty
-		if (VERIFIER.verifyNotNull(request, status)
-				&& ((status.equals(ApprovalStatus.DENIED) && VERIFIER.verifyStrings(reason))
-						|| status.equals(ApprovalStatus.APPROVED))
-				&& request.getStatus().equals(RequestStatus.ACTIVE)) {
+		if (VERIFIER.verifyNotNull(request, status) && request.getStatus().equals(RequestStatus.ACTIVE)) {
 			// Put all of the approvals into an array
 			Approval[] approvals = request.getApprovalArray();
 
@@ -132,6 +129,11 @@ public class RequestServiceImpl implements RequestService {
 				currentApproval.setStatus(status);
 				log.debug("Current Approval status changed to " + currentApproval.getStatus());
 				if (status.equals(ApprovalStatus.DENIED)) {
+					
+					//If the reason is blank or null, return null
+					if (!VERIFIER.verifyStrings(reason)) {
+						break;
+					}
 					request.setStatus(RequestStatus.DENIED);
 					request.setReason(reason);
 					User user = userDao.getUser(request.getUsername());

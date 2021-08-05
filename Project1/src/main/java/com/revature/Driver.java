@@ -58,6 +58,10 @@ public class Driver {
 		//As an employee, I can create a reimbursement request.
 		app.post("/requests/", reqControl::createRequest);
 		
+		//Upload files as part of creating the reimbursement requests.
+		app.post("/requests/:requestId/fileURIs", reqControl::uploadExtraFile);
+		app.post("/requests/:requestId/approvalMsgsURIs", reqControl::uploadMessageFile);
+		
 		//As an employee, I can cancel my reimbursement request.
 		app.put("/requests/:requestId/status", reqControl::cancelRequest);
 		

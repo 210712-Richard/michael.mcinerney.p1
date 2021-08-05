@@ -29,4 +29,17 @@ public interface RequestController {
 	 * @param ctx The context
 	 */
 	public void cancelRequest(Context ctx);
+	
+	/**
+	 * Allow the user to upload extra files to their request
+	 * @param ctx The context<br>
+	 * The body should be the file and should include a filetype header
+	 */
+	public void uploadExtraFile(Context ctx);
+	
+	/**
+	 * Upload an approval message
+	 * @param ctx The context
+	 */
+	public void uploadMessageFile(Context ctx);
 }
