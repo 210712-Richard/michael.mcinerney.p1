@@ -38,7 +38,7 @@ public class RequestControllerImpl implements RequestController {
 		// Get the request from the body
 		Request request = ctx.bodyAsClass(ReimbursementRequest.class);
 		log.debug("Request from the body: " + request);
-
+		
 		// Create the request.
 		request = reqService.createRequest(loggedUser.getUsername(), request.getFirstName(), request.getLastName(),
 				request.getDeptName(), request.getName(), request.getStartDate(), request.getStartTime(),
@@ -68,8 +68,9 @@ public class RequestControllerImpl implements RequestController {
 
 		// Get the request
 		Request request = reqService.getRequest(UUID.fromString(ctx.pathParam("requestId")));
-
+		log.debug("Request from requestId: " + request);
 		Request approval = ctx.bodyAsClass(ReimbursementRequest.class);
+		log.debug("Request from body: " + approval);
 
 		// If the request was not found
 		if (request == null) {
@@ -123,6 +124,9 @@ public class RequestControllerImpl implements RequestController {
 							return;
 						}
 						// TODO handle this case
+						ctx.status(501);
+						ctx.html("Doesn't handle reimburse changes yet.");
+						return;
 					}
 				}
 				try {

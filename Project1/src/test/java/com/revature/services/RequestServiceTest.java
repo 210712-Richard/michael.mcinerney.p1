@@ -530,7 +530,7 @@ public class RequestServiceTest {
 	}
 
 	@Test
-	public void testChangeApprovalStatusFinalBenCo() {
+	public void testChangeApprovalStatusFinalApproved() {
 		// Set the pending balance to the request cost
 		user.setPendingBalance(request.getCost());
 		request.getSupervisorApproval().setStatus(ApprovalStatus.APPROVED);

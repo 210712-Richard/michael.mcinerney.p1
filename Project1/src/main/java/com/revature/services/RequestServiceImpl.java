@@ -110,6 +110,7 @@ public class RequestServiceImpl implements RequestService {
 
 			for (int i = 0; i < approvals.length; i++) {
 				Approval currentApproval = approvals[i];
+				log.debug("Current Approval being evaluated: " + currentApproval);
 				
 				//If the approval has already been approved, move to the next one
 				if (currentApproval.getStatus().equals(ApprovalStatus.APPROVED)
@@ -126,8 +127,9 @@ public class RequestServiceImpl implements RequestService {
 							"The approval that is being evaluated is " + currentApproval.getStatus());
 				}
 				Approval nextApproval = (i + 1 < approvals.length) ? approvals[i + 1] : null;
+				log.debug("The next Approval to be evaluated: " + nextApproval);
 				currentApproval.setStatus(status);
-
+				log.debug("Current Approval status changed to " + currentApproval.getStatus());
 				if (status.equals(ApprovalStatus.DENIED)) {
 					request.setStatus(RequestStatus.DENIED);
 					request.setReason(reason);
@@ -150,6 +152,7 @@ public class RequestServiceImpl implements RequestService {
 					// If the supervisor is also a department head, bypass the department approval
 					if (dept.getDeptHeadUsername().equals(request.getSupervisorApproval().getUsername())) {
 						status = ApprovalStatus.BYPASSED;
+						log.debug("Status changed to " + status);
 						continue;
 					}
 				}
