@@ -53,4 +53,10 @@ public interface RequestService {
 	 * @param request The request being saved
 	 */
 	public void updateRequest(Request request);
+	
+	/**
+	 * Cancel the Request of the user
+	 * @param request The Request being cancelled.
+	 */
+	public void cancelRequest(Request request);
 }

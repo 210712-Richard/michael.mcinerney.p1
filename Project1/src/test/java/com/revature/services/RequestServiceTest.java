@@ -121,11 +121,12 @@ public class RequestServiceTest {
 		assertEquals(request.getStartTime(), newRequest.getStartTime(), "Assert that the startTime is set.");
 		assertEquals(request.getLocation(), newRequest.getLocation(), "Assert that the location is set.");
 		assertEquals(request.getDescription(), newRequest.getDescription(), "Assert that the description is set.");
-		assertEquals(request.getCost() * request.getType().getPercent(), newRequest.getCost(),
-				"Assert that the cost is set.");
+		assertEquals(request.getCost(), newRequest.getCost(), "Assert that the cost is set.");
 		assertEquals(request.getGradingFormat(), newRequest.getGradingFormat(),
 				"Assert that the gradingFormat is set.");
 		assertEquals(request.getType(), newRequest.getType(), "Assert that the type is set.");
+		assertEquals(request.getCost() * request.getType().getPercent(), newRequest.getReimburseAmount(),
+				"Assert that the reimburse amount was set");
 
 		// Make sure supervisorUsername is set to user's supervisorUsername
 		assertEquals(user.getSupervisorUsername(), newRequest.getSupervisorApproval().getUsername(),
@@ -169,10 +170,11 @@ public class RequestServiceTest {
 		assertEquals(request.getStartTime(), newRequest.getStartTime(), "Assert that the startTime is set.");
 		assertEquals(request.getLocation(), newRequest.getLocation(), "Assert that the location is set.");
 		assertEquals(request.getDescription(), newRequest.getDescription(), "Assert that the description is set.");
-		assertEquals(expectedCost, newRequest.getCost(), "Assert that the cost is set.");
+		assertEquals(request.getCost(), newRequest.getCost(), "Assert that the cost is set.");
 		assertEquals(request.getGradingFormat(), newRequest.getGradingFormat(),
 				"Assert that the gradingFormat is set.");
 		assertEquals(request.getType(), newRequest.getType(), "Assert that the type is set.");
+		assertEquals(expectedCost, newRequest.getReimburseAmount(), "Assert that the reimburse amount is set");
 	}
 
 	@Test
@@ -670,13 +672,13 @@ public class RequestServiceTest {
 	public void testUpdateRequestValid() {
 		// Capture the Request
 		ArgumentCaptor<Request> captor = ArgumentCaptor.forClass(Request.class);
-		
+
 		// Call the method
 		service.updateRequest(request);
-		
+
 		// Verify it reqDao was called
 		Mockito.verify(reqDao).updateRequest(captor.capture());
-		
+
 		// Make sure the capture is the same request
 		assertEquals(request, captor.getValue(), "Assert that the request passed in is the same request");
 
@@ -691,5 +693,63 @@ public class RequestServiceTest {
 		// Make sure the reqDao is not called
 		Mockito.verifyZeroInteractions(reqDao);
 
+	}
+	
+	@Test
+	public void testCancelRequestValidReimburse() {
+		ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
+		Double reimburse = 200.00;
+		Double zero = 0.0;
+		
+		request.setReimburseAmount(reimburse);
+		user.setPendingBalance(reimburse);
+		
+		service.cancelRequest(request);
+		
+		assertEquals(RequestStatus.CANCELLED, request.getStatus(), "Assert that the request was cancelled");
+		assertEquals(zero, user.getPendingBalance(), "Assert that pending balance is empty");
+		
+		Mockito.verify(userDao).updateUser(userCaptor.capture());
+		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
+		
+		assertEquals(request, reqCaptor.getValue(), "Assert that the Request was passed into updateRequest");
+		assertEquals(user, userCaptor.getValue(), "Assert that the User was passed into updateUser");
+	}
+	
+	@Test
+	public void testCancelRequestValidFinalReimburse() {
+		//Set up the ArgumentCaptors
+		ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
+		
+		//Values to be used for the test
+		Double reimburse = 200.00;
+		Double finalReimburse = 100.00;
+		Double zero = 0.0;
+		
+		//Set reimburse and finalreimburse. Finalreimburse should be the one used though
+		request.setReimburseAmount(reimburse);
+		request.setFinalReimburseAmount(finalReimburse);
+		user.setPendingBalance(finalReimburse);
+		
+		service.cancelRequest(request);
+		
+		assertEquals(RequestStatus.CANCELLED, request.getStatus(), "Assert that the request was cancelled");
+		assertEquals(zero, user.getPendingBalance(), "Assert that pending balance is empty");
+		
+		Mockito.verify(userDao).updateUser(userCaptor.capture());
+		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
+		
+		assertEquals(request, reqCaptor.getValue(), "Assert that the Request was passed into updateRequest");
+		assertEquals(user, userCaptor.getValue(), "Assert that the User was passed into updateUser");
+	}
+	
+	@Test
+	public void testCancelRequestInvalid() {
+		service.cancelRequest(null);
+		
+		Mockito.verifyZeroInteractions(reqDao);
+		Mockito.verifyZeroInteractions(userDao);
 	}
 }
