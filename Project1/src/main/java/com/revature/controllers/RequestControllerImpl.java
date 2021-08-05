@@ -202,8 +202,13 @@ public class RequestControllerImpl implements RequestController {
 			return;
 		}
 		
-		request.setStatus(RequestStatus.CANCELLED);
-		reqService.updateRequest(request);
-		ctx.status(204);
+		if (request.getStatus().equals(RequestStatus.ACTIVE)) {
+			reqService.cancelRequest(request);
+			ctx.status(204);
+		} else {
+			ctx.status(406);
+			ctx.html("The request cannot be cancelled");
+		}
+		
 	}
 }

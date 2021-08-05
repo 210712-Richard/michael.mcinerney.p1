@@ -65,7 +65,7 @@ public class RequestServiceImpl implements RequestService {
 				// request is valid
 				if (reimburseMax > 0) {
 					request = new ReimbursementRequest(username, firstName, lastName, deptName, name, startDate,
-							startTime, location, description, reimburseMax, gradingFormat, type);
+							startTime, location, description, cost, gradingFormat, type);
 					request.setId(UUID.randomUUID());
 					request.setReimburseAmount(reimburseMax);
 
@@ -112,8 +112,8 @@ public class RequestServiceImpl implements RequestService {
 			for (int i = 0; i < approvals.length; i++) {
 				Approval currentApproval = approvals[i];
 				log.debug("Current Approval being evaluated: " + currentApproval);
-				
-				//If the approval has already been approved, move to the next one
+
+				// If the approval has already been approved, move to the next one
 				if (currentApproval.getStatus().equals(ApprovalStatus.APPROVED)
 						|| currentApproval.getStatus().equals(ApprovalStatus.AUTO_APPROVED)
 						|| currentApproval.getStatus().equals(ApprovalStatus.BYPASSED)) {
@@ -173,9 +173,10 @@ public class RequestServiceImpl implements RequestService {
 					// Set the user's balances and set the request to approved
 					request.setStatus(RequestStatus.APPROVED);
 					User user = userDao.getUser(request.getUsername());
-					
-					//If the reimburse amount was never changed, set it to the current reimburse amount
-					if (request.getFinalReimburseAmount() == null) {
+
+					// If the reimburse amount was never changed, set it to the current reimburse
+					// amount
+					if (request.getFinalReimburseAmount() == null || request.getFinalReimburseAmount() == 0.0) {
 						request.setFinalReimburseAmount(request.getReimburseAmount());
 					}
 					user.alterPendingBalance(request.getFinalReimburseAmount() * -1.0);
@@ -218,5 +219,29 @@ public class RequestServiceImpl implements RequestService {
 		if (request != null) {
 			reqDao.updateRequest(request);
 		}
+	}
+
+	@Override
+	public void cancelRequest(Request request) {
+		if (request == null) {
+			return;
+		}
+		// Get the user
+		User user = userDao.getUser(request.getUsername());
+
+		// Cancel the request
+		request.setStatus(RequestStatus.CANCELLED);
+
+		// Need to change the user's pending balance
+		// First need to check and see if finalReimburseAmount is set to see which
+		// reimburse amount is part of the pending balance
+		Double reimburse = (request.getFinalReimburseAmount() != null && request.getFinalReimburseAmount() > 0.0)
+				? request.getFinalReimburseAmount()
+				: request.getReimburseAmount();
+		log.debug("Amount the user is losing from pendingBalance: " + reimburse);
+		// Subtract the amount from the user
+		user.alterPendingBalance(reimburse * -1.0);
+		userDao.updateUser(user);
+		reqDao.updateRequest(request);
 	}
 }
