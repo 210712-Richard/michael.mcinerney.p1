@@ -72,7 +72,7 @@ public class Driver {
 		//As an employee, I can upload the final grade/presentation for the reimbursement request. 
 		app.put("/requests/:requestId/presFileName", reqControl::uploadPresentation);
 		app.get("/requests/:requestId/presFileName", reqControl::getPresentation);
-		
+		app.put("/requests/:requestId/finalGrade", reqControl::putFinalGrade);		
 		//As a supervisor, I can accept or decline a reimbursement request.
 		//As a department head, I can accept or decline a reimbursement request.
 		//As a Benefits Coordinator, I can accept or decline a reimbursement request.

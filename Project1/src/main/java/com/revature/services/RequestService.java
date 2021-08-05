@@ -75,4 +75,11 @@ public interface RequestService {
 	 * @param employeeAgrees Whether the employee agrees or not
 	 */
 	public void changeEmployeeAgrees(Request request, Boolean employeeAgrees);
+	
+	/**
+	 * Add the final grade to the request
+	 * @param request The request getting the final grade
+	 * @param grade The final grade
+	 */
+	public void addFinalGrade(Request request, String grade);
 }

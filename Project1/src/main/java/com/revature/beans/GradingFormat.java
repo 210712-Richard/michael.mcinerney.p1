@@ -59,5 +59,37 @@ public class GradingFormat {
 	public String toString() {
 		return "GradingFormat [format=" + format + ", passingGrade=" + passingGrade + "]";
 	}
+	
+	public Boolean isPassing(String grade) {
+		Boolean retGrade = null;
+		switch(format) {
+		case LETTER:
+			
+			if (grade.charAt(0) <= passingGrade.charAt(0)) {
+				retGrade = true;
+			} else {
+				retGrade = false;
+			}
+			break;
+		case PASS_FAIL:
+			if ("Pass".equals(grade)) {
+				retGrade = true;
+			} else {
+				retGrade = false;
+			}
+			break;
+		case PERCENT:
+			if (Double.parseDouble(grade) >= Double.parseDouble(passingGrade)) {
+				retGrade = true;
+			} else {
+				retGrade = false;
+			}
+			break;
+		default: //For presentation
+			break;
+			
+		}
+		return retGrade;
+	}
 
 }
