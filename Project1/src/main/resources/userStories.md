@@ -6,7 +6,7 @@
 
 ## Employee
 - [x] **emp1**. As an employee, I can create a reimbursement request.
-- [ ] **emp2**. As an employee, I can cancel my reimbursement request.
+- [x] **emp2**. As an employee, I can cancel my reimbursement request.
 - [ ] **emp3**. As an employee, I can upload the final grade/presentation for the reimbursement request. 
 
 ## Supervisor
