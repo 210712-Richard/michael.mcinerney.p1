@@ -38,7 +38,7 @@ public class RequestControllerImpl implements RequestController {
 		// Get the request from the body
 		Request request = ctx.bodyAsClass(ReimbursementRequest.class);
 		log.debug("Request from the body: " + request);
-		
+
 		// Create the request.
 		request = reqService.createRequest(loggedUser.getUsername(), request.getFirstName(), request.getLastName(),
 				request.getDeptName(), request.getName(), request.getStartDate(), request.getStartTime(),
@@ -112,10 +112,12 @@ public class RequestControllerImpl implements RequestController {
 				// If it is on BenCoApproval, set the BenCoApproval username to the current user
 				if (i == Request.BENCO_INDEX) {
 					currentApproval.setUsername(loggedUser.getUsername());
-					//If the final reimburseamount was set and is different then the actual reimburseamount
+					// If the final reimburseamount was set and is different then the actual
+					// reimburseamount
 					if (approval.getFinalReimburseAmount() != null
 							&& approval.getFinalReimburseAmount() != request.getReimburseAmount()) {
-						//If the user did not provide a reason for why they are changing the reimburse amount
+						// If the user did not provide a reason for why they are changing the reimburse
+						// amount
 						if (approval.getFinalReimburseAmountReason() == null
 								|| approval.getFinalReimburseAmountReason().isBlank()) {
 							// TODO check status code
@@ -143,5 +145,34 @@ public class RequestControllerImpl implements RequestController {
 		}
 
 		ctx.status(403);
+	}
+
+	@Override
+	public void getRequest(Context ctx) {
+		User loggedUser = ctx.sessionAttribute("loggedUser");
+
+		// Make sure the user is logged in
+		if (loggedUser == null) {
+			ctx.status(401);
+			return;
+		}
+		UUID requestId = UUID.fromString(ctx.pathParam("requestId"));
+		Request request = reqService.getRequest(requestId);
+		log.debug("Request from the requestId" + request);
+		if (request == null) {
+			ctx.status(404);
+			ctx.html("No request with that ID");
+			return;
+		}
+		
+		//If the user is not authorized to see the final grade, set the return request to null
+		//NOTE: This will not be saved, this is just for returning it
+		if (!loggedUser.getUsername().equals(request.getUsername())
+				&& !loggedUser.getUsername().equals(request.getFinalApproval().getUsername())) {
+			request.setFinalGrade(null);
+			request.setIsPassing(null);
+		}
+		
+		ctx.json(request);
 	}
 }

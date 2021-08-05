@@ -17,4 +17,10 @@ public interface RequestController {
 	 * The body should have the approval and (if the request is declined) a reason
 	 */
 	public void changeApprovalStatus(Context ctx);
+	
+	/**
+	 * Get the request by the requestId in the path param
+	 * @param ctx The context
+	 */
+	public void getRequest(Context ctx);
 }

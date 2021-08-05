@@ -42,7 +42,7 @@ public interface RequestService {
 	public Request changeApprovalStatus(Request request, ApprovalStatus status, String reason);
 	
 	/**
-	 * Get the Request based on the ID of the user
+	 * Get the Request based on the ID of the request
 	 * @param id
 	 * @return
 	 */
