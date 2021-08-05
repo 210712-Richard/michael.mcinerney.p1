@@ -134,7 +134,15 @@ public class RequestControllerImpl implements RequestController {
 				try {
 					request = reqService.changeApprovalStatus(request, approval.getSupervisorApproval().getStatus(),
 							approval.getReason());
-					ctx.json(request);
+					
+					//If the request returned null, then the request was bad
+					if (request == null) {
+						ctx.status(400);
+						ctx.html("Approval is invalid.");
+					} else {
+						ctx.json(request);
+					}
+					
 					return;
 				} catch (IllegalApprovalAttemptException e) {
 					ctx.status(500);

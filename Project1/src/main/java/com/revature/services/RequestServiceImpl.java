@@ -104,7 +104,8 @@ public class RequestServiceImpl implements RequestService {
 		// active and the arguments are not empty
 		if (VERIFIER.verifyNotNull(request, status)
 				&& ((status.equals(ApprovalStatus.DENIED) && VERIFIER.verifyStrings(reason))
-						|| request.getStatus().equals(RequestStatus.ACTIVE))) {
+						|| status.equals(ApprovalStatus.APPROVED))
+				&& request.getStatus().equals(RequestStatus.ACTIVE)) {
 			// Put all of the approvals into an array
 			Approval[] approvals = request.getApprovalArray();
 

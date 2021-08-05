@@ -59,7 +59,7 @@ public class Driver {
 		app.post("/requests/", reqControl::createRequest);
 		
 		//As an employee, I can cancel my reimbursement request.
-		app.put("/requests/:requestId", reqControl::cancelRequest);
+		app.put("/requests/:requestId/status", reqControl::cancelRequest);
 		
 		//As an employee, I can upload the final grade/presentation for the reimbursement request. 
 		
