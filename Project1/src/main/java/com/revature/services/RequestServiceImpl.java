@@ -248,7 +248,31 @@ public class RequestServiceImpl implements RequestService {
 	}
 
 	@Override
-	public void changeReimburseAmount(Request request, Double reimburse, String reason) {
+	public Request changeReimburseAmount(Request request, Double reimburse, String reason) {
+		Request retRequest = null;
+		//Make sure all the arguments are good
+		if (VERIFIER.verifyNotNull(request, reimburse) && reimburse > 0.0 && VERIFIER.verifyStrings(reason)) {
+			
+			//Set all the request fields
+			request.setFinalReimburseAmount(reimburse);
+			request.setFinalReimburseAmountReason(reason);
+			request.setNeedsEmployeeReview(true);
+			request.setEmployeeAgrees(false);
+			
+			//Change the user's pending balance
+			User user = userDao.getUser(request.getUsername());
+			user.alterPendingBalance(reimburse - request.getReimburseAmount());
+			userDao.updateUser(user);
+			
+			//Update the request and return it
+			reqDao.updateRequest(request);
+			retRequest = request;
+		}
+		return retRequest;
+	}
+
+	@Override
+	public void changeEmployeeAgrees(Request request, Boolean employeeAgrees) {
 		// TODO Auto-generated method stub
 		
 	}

@@ -67,5 +67,12 @@ public interface RequestService {
 	 * @param reason The reason for the reimburse changed
 	 * @return The request back. Null if there was an issue
 	 */
-	public void changeReimburseAmount(Request request, Double reimburse, String reason);
+	public Request changeReimburseAmount(Request request, Double reimburse, String reason);
+	
+	/**
+	 * Change whether the employee agrees with the new reimburse amount
+	 * @param request The request being changed
+	 * @param employeeAgrees Whether the employee agrees or not
+	 */
+	public void changeEmployeeAgrees(Request request, Boolean employeeAgrees);
 }

@@ -66,6 +66,7 @@ public class ReimbursementRequest implements Request {
 		finalApproval = new Approval();
 		
 		employeeAgrees = true;
+		needsEmployeeReview = false;
 	}
 
 	public ReimbursementRequest(String username, String firstName, String lastName, String deptName, String name,
@@ -344,6 +345,10 @@ public class ReimbursementRequest implements Request {
 		Approval [] arr = { supervisorApproval, deptHeadApproval,
 			benCoApproval, finalApproval };
 		return arr;
+	}
+	
+	public Boolean getFinalReimburseChanged() {
+		return finalReimburseAmount != reimburseAmount;
 	}
 
 	@Override
