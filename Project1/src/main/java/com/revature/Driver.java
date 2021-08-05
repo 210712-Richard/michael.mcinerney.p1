@@ -52,6 +52,9 @@ public class Driver {
 		//Create user, mostly for testing purposes
 		app.put("/users/:username", userControl::createUser);
 		
+		//Get Request
+		app.get("/requests/:requestId", reqControl::getRequest);
+		
 		//As an employee, I can create a reimbursement request.
 		app.post("/requests/", reqControl::createRequest);
 		
