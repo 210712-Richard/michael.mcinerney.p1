@@ -16,6 +16,12 @@ public interface Request {
 	TemporalAmount TIME_LIMIT = Duration.of(30, ChronoUnit.MINUTES);
 	//Used to set a placeholder value to the Approval deadline
 	LocalDateTime PLACEHOLDER = LocalDateTime.of(LocalDate.of(2020, 12, 31), LocalTime.of(0, 0));
+	
+	//Indexes for the approval array
+	Integer SUPERVISOR_INDEX = 0;
+	Integer DEPT_HEAD_INDEX = 1;
+	Integer BENCO_INDEX = 2;
+	Integer FINAL_INDEX = 3;
 
 	UUID getId();
 
@@ -141,5 +147,7 @@ public interface Request {
 	String getFinalReimburseAmountReason();
 
 	void setFinalReimburseAmountReason(String finalReimburseAmountReason);
+	
+	Approval[] getApprovalArray();
 
 }

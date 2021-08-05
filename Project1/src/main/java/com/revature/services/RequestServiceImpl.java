@@ -106,8 +106,7 @@ public class RequestServiceImpl implements RequestService {
 				&& ((status.equals(ApprovalStatus.DENIED) && VERIFIER.verifyStrings(reason))
 						|| request.getStatus().equals(RequestStatus.ACTIVE))) {
 			// Put all of the approvals into an array
-			Approval[] approvals = { request.getSupervisorApproval(), request.getDeptHeadApproval(),
-					request.getBenCoApproval(), request.getFinalApproval() };
+			Approval[] approvals = request.getApprovalArray();
 
 			for (int i = 0; i < approvals.length; i++) {
 				Approval currentApproval = approvals[i];
@@ -141,7 +140,7 @@ public class RequestServiceImpl implements RequestService {
 				}
 
 				// On the supervisor approval
-				if (i == 0) {
+				if (i == Request.SUPERVISOR_INDEX) {
 					// Need to check if the supervisor is also the department head
 					Department dept = deptDao.getDepartment(request.getDeptName());
 
@@ -155,23 +154,28 @@ public class RequestServiceImpl implements RequestService {
 					}
 				}
 				// On the BenCo approval
-				else if (i == 2) {
+				else if (i == Request.BENCO_INDEX) {
 					// If the grading format is a presentation, the supervisor will be set to the
 					// final approval
 					// else, the BenCo will be set to the final approval
 					if (request.getGradingFormat().getFormat().equals(Format.PRESENTATION)) {
-						request.getFinalApproval().setUsername(request.getSupervisorApproval().getUsername());
+						nextApproval.setUsername(request.getSupervisorApproval().getUsername());
 					} else {
-						request.getFinalApproval().setUsername(request.getBenCoApproval().getUsername());
+						nextApproval.setUsername(request.getBenCoApproval().getUsername());
 					}
 				}
 				// On final approval
-				else if (i == 3) {
+				else if (i == Request.FINAL_INDEX) {
 					// Set the user's balances and set the request to approved
 					request.setStatus(RequestStatus.APPROVED);
 					User user = userDao.getUser(request.getUsername());
-					user.alterPendingBalance(request.getReimburseAmount() * -1.0);
-					user.alterAwardedBalance(request.getReimburseAmount());
+					
+					//If the reimburse amount was never changed, set it to the current reimburse amount
+					if (request.getFinalReimburseAmount() == null) {
+						request.setFinalReimburseAmount(request.getReimburseAmount());
+					}
+					user.alterPendingBalance(request.getFinalReimburseAmount() * -1.0);
+					user.alterAwardedBalance(request.getFinalReimburseAmount());
 					userDao.updateUser(user);
 				}
 

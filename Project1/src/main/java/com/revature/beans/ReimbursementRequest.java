@@ -338,6 +338,12 @@ public class ReimbursementRequest implements Request {
 		this.finalReimburseAmountReason = finalReimburseAmountReason;
 	}
 
+	public Approval[] getApprovalArray() {
+		Approval [] arr = { supervisorApproval, deptHeadApproval,
+			benCoApproval, finalApproval };
+		return arr;
+	}
+
 	@Override
 	public int hashCode() {
 		return Objects.hash(approvalMsgsURIs, benCoApproval, cost, deptHeadApproval, deptName, description,
