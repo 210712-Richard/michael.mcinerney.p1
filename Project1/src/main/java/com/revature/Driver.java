@@ -80,7 +80,7 @@ public class Driver {
 		
 		//As a Benefits Coordinator, I can alter the amount of the reimbursement request.
 		app.put("/requests/:requestId/finalReimburseAmount/finalReimburseAmountReason", reqControl::changeReimburseAmount);
-		app.put("/request/:requestId/employeeAgrees", reqControl::finalReimburseCheck);
+		app.put("/requests/:requestId/employeeAgrees", reqControl::finalReimburseCheck);
 		
 	}
 

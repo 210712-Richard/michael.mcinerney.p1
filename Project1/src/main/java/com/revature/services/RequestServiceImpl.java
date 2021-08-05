@@ -273,7 +273,20 @@ public class RequestServiceImpl implements RequestService {
 
 	@Override
 	public void changeEmployeeAgrees(Request request, Boolean employeeAgrees) {
-		// TODO Auto-generated method stub
-		
+		if (VERIFIER.verifyNotNull(request, employeeAgrees)) {
+			//Set the request
+			request.setEmployeeAgrees(employeeAgrees);
+			request.setNeedsEmployeeReview(false);
+			
+			//If the employee doens't agree, cancel the request and change their pending balance
+			if (!employeeAgrees) {
+				request.getBenCoApproval().setStatus(ApprovalStatus.UNASSIGNED);
+				cancelRequest(request);
+			} else { //Else, update the request
+				reqDao.updateRequest(request);
+			}
+			
+			
+		}
 	}
 }

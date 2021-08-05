@@ -813,4 +813,61 @@ public class RequestServiceTest {
 		Mockito.verifyZeroInteractions(reqDao);
 		Mockito.verifyZeroInteractions(userDao);
 	}
+	
+	@Test
+	public void testChangeEmployeeAgreesValidTrue() {
+		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
+		request.getBenCoApproval().setStatus(ApprovalStatus.AWAITING);
+		Double finalReimburse = 200.00;
+		request.setFinalReimburseAmount(finalReimburse);
+		Boolean employeeAgrees = true;
+		
+		service.changeEmployeeAgrees(request, employeeAgrees);
+		
+		assertEquals(employeeAgrees, request.getEmployeeAgrees(), "Assert that employee agrees is set in the request");
+		assertEquals(false, request.getNeedsEmployeeReview(), "Assert that needs employee review is set in the request");
+		
+		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
+		
+		assertEquals(request, reqCaptor.getValue(), "Assert that the request passed in is the same request");
+	}
+	
+	@Test
+	public void testChangEmployeeAgreesValidFalse() {
+		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
+		ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+		request.getBenCoApproval().setStatus(ApprovalStatus.AWAITING);
+		Double finalReimburse = 200.00;
+		request.setFinalReimburseAmount(finalReimburse);
+		user.setPendingBalance(finalReimburse);
+		Boolean employeeAgrees = false;
+		
+		service.changeEmployeeAgrees(request, employeeAgrees);
+		
+		assertEquals(employeeAgrees, request.getEmployeeAgrees(), "Assert that employee agrees is set in the request");
+		assertEquals(false, request.getNeedsEmployeeReview(), "Assert that needs employee review is set in the request");
+		assertEquals(RequestStatus.CANCELLED, request.getStatus(), "Assert that the request status was sent.");
+		assertEquals(ApprovalStatus.UNASSIGNED, request.getBenCoApproval().getStatus(), "Assert that the benCoApproval status was set");
+		assertEquals(0.0, user.getPendingBalance(), "Assert that the user's pending balance was reset");
+		
+		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
+		Mockito.verify(userDao).updateUser(userCaptor.capture());
+		
+		assertEquals(request, reqCaptor.getValue(), "Assert that the request passed in is the same request");
+		assertEquals(user, userCaptor.getValue(), "Assert that the user passed in is the same user");
+	}
+	
+	@Test
+	public void testChangeEmployeeAgreesInvalid() {
+		request.getBenCoApproval().setStatus(ApprovalStatus.AWAITING);
+		Double finalReimburse = 200.00;
+		request.setFinalReimburseAmount(finalReimburse);
+		Boolean employeeAgrees = true;
+		
+		service.changeEmployeeAgrees(null, employeeAgrees);
+		service.changeEmployeeAgrees(request, null);
+		
+		Mockito.verifyZeroInteractions(reqDao);
+		Mockito.verifyZeroInteractions(userDao);
+	}
 }
