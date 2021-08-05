@@ -59,4 +59,20 @@ public interface RequestService {
 	 * @param request The Request being cancelled.
 	 */
 	public void cancelRequest(Request request);
+	
+	/**
+	 * Change the final reimburse amount and set other fields
+	 * @param request The request that is changing
+	 * @param reimburse The amount the reimburse is chaning to
+	 * @param reason The reason for the reimburse changed
+	 * @return The request back. Null if there was an issue
+	 */
+	public Request changeReimburseAmount(Request request, Double reimburse, String reason);
+	
+	/**
+	 * Change whether the employee agrees with the new reimburse amount
+	 * @param request The request being changed
+	 * @param employeeAgrees Whether the employee agrees or not
+	 */
+	public void changeEmployeeAgrees(Request request, Boolean employeeAgrees);
 }

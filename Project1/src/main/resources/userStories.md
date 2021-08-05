@@ -18,5 +18,5 @@
 
 ## Benefits Coordinator
 - [x] **benCo1**. As a Benefits Coordinator, I can accept or decline a reimbursement request.
-- [ ] **benCo2**. As a Benefits Coordinator, I can alter the amount of the reimbursement request.
+- [x] **benCo2**. As a Benefits Coordinator, I can alter the amount of the reimbursement request.
 - [x] **benCo3**. As a Benefits Coordinator, I can do the final accept for reimbursement requests with grades.

@@ -14,6 +14,7 @@ import com.revature.beans.ReimbursementRequest;
 import com.revature.beans.Request;
 import com.revature.beans.RequestStatus;
 import com.revature.beans.User;
+import com.revature.beans.UserType;
 import com.revature.exceptions.IllegalApprovalAttemptException;
 import com.revature.factory.BeanFactory;
 import com.revature.factory.TraceLog;
@@ -86,10 +87,14 @@ public class RequestControllerImpl implements RequestController {
 			return;
 		}
 
+		// If the request in the body is null, or the approval passed in is null,
+		// or the status the used sent in is not approved nor denied or the request is
+		// not active
+		// or the employee needs to review the application still
 		if (approval == null || approval.getSupervisorApproval() == null
 				|| (!approval.getSupervisorApproval().getStatus().equals(ApprovalStatus.APPROVED)
 						&& !approval.getSupervisorApproval().getStatus().equals(ApprovalStatus.DENIED))
-				|| !request.getStatus().equals(RequestStatus.ACTIVE)) {
+				|| !request.getStatus().equals(RequestStatus.ACTIVE) || request.getNeedsEmployeeReview() == true) {
 			// TODO check status codes
 			ctx.status(406);
 			ctx.html("This request cannot be approved or denied any further.");
@@ -119,24 +124,7 @@ public class RequestControllerImpl implements RequestController {
 				// If it is on BenCoApproval, set the BenCoApproval username to the current user
 				if (i == Request.BENCO_INDEX) {
 					currentApproval.setUsername(loggedUser.getUsername());
-					// If the final reimburseamount was set and is different then the actual
-					// reimburseamount
-					if (approval.getFinalReimburseAmount() != null
-							&& approval.getFinalReimburseAmount() != request.getReimburseAmount()) {
-						// If the user did not provide a reason for why they are changing the reimburse
-						// amount
-						if (approval.getFinalReimburseAmountReason() == null
-								|| approval.getFinalReimburseAmountReason().isBlank()) {
-							// TODO check status code
-							ctx.status(400);
-							ctx.html("If changing the reimburse amount, need a reason");
-							return;
-						}
-						// TODO handle this case
-						ctx.status(501);
-						ctx.html("Doesn't handle reimburse changes yet.");
-						return;
-					}
+
 				}
 				try {
 					request = reqService.changeApprovalStatus(request, approval.getSupervisorApproval().getStatus(),
@@ -472,8 +460,8 @@ public class RequestControllerImpl implements RequestController {
 			ctx.html("The presentation wasn't found");
 			return;
 		}
-		
-		//If the user is not the request creator and is not the final approver
+
+		// If the user is not the request creator and is not the final approver
 		if (!loggedUser.getUsername().equals(request.getUsername())
 				&& !loggedUser.getUsername().equals(request.getFinalApproval().getUsername())) {
 			ctx.status(403);
@@ -487,5 +475,92 @@ public class RequestControllerImpl implements RequestController {
 		} catch (Exception e) {
 			ctx.status(500);
 		}
+	}
+
+	@Override
+	public void changeReimburseAmount(Context ctx) {
+		User loggedUser = ctx.sessionAttribute("loggedUser");
+
+		// Make sure the user is logged in
+		if (loggedUser == null || !loggedUser.getType().equals(UserType.BENEFITS_COORDINATOR)) {
+			ctx.status(403);
+			return;
+		}
+		
+		Request request = reqService.getRequest(UUID.fromString(ctx.pathParam("requestId")));
+		Request approval = ctx.bodyAsClass(ReimbursementRequest.class);
+		
+		//Make sure the request is awaiting BenCo approval
+		if(!request.getBenCoApproval().getStatus().equals(ApprovalStatus.AWAITING)) {
+			ctx.status(403);
+			return;
+		}
+		// If the final reimburseamount was set and is different then the actual
+		// reimburseamount
+		if (request != null && approval.getFinalReimburseAmount() != null && request.getFinalReimburseAmount() != null &&
+				request.getFinalReimburseAmount() <= 0.0
+				&& approval.getFinalReimburseAmount() != request.getReimburseAmount()) {
+			// If the user did not provide a reason for why they are changing the reimburse
+			// amount
+			if (approval.getFinalReimburseAmountReason() == null
+					|| approval.getFinalReimburseAmountReason().isBlank()) {
+				// TODO check status code
+				ctx.status(400);
+				ctx.html("If changing the reimburse amount, need a reason");
+				return;
+			}
+			// Set the final reimburse amount
+			request = reqService.changeReimburseAmount(request, approval.getFinalReimburseAmount(),
+					approval.getFinalReimburseAmountReason());
+
+			// If the request does not equal null, return the request
+			// else, return a 400 status code
+			if (request != null) {
+				ctx.json(request);
+			} else {
+				// TODO status code check
+				ctx.status(400);
+			}
+			return;
+		}
+		ctx.status(403);
+	}
+
+	@Override
+	public void finalReimburseCheck(Context ctx) {
+		User loggedUser = ctx.sessionAttribute("loggedUser");
+
+		// Make sure the user is logged in
+		if (loggedUser == null) {
+			ctx.status(403);
+			return;
+		}
+		
+		//Get the request
+		Request request = reqService.getRequest(UUID.fromString(ctx.pathParam("requestId")));
+		log.debug("Request from the requestId path param: " + request);
+		
+		//If the request wasn't found
+		if (request == null) {
+			ctx.status(404);
+			ctx.html("No Request Found");
+			return;
+		}
+		//If the user is not the owner of the request or the request does not need their review
+		if (!loggedUser.getUsername().equals(request.getUsername()) || !request.getNeedsEmployeeReview()) {
+			ctx.status(403);
+			return;
+		}
+		
+		//Get the review. If it is null or the getEmployeeAgrees is not a part of it
+		Request review = ctx.bodyAsClass(ReimbursementRequest.class);
+		
+		if (review == null || review.getEmployeeAgrees() == null) {
+			ctx.status(400);
+			return;
+		}
+		
+		reqService.changeEmployeeAgrees(request, review.getEmployeeAgrees());
+		ctx.status(204);
 	}
 }

@@ -246,4 +246,47 @@ public class RequestServiceImpl implements RequestService {
 		userDao.updateUser(user);
 		reqDao.updateRequest(request);
 	}
+
+	@Override
+	public Request changeReimburseAmount(Request request, Double reimburse, String reason) {
+		Request retRequest = null;
+		//Make sure all the arguments are good
+		if (VERIFIER.verifyNotNull(request, reimburse) && reimburse > 0.0 && VERIFIER.verifyStrings(reason)) {
+			
+			//Set all the request fields
+			request.setFinalReimburseAmount(reimburse);
+			request.setFinalReimburseAmountReason(reason);
+			request.setNeedsEmployeeReview(true);
+			request.setEmployeeAgrees(false);
+			
+			//Change the user's pending balance
+			User user = userDao.getUser(request.getUsername());
+			user.alterPendingBalance(reimburse - request.getReimburseAmount());
+			userDao.updateUser(user);
+			
+			//Update the request and return it
+			reqDao.updateRequest(request);
+			retRequest = request;
+		}
+		return retRequest;
+	}
+
+	@Override
+	public void changeEmployeeAgrees(Request request, Boolean employeeAgrees) {
+		if (VERIFIER.verifyNotNull(request, employeeAgrees)) {
+			//Set the request
+			request.setEmployeeAgrees(employeeAgrees);
+			request.setNeedsEmployeeReview(false);
+			
+			//If the employee doens't agree, cancel the request and change their pending balance
+			if (!employeeAgrees) {
+				request.getBenCoApproval().setStatus(ApprovalStatus.UNASSIGNED);
+				cancelRequest(request);
+			} else { //Else, update the request
+				reqDao.updateRequest(request);
+			}
+			
+			
+		}
+	}
 }

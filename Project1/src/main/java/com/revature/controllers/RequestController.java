@@ -65,4 +65,16 @@ public interface RequestController {
 	 * @param ctx The context
 	 */
 	public void getPresentation(Context ctx);
+	
+	/**
+	 * Change the Reimburse Amount
+	 * @param ctx The context
+	 */
+	public void changeReimburseAmount(Context ctx);
+	
+	/**
+	 * Set whether the employee agrees with the finalReimburseAmount or not
+	 * @param ctx The context
+	 */
+	public void finalReimburseCheck(Context ctx);
 }
