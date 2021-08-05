@@ -1,5 +1,6 @@
 package com.revature.controllers;
 
+import java.io.InputStream;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -8,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.revature.beans.Approval;
 import com.revature.beans.ApprovalStatus;
+import com.revature.beans.Format;
 import com.revature.beans.ReimbursementRequest;
 import com.revature.beans.Request;
 import com.revature.beans.RequestStatus;
@@ -264,8 +266,8 @@ public class RequestControllerImpl implements RequestController {
 		// Generate the key and upload to the bucket
 		String key = request.getId() + "/files/" + request.getFileURIs().size() + "." + filetype;
 		s3Instance.uploadToBucket(key, ctx.bodyAsBytes());
-		
-		//Add the key to the request, update database, and return request
+
+		// Add the key to the request, update database, and return request
 		request.getFileURIs().add(key);
 		reqService.updateRequest(request);
 		ctx.json(request);
@@ -316,17 +318,174 @@ public class RequestControllerImpl implements RequestController {
 		}
 
 		// Generate the key and upload to the bucket
-		String key = request.getId() + "/messages/" + request.getFileURIs().size() + "." + filetype;
+		String key = request.getId() + "/messages/" + request.getApprovalMsgsURIs().size() + "." + filetype;
 		s3Instance.uploadToBucket(key, ctx.bodyAsBytes());
 		request.getApprovalMsgsURIs().add(key);
-		
+
 		// Bypass the request if the supervisor or department head are awaiting
 		if (request.getSupervisorApproval().getStatus().equals(ApprovalStatus.AWAITING)
 				|| request.getDeptHeadApproval().getStatus().equals(ApprovalStatus.AWAITING)) {
 			reqService.changeApprovalStatus(request, ApprovalStatus.BYPASSED, null);
 		}
-		//Return request
+		// Return request
 		ctx.json(request);
-			
+
+	}
+
+	@Override
+	public void uploadPresentation(Context ctx) {
+		User loggedUser = ctx.sessionAttribute("loggedUser");
+		String filetype = ctx.header("filetype");
+		final String PPT = "pptx";
+		// Make sure the user is logged in
+		if (loggedUser == null) {
+			ctx.status(401);
+			return;
+		}
+
+		// Make sure the filetype is correct
+		if (!PPT.equals(filetype)) {
+			ctx.status(400);
+			ctx.html("Incorret filetype entered");
+			return;
+		}
+
+		// Get the request from the UUID in the path
+		UUID requestId = UUID.fromString(ctx.pathParam("requestId"));
+		Request request = reqService.getRequest(requestId);
+		log.debug("Request from the requestId" + request);
+
+		// If no request was found with that id
+		if (request == null) {
+			ctx.status(404);
+			ctx.html("No request with that ID");
+			return;
+		}
+
+		// If the request is ready to be processed by BenCo or cancelled by the
+		// user or is not supposed to accept a presentation
+		if (!request.getStatus().equals(RequestStatus.ACTIVE)
+				|| !request.getFinalApproval().getStatus().equals(ApprovalStatus.AWAITING)
+				|| !request.getGradingFormat().getFormat().equals(Format.PRESENTATION)) {
+			ctx.status(403);
+			return;
+		}
+
+		// If the user is not the owner of the request
+		if (!loggedUser.getUsername().equals(request.getUsername())) {
+			ctx.status(403);
+			return;
+		}
+
+		// Generate the key and upload to the bucket
+		String key = request.getId() + "/presentations/presentation." + filetype;
+		s3Instance.uploadToBucket(key, ctx.bodyAsBytes());
+		request.setPresFileName(key);
+		// Update and return request
+		reqService.updateRequest(request);
+		ctx.json(request);
+
+	}
+
+	public void getFile(Context ctx) {
+		User loggedUser = ctx.sessionAttribute("loggedUser");
+		// Make sure the user is logged in
+		if (loggedUser == null) {
+			ctx.status(401);
+			return;
+		}
+
+		Request request = reqService.getRequest(UUID.fromString(ctx.pathParam("requestId")));
+		log.debug("Request from the requestId in path: " + request);
+		Integer index = Integer.parseInt(ctx.pathParam("index"));
+		log.debug("The index from the path: " + index);
+
+		// If the request was not found
+		if (request == null) {
+			ctx.status(404);
+			ctx.html("The request wasn't found");
+			return;
+		}
+		if (index == null || index < 0 || index >= request.getFileURIs().size()) {
+			ctx.status(404);
+			ctx.html("The file wasn't found");
+			return;
+		}
+		String key = request.getFileURIs().get(index);
+
+		try {
+			InputStream file = s3Instance.getObject(key);
+			ctx.result(file);
+		} catch (Exception e) {
+			ctx.status(500);
+		}
+	}
+
+	public void getMessage(Context ctx) {
+		User loggedUser = ctx.sessionAttribute("loggedUser");
+		// Make sure the user is logged in
+		if (loggedUser == null) {
+			ctx.status(401);
+			return;
+		}
+
+		Request request = reqService.getRequest(UUID.fromString(ctx.pathParam("requestId")));
+		log.debug("Request from the requestId in path: " + request);
+		Integer index = Integer.parseInt(ctx.pathParam("index"));
+		log.debug("The index from the path: " + index);
+
+		// If the request was not found
+		if (request == null) {
+			ctx.status(404);
+			ctx.html("The request wasn't found");
+			return;
+		}
+		if (index == null || index < 0 || index > request.getApprovalMsgsURIs().size()) {
+			ctx.status(404);
+			ctx.html("The file wasn't found");
+			return;
+		}
+		String key = request.getApprovalMsgsURIs().get(index);
+
+		try {
+			InputStream file = s3Instance.getObject(key);
+			ctx.result(file);
+		} catch (Exception e) {
+			ctx.status(500);
+		}
+	}
+
+	public void getPresentation(Context ctx) {
+		User loggedUser = ctx.sessionAttribute("loggedUser");
+		// Make sure the user is logged in
+		if (loggedUser == null) {
+			ctx.status(401);
+			return;
+		}
+
+		Request request = reqService.getRequest(UUID.fromString(ctx.pathParam("requestId")));
+		log.debug("Request from the requestId in path: " + request);
+
+		// If the request was not found
+		if (request == null || request.getPresFileName() == null) {
+			ctx.status(404);
+			ctx.html("The presentation wasn't found");
+			return;
+		}
+		
+		//If the user is not the request creator and is not the final approver
+		if (!loggedUser.getUsername().equals(request.getUsername())
+				&& !loggedUser.getUsername().equals(request.getFinalApproval().getUsername())) {
+			ctx.status(403);
+			return;
+		}
+		String key = request.getPresFileName();
+
+		try {
+			InputStream file = s3Instance.getObject(key);
+			ctx.result(file);
+		} catch (Exception e) {
+			ctx.status(500);
+		}
 	}
 }

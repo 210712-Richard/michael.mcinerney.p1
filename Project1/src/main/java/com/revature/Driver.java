@@ -62,15 +62,22 @@ public class Driver {
 		app.post("/requests/:requestId/fileURIs", reqControl::uploadExtraFile);
 		app.post("/requests/:requestId/approvalMsgsURIs", reqControl::uploadMessageFile);
 		
+		//Get the files
+		app.get("/requests/:requestId/fileURIs/:index", reqControl::getFile);
+		app.get("requests/:requestId/approvalMsgsURIs/:index", reqControl::getMessage);
+		
 		//As an employee, I can cancel my reimbursement request.
 		app.put("/requests/:requestId/status", reqControl::cancelRequest);
 		
 		//As an employee, I can upload the final grade/presentation for the reimbursement request. 
+		app.put("/requests/:requestId/presFileName", reqControl::uploadPresentation);
+		app.get("/requests/:requestId/presFileName", reqControl::getPresentation);
 		
 		//As a supervisor, I can accept or decline a reimbursement request.
 		//As a department head, I can accept or decline a reimbursement request.
 		//As a Benefits Coordinator, I can accept or decline a reimbursement request.
 		app.put("/requests/:requestId", reqControl::changeApprovalStatus);
+		
 	}
 
 	/**

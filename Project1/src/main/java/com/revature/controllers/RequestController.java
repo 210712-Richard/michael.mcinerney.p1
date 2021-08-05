@@ -42,4 +42,27 @@ public interface RequestController {
 	 * @param ctx The context
 	 */
 	public void uploadMessageFile(Context ctx);
+	
+	/**
+	 * Upload the final presentation
+	 * @param ctx The context
+	 */
+	public void uploadPresentation(Context ctx);
+	
+	/**
+	 * Get the file
+	 * @param ctx The context
+	 */
+	public void getFile(Context ctx);
+	
+	/**
+	 * Get a message file in the request
+	 * @param ctx The context
+	 */
+	public void getMessage(Context ctx);
+	/**
+	 * Get the presentation
+	 * @param ctx The context
+	 */
+	public void getPresentation(Context ctx);
 }
