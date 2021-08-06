@@ -10,15 +10,21 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatementBuilder;
 import com.revature.beans.Department;
 import com.revature.factory.TraceLog;
 import com.revature.util.CassandraUtil;
+import com.revature.util.Verifier;
 
 @TraceLog
 public class DepartmentDaoImpl implements DepartmentDao {
 	private CqlSession session = CassandraUtil.getInstance().getSession();
+	private static final Verifier VERIFIER = new Verifier();
 	
 
 	@Override
 	public Department getDepartment(String deptName) {
 		
+		//Make sure the deptName is not null
+		if (!VERIFIER.verifyNotNull(deptName)) {
+			return null;
+		}
 		//Create the query and bind the parameters
 		String query = "SELECT name, deptheadusername FROM department WHERE name = ?;";
 		

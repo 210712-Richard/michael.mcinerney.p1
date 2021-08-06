@@ -38,9 +38,8 @@ public class RequestDaoImpl implements RequestDao {
 			DataTypes.TEXT);
 
 	public Request getRequest(UUID id) {
-		if (id == null) {
-			return null;
-		}
+		
+		//Create the query and bind the parameters
 		StringBuilder query = new StringBuilder("SELECT ")
 				.append("id, username, status, isurgent, name, firstname, lastname, ")
 				.append("deptname, startdate, starttime, location, description, cost, gradingFormat, ")
@@ -51,14 +50,17 @@ public class RequestDaoImpl implements RequestDao {
 				.append("FROM request WHERE id = ?;");
 		SimpleStatement s = new SimpleStatementBuilder(query.toString()).build();
 		BoundStatement bound = session.prepare(s).bind(id);
-
+		
+		//Execute the query and get the result set
 		ResultSet rs = session.execute(bound);
 		Row row = rs.one();
 
+		//If the row is null, return null
 		if (row == null) {
 			return null;
 		}
-
+		
+		//Create a new request using the data from the row and return the request
 		Request request = new ReimbursementRequest();
 		request.setId(row.getUuid("id"));
 		request.setUsername(row.getString("username"));
@@ -112,7 +114,10 @@ public class RequestDaoImpl implements RequestDao {
 	}
 
 	public List<Request> getRequests() {
+		//Instantiate a list to return
 		List<Request> requests = new ArrayList<Request>();
+		
+		//Create the query and execute it
 		StringBuilder query = new StringBuilder("SELECT ")
 				.append("id, username, status, isurgent, name, firstname, lastname, ")
 				.append("deptname, startdate, starttime, location, description, cost, gradingFormat, ")
@@ -121,9 +126,9 @@ public class RequestDaoImpl implements RequestDao {
 				.append("finalgrade, ispassing, presfilename, finalapproval, finalreimburseamount, ")
 				.append("finalreimburseamountreason, needsemployeereview, employeeagrees ").append("FROM request;");
 		SimpleStatement s = new SimpleStatementBuilder(query.toString()).build();
-
 		ResultSet rs = session.execute(s);
-
+		
+		//Loop through each row, create a request, and add the request to the list
 		rs.forEach((row) -> {
 			Request request = new ReimbursementRequest();
 			request.setId(row.getUuid("id"));
@@ -179,6 +184,8 @@ public class RequestDaoImpl implements RequestDao {
 	}
 
 	public void updateRequest(Request request) {
+		
+		//Create the query 
 		StringBuilder query = new StringBuilder("UPDATE request SET ")
 				.append("status = ?, isurgent = ?, name = ?, firstname = ?, lastname = ?, ")
 				.append("deptname = ?, startdate = ?, starttime = ?, location = ?, description = ?, cost = ?, gradingFormat = ?, ")
@@ -211,6 +218,7 @@ public class RequestDaoImpl implements RequestDao {
 				request.getFinalApproval().getDeadline().toInstant(ZoneOffset.UTC),
 				request.getFinalApproval().getUsername());
 
+		//Bind the paramters and execute
 		BoundStatement bound = session.prepare(s).bind(request.getStatus().toString(), request.getIsUrgent(),
 				request.getName(), request.getFirstName(), request.getLastName(), request.getDeptName(),
 				request.getStartDate(), request.getStartTime(), request.getLocation(), request.getDescription(),
@@ -225,6 +233,8 @@ public class RequestDaoImpl implements RequestDao {
 	}
 
 	public void createRequest(Request request) {
+		
+		//Create the query
 		StringBuilder query = new StringBuilder("INSERT INTO request (")
 				.append("id, username, status, isurgent, name, firstname, lastname, ")
 				.append("deptname, startdate, starttime, location, description, cost, gradingFormat, ")
@@ -257,6 +267,8 @@ public class RequestDaoImpl implements RequestDao {
 				request.getFinalApproval().getDeadline().toInstant(ZoneOffset.UTC),
 				request.getFinalApproval().getUsername());
 
+		
+		//Bind the parameters an execute
 		BoundStatement bound = session.prepare(s).bind(request.getId(), request.getUsername(),
 				request.getStatus().toString(), request.getIsUrgent(), request.getName(), request.getFirstName(),
 				request.getLastName(), request.getDeptName(), request.getStartDate(), request.getStartTime(),

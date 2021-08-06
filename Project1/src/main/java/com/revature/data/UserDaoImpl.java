@@ -13,32 +13,38 @@ import com.revature.beans.User;
 import com.revature.beans.UserType;
 import com.revature.factory.TraceLog;
 import com.revature.util.CassandraUtil;
+import com.revature.util.Verifier;
 
 @TraceLog
 public class UserDaoImpl implements UserDao {
 	private CqlSession session = CassandraUtil.getInstance().getSession();
+	private static final Verifier VERIFIER = new Verifier();
 
 	@Override
 	public User getUser(String username) {
-		
+
+		// Make sure the username is not null
+		if (!VERIFIER.verifyNotNull(username)) {
+			return null;
+		}
 		// Create the query and bind the parameters to it
 		StringBuilder query = new StringBuilder("SELECT username, password, email, firstname, ")
 				.append("lastname, type, departmentname, supervisorusername, pendingbalance, awardedbalance, requests, "
 						+ "reviewrequests FROM user WHERE username = ?;");
 		SimpleStatement s = new SimpleStatementBuilder(query.toString()).build();
 		BoundStatement bound = session.prepare(s).bind(username);
-		
-		//Execute the query and get the result set
+
+		// Execute the query and get the result set
 		ResultSet rs = session.execute(bound);
 
 		Row row = rs.one();
-		
-		//If the row is null, return a null object
+
+		// If the row is null, return a null object
 		if (row == null) {
 			return null;
 		}
-		
-		//Set all the row's data to the user
+
+		// Set all the row's data to the user
 		User user = new User();
 
 		user.setUsername(row.getString("username"));
@@ -60,24 +66,28 @@ public class UserDaoImpl implements UserDao {
 	@Override
 	public User getUser(String username, String password) {
 
-		//Create the query and bind the parameters
+		// Make sure the username and password are not null
+		if (!VERIFIER.verifyNotNull(username, password)) {
+			return null;
+		}
+		// Create the query and bind the parameters
 		StringBuilder query = new StringBuilder("SELECT username, password, email, firstname, ")
 				.append("lastname, type, departmentname, supervisorusername, pendingbalance, awardedbalance, requests, "
 						+ "reviewrequests FROM user WHERE username = ? AND password = ?;");
 		SimpleStatement s = new SimpleStatementBuilder(query.toString()).build();
 		BoundStatement bound = session.prepare(s).bind(username, password);
-		
-		//Execute the query and get the result set
+
+		// Execute the query and get the result set
 		ResultSet rs = session.execute(bound);
 
 		Row row = rs.one();
-		
-		//If the row is null, return null
+
+		// If the row is null, return null
 		if (row == null) {
 			return null;
 		}
 
-		//Set the row's data to a User and return the User
+		// Set the row's data to a User and return the User
 		User user = new User();
 
 		user.setUsername(row.getString("username"));
@@ -98,7 +108,8 @@ public class UserDaoImpl implements UserDao {
 
 	@Override
 	public void updateUser(User user) {
-		//Create the query and bind the parameters
+
+		// Create the query and bind the parameters
 		StringBuilder query = new StringBuilder("UPDATE user SET email=?, firstname=?, ").append(
 				"lastname=?, type=?, departmentname=?, supervisorusername=?, pendingbalance=?, awardedbalance=?, requests=?, "
 						+ "reviewrequests=? WHERE username = ? AND password = ?");
@@ -108,14 +119,15 @@ public class UserDaoImpl implements UserDao {
 				user.getType().toString(), user.getDepartmentName(), user.getSupervisorUsername(),
 				user.getPendingBalance(), user.getAwardedBalance(), user.getRequests(), user.getReviewRequests(),
 				user.getUsername(), user.getPassword());
-		
-		//Execute the query
+
+		// Execute the query
 		session.execute(bound);
 	}
 
 	@Override
 	public void createUser(User user) {
-		//Create the query and bind the parameters
+
+		// Create the query and bind the parameters
 		StringBuilder query = new StringBuilder("INSERT INTO user (username, password, email, firstname, ")
 				.append("lastname, type, departmentname, supervisorusername, pendingbalance, awardedbalance, requests, "
 						+ "reviewrequests")
@@ -126,8 +138,9 @@ public class UserDaoImpl implements UserDao {
 				user.getFirstName(), user.getLastName(), user.getType().toString(), user.getDepartmentName(),
 				user.getSupervisorUsername(), user.getPendingBalance(), user.getAwardedBalance(), user.getRequests(),
 				user.getReviewRequests());
-		
-		//Execute the query
+
+		// Execute the query
 		session.execute(bound);
+
 	}
 }
