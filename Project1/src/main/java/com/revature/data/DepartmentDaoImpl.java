@@ -19,33 +19,39 @@ public class DepartmentDaoImpl implements DepartmentDao {
 	@Override
 	public Department getDepartment(String deptName) {
 		
-		if (deptName == null) {
-			return null;
-		}
+		//Create the query and bind the parameters
 		String query = "SELECT name, deptheadusername FROM department WHERE name = ?;";
 		
 		SimpleStatement s = new SimpleStatementBuilder(query).build();
 		BoundStatement bound = session.prepare(s).bind(deptName);
+		
+		//Execute the query and get the ResultSet
 		ResultSet rs = session.execute(bound);
 		Row row = rs.one();
 		
-		//This means the user was not found
+		//If the row was null, return null
 		if (row == null) {
 			return null;
 		}
+		
+		//Set the row's data to a Department and return the Department
 		Department dept = new Department();
 		dept.setName(row.getString("name"));
 		dept.setDeptHeadUsername(row.getString("deptheadusername"));
 		return dept;
 	}
-
+	
+	@Override
 	public void createDepartment(Department dept) {
+		
+		//Create the query and bind to the parameters
 		String query = "INSERT INTO department (name, deptheadusername) values (?, ?);";
-
 		SimpleStatement s = new SimpleStatementBuilder(query)
 				.setConsistencyLevel(DefaultConsistencyLevel.LOCAL_QUORUM)
 				.build();
 		BoundStatement bound = session.prepare(s).bind(dept.getName(), dept.getDeptHeadUsername());
+		
+		//Execute the query
 		session.execute(bound);
 	}
 

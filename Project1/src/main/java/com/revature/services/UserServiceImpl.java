@@ -35,6 +35,7 @@ public class UserServiceImpl implements UserService {
 		User newUser = new User(username, password, email, firstName, lastName, type, deptName, supervisorUsername);
 		log.debug("User being created: " + newUser);
 		
+		//Send the data to the DAO to put in the database
 		userDao.createUser(newUser);
 		
 		return newUser;
@@ -42,6 +43,7 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public Boolean isUsernameUnique(String username) {
+		//Get the user from the database
 		User user = userDao.getUser(username);
 		log.debug("User returned: " + user);
 		
@@ -55,9 +57,13 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public User updateUser(User user) {
+		
+		//IF a null user was passed in, return null
 		if (user == null) {
 			return null;
 		}
+		
+		//Send the updated user to the database to put the new data
 		userDao.updateUser(user);
 		return user;
 	}
