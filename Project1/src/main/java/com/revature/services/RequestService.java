@@ -11,6 +11,8 @@ import com.revature.beans.Request;
 
 public interface RequestService {
 	
+	Object APPROVAL_LOCK = new Object();
+	
 	/**
 	 * Creates a request with the parameters
 	 * @param username The username of the user
@@ -82,4 +84,10 @@ public interface RequestService {
 	 * @param grade The final grade
 	 */
 	public void addFinalGrade(Request request, String grade);
+	
+	/**
+	 * Auto approves the request
+	 */
+	public void autoApprove();
+
 }

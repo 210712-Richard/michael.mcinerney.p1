@@ -3,6 +3,7 @@ package com.revature.services;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.Period;
+import java.util.List;
 import java.util.UUID;
 
 import org.apache.logging.log4j.LogManager;
@@ -79,9 +80,9 @@ public class RequestServiceImpl implements RequestService {
 
 				// Set the supervisor approval to the user's supervisor and start the deadline
 				request.getSupervisorApproval().setUsername(user.getSupervisorUsername());
-				request.getSupervisorApproval().startDeadline();
+				request.startDeadline();
 				request.getSupervisorApproval().setStatus(ApprovalStatus.AWAITING);
-				log.debug("Supervisor's deadline set to " + request.getSupervisorApproval().getDeadline());
+				log.debug("Deadline set to " + request.getDeadline());
 				// Add the request to the database
 				reqDao.createRequest(request);
 
@@ -192,7 +193,7 @@ public class RequestServiceImpl implements RequestService {
 				// If there is another approval (Only when it is on final approval)
 				if (nextApproval != null) {
 					nextApproval.setStatus(ApprovalStatus.AWAITING);
-					nextApproval.startDeadline();
+					request.startDeadline();
 				}
 
 				reqDao.updateRequest(request);
@@ -296,11 +297,52 @@ public class RequestServiceImpl implements RequestService {
 	@Override
 	public void addFinalGrade(Request request, String grade) {
 		if (VERIFIER.verifyNotNull(request) && VERIFIER.verifyStrings(grade)) {
-			
-			//Set the grade and make sure it is passing
+
+			// Set the grade and make sure it is passing
 			request.setFinalGrade(grade);
 			request.setIsPassing(request.getGradingFormat().isPassing(grade));
 			reqDao.updateRequest(request);
+		}
+	}
+
+	@Override
+	public void autoApprove() {
+		// Check the database to see if there are any requests needed to auto approve
+		List<Request> requests = reqDao.getExpiredRequests();
+
+		// If the list isn't null or empty, that means an active request has a past-due
+		// deadline
+		if (requests != null && !requests.isEmpty()) {
+
+			// Make sure the controller doesn't approve the request
+			synchronized (RequestService.APPROVAL_LOCK) {
+
+				for (Request request : requests) {
+					log.debug("Request being auto approved: " + request);
+
+					// If the supervisor or dept head approval was needed, will just auto approve
+					// those
+					if (ApprovalStatus.AWAITING.equals(request.getSupervisorApproval().getStatus())
+							|| ApprovalStatus.AWAITING.equals(request.getDeptHeadApproval().getStatus())) {
+						changeApprovalStatus(request, ApprovalStatus.AUTO_APPROVED, null);
+
+					}
+
+					// If the benCo or finalApproval user didn't approve, will need to message benCo
+					// supervisor
+					else if (ApprovalStatus.AWAITING.equals(request.getBenCoApproval().getStatus())
+							|| ApprovalStatus.AWAITING.equals(request.getFinalApproval().getStatus())) {
+						request.startDeadline();
+						reqDao.updateRequest(request);
+
+					}
+					// If none of the requests are waiting, the request is most likely bad
+					else {
+						throw new IllegalApprovalAttemptException("Auto-approval attempt on Request.");
+					}
+				}
+			}
+
 		}
 	}
 }

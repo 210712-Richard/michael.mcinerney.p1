@@ -115,6 +115,10 @@ public interface Request {
 
 	void setBenCoApproval(Approval benCoApproval);
 	
+	LocalDateTime getDeadline();
+	void setDeadline(LocalDateTime deadline);
+	void startDeadline();
+	
 	String getReason();
 	void setReason(String reason);
 

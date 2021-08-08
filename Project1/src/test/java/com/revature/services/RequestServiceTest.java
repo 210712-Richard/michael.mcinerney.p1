@@ -10,6 +10,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.Period;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -18,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
+import com.revature.beans.Approval;
 import com.revature.beans.ApprovalStatus;
 import com.revature.beans.Department;
 import com.revature.beans.EventType;
@@ -133,7 +136,7 @@ public class RequestServiceTest {
 				"Assert that the supervisor that needs to do the approval is the same as the User's supervisor");
 
 		// Make sure deadline is not the default value
-		assertTrue(Request.PLACEHOLDER.isBefore(newRequest.getSupervisorApproval().getDeadline()),
+		assertTrue(Request.PLACEHOLDER.isBefore(newRequest.getDeadline()),
 				"Assert that the deadline changed away from the placeholder.");
 
 		// Make sure supervisor status is awaiting
@@ -326,7 +329,7 @@ public class RequestServiceTest {
 				"Assert that the dept head approval is now awaiting.");
 		assertEquals(request.getDeptHeadApproval().getUsername(), dept.getDeptHeadUsername(),
 				"Assert that the dept head is set to do the approval");
-		assertNotEquals(request.getDeptHeadApproval().getDeadline(), Request.PLACEHOLDER,
+		assertNotEquals(request.getDeadline(), Request.PLACEHOLDER,
 				"Assert that the time limit has changed for the Request from the placeholder");
 
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
@@ -388,7 +391,7 @@ public class RequestServiceTest {
 				"Assert that the supervisor approved the request.");
 		assertEquals(ApprovalStatus.AWAITING, request.getBenCoApproval().getStatus(),
 				"Assert that the BenCo approval is now in awaiting.");
-		assertNotEquals(request.getBenCoApproval().getDeadline(), Request.PLACEHOLDER,
+		assertNotEquals(request.getDeadline(), Request.PLACEHOLDER,
 				"Assert that the time limit has changed for the Request from the placeholder");
 
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
@@ -450,7 +453,7 @@ public class RequestServiceTest {
 				"Assert that the BenCo approval is now in awaiting.");
 		assertEquals(request.getBenCoApproval().getUsername(), request.getFinalApproval().getUsername(),
 				"Assert that the finalApproval username is set to the supervisor's username");
-		assertNotEquals(request.getFinalApproval().getDeadline(), Request.PLACEHOLDER,
+		assertNotEquals(request.getDeadline(), Request.PLACEHOLDER,
 				"Assert that the time limit has changed for the Request from the placeholder");
 
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
@@ -480,7 +483,7 @@ public class RequestServiceTest {
 				"Assert that the final approval is now in awaiting.");
 		assertEquals(request.getSupervisorApproval().getUsername(), request.getFinalApproval().getUsername(),
 				"Assert that the finalApproval username is set to the supervisor's username");
-		assertNotEquals(request.getFinalApproval().getDeadline(), Request.PLACEHOLDER,
+		assertNotEquals(request.getDeadline(), Request.PLACEHOLDER,
 				"Assert that the time limit has changed for the Request from the placeholder");
 
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
@@ -685,65 +688,66 @@ public class RequestServiceTest {
 		Mockito.verifyZeroInteractions(reqDao);
 
 	}
-	
+
 	@Test
 	public void testCancelRequestValidReimburse() {
 		ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
 		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
 		Double reimburse = 200.00;
 		Double zero = 0.0;
-		
+
 		request.setReimburseAmount(reimburse);
 		user.setPendingBalance(reimburse);
-		
+
 		service.cancelRequest(request);
-		
+
 		assertEquals(RequestStatus.CANCELLED, request.getStatus(), "Assert that the request was cancelled");
 		assertEquals(zero, user.getPendingBalance(), "Assert that pending balance is empty");
-		
+
 		Mockito.verify(userDao).updateUser(userCaptor.capture());
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
-		
+
 		assertEquals(request, reqCaptor.getValue(), "Assert that the Request was passed into updateRequest");
 		assertEquals(user, userCaptor.getValue(), "Assert that the User was passed into updateUser");
 	}
-	
+
 	@Test
 	public void testCancelRequestValidFinalReimburse() {
-		//Set up the ArgumentCaptors
+		// Set up the ArgumentCaptors
 		ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
 		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
-		
-		//Values to be used for the test
+
+		// Values to be used for the test
 		Double reimburse = 200.00;
 		Double finalReimburse = 100.00;
 		Double zero = 0.0;
-		
-		//Set reimburse and finalreimburse. Finalreimburse should be the one used though
+
+		// Set reimburse and finalreimburse. Finalreimburse should be the one used
+		// though
 		request.setReimburseAmount(reimburse);
 		request.setFinalReimburseAmount(finalReimburse);
 		user.setPendingBalance(finalReimburse);
-		
+
 		service.cancelRequest(request);
-		
+
 		assertEquals(RequestStatus.CANCELLED, request.getStatus(), "Assert that the request was cancelled");
 		assertEquals(zero, user.getPendingBalance(), "Assert that pending balance is empty");
-		
+
 		Mockito.verify(userDao).updateUser(userCaptor.capture());
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
-		
+
 		assertEquals(request, reqCaptor.getValue(), "Assert that the Request was passed into updateRequest");
 		assertEquals(user, userCaptor.getValue(), "Assert that the User was passed into updateUser");
 	}
-	
+
 	@Test
 	public void testCancelRequestInvalid() {
 		service.cancelRequest(null);
-		
+
 		Mockito.verifyZeroInteractions(reqDao);
 		Mockito.verifyZeroInteractions(userDao);
 	}
-	
+
 	@Test
 	public void testChangeReimburseAmountValid() {
 		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
@@ -751,60 +755,61 @@ public class RequestServiceTest {
 		Double reimburse = 200.00;
 		Double finalReimburse = 100.00;
 		String reason = "this is a reason";
-		
+
 		request.setReimburseAmount(reimburse);
 		user.setPendingBalance(reimburse);
-		
+
 		Request retRequest = service.changeReimburseAmount(request, finalReimburse, reason);
-		
-		//Make sure all the fields were set correctly
+
+		// Make sure all the fields were set correctly
 		assertEquals(request, retRequest, "Assert that the request returned is the same request.");
 		assertEquals(finalReimburse, request.getFinalReimburseAmount(), "Assert that the finalReimburseAmount is set");
-		assertEquals(reason, request.getFinalReimburseAmountReason(), "Assert that the finalReimburseAmountReason is set");
+		assertEquals(reason, request.getFinalReimburseAmountReason(),
+				"Assert that the finalReimburseAmountReason is set");
 		assertEquals(true, request.getNeedsEmployeeReview(), "Assert that needsEmployeeReview is true");
 		assertEquals(false, request.getEmployeeAgrees(), "Assert that employeeAgrees is set to false");
 		assertEquals(finalReimburse, user.getPendingBalance(), "Assert that the user's pending balance was changed");
-		
-		//Verify updateRequest was called and the request was set in
+
+		// Verify updateRequest was called and the request was set in
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
 		Mockito.verify(userDao).updateUser(userCaptor.capture());
 		assertEquals(request, reqCaptor.getValue(), "Assert that the request passed in is the same request");
 		assertEquals(user, userCaptor.getValue(), "Assert that the user passed in is the same user");
 	}
-	
+
 	@Test
 	public void testChangeReimburseAmountInvalid() {
 		Double reimburse = 200.00;
 		Double finalReimburse = 100.00;
 		String reason = "this is a reason";
-		
+
 		request.setReimburseAmount(reimburse);
-		
-		//Null requests return null
+
+		// Null requests return null
 		Request nullRequest = service.changeReimburseAmount(null, finalReimburse, reason);
 		assertNull("Assert that a null request returns a null", nullRequest);
-		
-		//Null or less than zero finalreimburse returns null
+
+		// Null or less than zero finalreimburse returns null
 		nullRequest = service.changeReimburseAmount(request, null, reason);
 		assertNull("Assert that a null finalReimburse returns a null", nullRequest);
-		
+
 		nullRequest = service.changeReimburseAmount(request, 0.0, reason);
 		assertNull("Assert that a zero finalReimburse returns a null", nullRequest);
-		
+
 		nullRequest = service.changeReimburseAmount(request, -1.0, reason);
 		assertNull("Assert that a negative finalReimburse returns a null", nullRequest);
-		
-		//Null or blank reason returns null
+
+		// Null or blank reason returns null
 		nullRequest = service.changeReimburseAmount(request, finalReimburse, null);
 		assertNull("Assert that a null reason returns a null", nullRequest);
-		
+
 		nullRequest = service.changeReimburseAmount(request, null, " ");
 		assertNull("Assert that a blank reason returns a null", nullRequest);
-		
+
 		Mockito.verifyZeroInteractions(reqDao);
 		Mockito.verifyZeroInteractions(userDao);
 	}
-	
+
 	@Test
 	public void testChangeEmployeeAgreesValidTrue() {
 		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
@@ -812,17 +817,18 @@ public class RequestServiceTest {
 		Double finalReimburse = 200.00;
 		request.setFinalReimburseAmount(finalReimburse);
 		Boolean employeeAgrees = true;
-		
+
 		service.changeEmployeeAgrees(request, employeeAgrees);
-		
+
 		assertEquals(employeeAgrees, request.getEmployeeAgrees(), "Assert that employee agrees is set in the request");
-		assertEquals(false, request.getNeedsEmployeeReview(), "Assert that needs employee review is set in the request");
-		
+		assertEquals(false, request.getNeedsEmployeeReview(),
+				"Assert that needs employee review is set in the request");
+
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
-		
+
 		assertEquals(request, reqCaptor.getValue(), "Assert that the request passed in is the same request");
 	}
-	
+
 	@Test
 	public void testChangEmployeeAgreesValidFalse() {
 		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
@@ -832,61 +838,163 @@ public class RequestServiceTest {
 		request.setFinalReimburseAmount(finalReimburse);
 		user.setPendingBalance(finalReimburse);
 		Boolean employeeAgrees = false;
-		
+
 		service.changeEmployeeAgrees(request, employeeAgrees);
-		
+
 		assertEquals(employeeAgrees, request.getEmployeeAgrees(), "Assert that employee agrees is set in the request");
-		assertEquals(false, request.getNeedsEmployeeReview(), "Assert that needs employee review is set in the request");
+		assertEquals(false, request.getNeedsEmployeeReview(),
+				"Assert that needs employee review is set in the request");
 		assertEquals(RequestStatus.CANCELLED, request.getStatus(), "Assert that the request status was sent.");
-		assertEquals(ApprovalStatus.UNASSIGNED, request.getBenCoApproval().getStatus(), "Assert that the benCoApproval status was set");
+		assertEquals(ApprovalStatus.UNASSIGNED, request.getBenCoApproval().getStatus(),
+				"Assert that the benCoApproval status was set");
 		assertEquals(0.0, user.getPendingBalance(), "Assert that the user's pending balance was reset");
-		
+
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
 		Mockito.verify(userDao).updateUser(userCaptor.capture());
-		
+
 		assertEquals(request, reqCaptor.getValue(), "Assert that the request passed in is the same request");
 		assertEquals(user, userCaptor.getValue(), "Assert that the user passed in is the same user");
 	}
-	
+
 	@Test
 	public void testChangeEmployeeAgreesInvalid() {
 		request.getBenCoApproval().setStatus(ApprovalStatus.AWAITING);
 		Double finalReimburse = 200.00;
 		request.setFinalReimburseAmount(finalReimburse);
 		Boolean employeeAgrees = true;
-		
+
 		service.changeEmployeeAgrees(null, employeeAgrees);
 		service.changeEmployeeAgrees(request, null);
-		
+
 		Mockito.verifyZeroInteractions(reqDao);
 		Mockito.verifyZeroInteractions(userDao);
 	}
-	
+
 	@Test
 	public void testAddFinalGradeValid() {
 		String grade = "C";
-		
+
 		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
-		
+
 		service.addFinalGrade(request, grade);
-		
+
 		assertEquals(grade, request.getFinalGrade(), "Assert that the final grade was set");
 		assertNotNull(request.getIsPassing(), "Assert that the isPassing is set");
-		
+
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
-		
+
 		assertEquals(request, reqCaptor.getValue(), "Assert that the request was passed in");
 	}
-	
+
 	@Test
 	public void testAddFinalGradeInvalid() {
 		String grade = "C";
-		
+
 		service.addFinalGrade(null, grade);
-		
+
 		service.addFinalGrade(request, "");
 		service.addFinalGrade(request, null);
-		
+
 		Mockito.verifyZeroInteractions(reqDao);
+	}
+
+	@Test
+	public void testAutoApproveSupervisor() {
+		
+		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
+		// Set approval status to awaiting and the deadline to expired
+		request.setSupervisorApproval(new Approval(ApprovalStatus.AWAITING, supervisor.getUsername()));
+		request.setDeadline(Request.PLACEHOLDER);
+
+		// Create the list and add the request to it
+		List<Request> requests = new ArrayList<Request>();
+		requests.add(request);
+
+		Mockito.when(reqDao.getExpiredRequests()).thenReturn(requests);
+
+		service.autoApprove();
+
+		assertEquals(ApprovalStatus.AUTO_APPROVED, request.getSupervisorApproval().getStatus(),
+				"Assert that the supervisor approval was auto-approved");
+		assertEquals(ApprovalStatus.AWAITING, request.getDeptHeadApproval().getStatus(),
+				"Assert that the dept head approval was seet to awaiting.");
+		assertNotEquals(Request.PLACEHOLDER, request.getDeadline(), "Assert that the deadline was set");
+		
+		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
+		
+		assertEquals(request, reqCaptor.getValue(), "Assert that the request was passed in to the updateRequest");
+	}
+
+	@Test
+	public void testAutoApproveDeptHead() {
+		
+		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
+		// Set approval status to awaiting and the deadline to expired
+		request.setSupervisorApproval(new Approval(ApprovalStatus.APPROVED, supervisor.getUsername()));
+		request.setDeptHeadApproval(new Approval(ApprovalStatus.AWAITING, deptHead.getUsername()));
+		request.setDeadline(Request.PLACEHOLDER);
+
+		// Create the list and add the request to it
+		List<Request> requests = new ArrayList<Request>();
+		requests.add(request);
+
+		Mockito.when(reqDao.getExpiredRequests()).thenReturn(requests);
+
+		service.autoApprove();
+
+		assertEquals(ApprovalStatus.AUTO_APPROVED, request.getDeptHeadApproval().getStatus(),
+				"Assert that the dept head approval was auto-approved");
+		assertEquals(ApprovalStatus.AWAITING, request.getBenCoApproval().getStatus(),
+				"Assert that the benCo approval was seet to awaiting.");
+		assertNotEquals(Request.PLACEHOLDER, request.getDeadline(), "Assert that the deadline was set");
+		
+		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
+		
+		assertEquals(request, reqCaptor.getValue(), "Assert that the request was passed in to the updateRequest");
+	}
+	
+	@Test
+	public void testAutoApproveBenCo() {
+		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
+		// Set approval status to awaiting and the deadline to expired
+		request.setSupervisorApproval(new Approval(ApprovalStatus.APPROVED, supervisor.getUsername()));
+		request.setDeptHeadApproval(new Approval(ApprovalStatus.APPROVED, deptHead.getUsername()));
+		request.setBenCoApproval(new Approval(ApprovalStatus.AWAITING, benCo.getUsername()));
+		request.setDeadline(Request.PLACEHOLDER);
+
+		// Create the list and add the request to it
+		List<Request> requests = new ArrayList<Request>();
+		requests.add(request);
+
+		Mockito.when(reqDao.getExpiredRequests()).thenReturn(requests);
+
+		service.autoApprove();
+
+		assertEquals(ApprovalStatus.AWAITING, request.getBenCoApproval().getStatus(),
+				"Assert that the benCo approval was seet to awaiting.");
+		assertNotEquals(Request.PLACEHOLDER, request.getDeadline(), "Assert that the deadline was set");
+		
+		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
+		
+		assertEquals(request, reqCaptor.getValue(), "Assert that the request was passed in to the updateRequest");
+	}
+
+	@Test
+	public void testAutoApproveInvalid() {
+		// Set all the approval statuses to approved and the deadline to expired
+		request.setSupervisorApproval(new Approval(ApprovalStatus.APPROVED, supervisor.getUsername()));
+		request.setDeptHeadApproval(new Approval(ApprovalStatus.APPROVED, deptHead.getUsername()));
+		request.setBenCoApproval(new Approval(ApprovalStatus.APPROVED, benCo.getUsername()));
+		request.setFinalApproval(new Approval(ApprovalStatus.APPROVED, benCo.getUsername()));
+		request.setDeadline(Request.PLACEHOLDER);
+
+		// Create the list and add the request to it
+		List<Request> requests = new ArrayList<Request>();
+		requests.add(request);
+
+		Mockito.when(reqDao.getExpiredRequests()).thenReturn(requests);
+
+		assertThrows(IllegalApprovalAttemptException.class, () -> service.autoApprove(),
+				"Assert that an active request with no awaiting approvals throws an exception.");
 	}
 }

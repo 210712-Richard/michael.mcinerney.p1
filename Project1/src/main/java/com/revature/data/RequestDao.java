@@ -21,6 +21,12 @@ public interface RequestDao {
 	public List<Request> getRequests();
 	
 	/**
+	 * Get the list of requests that are active and deadline have passed.
+	 * @return The list of requests
+	 */
+	public List<Request> getExpiredRequests();
+	
+	/**
 	 * Update the Request
 	 * @param request The request to update
 	 */
