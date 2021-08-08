@@ -74,12 +74,16 @@ public class RequestControllerImpl implements RequestController {
 			return;
 		}
 
-		// Get the request
-		Request request = reqService.getRequest(UUID.fromString(ctx.pathParam("requestId")));
-		log.debug("Request from requestId: " + request);
+		// Get the request. If auto approve is auto approving a request right now, then need to wait
+		Request request = null;
+		synchronized (RequestService.APPROVAL_LOCK) {
+			request = reqService.getRequest(UUID.fromString(ctx.pathParam("requestId")));
+			log.debug("Request from requestId: " + request);
+		}
+		
+		//Get the approval status from the body
 		Request approval = ctx.bodyAsClass(ReimbursementRequest.class);
 		log.debug("Request from body: " + approval);
-
 		// If the request was not found
 		if (request == null) {
 			ctx.status(404);
@@ -97,13 +101,12 @@ public class RequestControllerImpl implements RequestController {
 				|| !request.getStatus().equals(RequestStatus.ACTIVE) || request.getNeedsEmployeeReview() == true) {
 			// TODO check status codes
 			ctx.status(406);
-			ctx.html("This request cannot be approved or denied any further.");
+			ctx.html("This request cannot be set to the specified status.");
 			return;
 		}
 
 		// Verify the user is allowed to change the approval status
 		Approval[] approvals = request.getApprovalArray();
-
 		for (int i = 0; i < approvals.length; i++) {
 			Approval currentApproval = approvals[i];
 

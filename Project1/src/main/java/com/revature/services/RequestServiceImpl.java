@@ -297,55 +297,50 @@ public class RequestServiceImpl implements RequestService {
 	@Override
 	public void addFinalGrade(Request request, String grade) {
 		if (VERIFIER.verifyNotNull(request) && VERIFIER.verifyStrings(grade)) {
-			
-			//Set the grade and make sure it is passing
+
+			// Set the grade and make sure it is passing
 			request.setFinalGrade(grade);
 			request.setIsPassing(request.getGradingFormat().isPassing(grade));
 			reqDao.updateRequest(request);
 		}
 	}
-	
+
 	@Override
 	public void autoApprove() {
-		while (true) {
-			// Check the database to see if there are any requests needed to auto approve
-			List<Request> requests = reqDao.getExpiredRequests();
+		// Check the database to see if there are any requests needed to auto approve
+		List<Request> requests = reqDao.getExpiredRequests();
 
-			//If the list isn't null or empty, that means an active request has a past-due deadline
-			if (requests != null && !requests.isEmpty()) {
-				
-				//Make sure the controller doesn't approve the request
-				synchronized (RequestService.APPROVAL_LOCK) {
+		// If the list isn't null or empty, that means an active request has a past-due
+		// deadline
+		if (requests != null && !requests.isEmpty()) {
 
-					for (Request request : requests) {
-						log.debug("Request being auto approved: " + request);
-						
-						//If the supervisor or dept head approval was needed, will just auto approve those
-						if (ApprovalStatus.AWAITING.equals(request.getSupervisorApproval().getStatus())
-								|| ApprovalStatus.AWAITING.equals(request.getDeptHeadApproval().getStatus())) {
-							changeApprovalStatus(request, ApprovalStatus.AUTO_APPROVED, null);
+			// Make sure the controller doesn't approve the request
+			synchronized (RequestService.APPROVAL_LOCK) {
 
-						}
-						
-						//If the benCo or finalApproval user didn't approve, will need to message benCo supervisor
-						else if (ApprovalStatus.AWAITING.equals(request.getBenCoApproval().getStatus())
-								|| ApprovalStatus.AWAITING.equals(request.getFinalApproval().getStatus())) {
-							
-						}
-						//If none of the requests are waiting, the request is most likely bad
-						else {
-							throw new IllegalApprovalAttemptException("Auto-approval attempt on Request.");
-						}
+				for (Request request : requests) {
+					log.debug("Request being auto approved: " + request);
+
+					// If the supervisor or dept head approval was needed, will just auto approve
+					// those
+					if (ApprovalStatus.AWAITING.equals(request.getSupervisorApproval().getStatus())
+							|| ApprovalStatus.AWAITING.equals(request.getDeptHeadApproval().getStatus())) {
+						changeApprovalStatus(request, ApprovalStatus.AUTO_APPROVED, null);
+
+					}
+
+					// If the benCo or finalApproval user didn't approve, will need to message benCo
+					// supervisor
+					else if (ApprovalStatus.AWAITING.equals(request.getBenCoApproval().getStatus())
+							|| ApprovalStatus.AWAITING.equals(request.getFinalApproval().getStatus())) {
+
+					}
+					// If none of the requests are waiting, the request is most likely bad
+					else {
+						throw new IllegalApprovalAttemptException("Auto-approval attempt on Request.");
 					}
 				}
 			}
 
-			//Don't want the thread to constantly query the database, so need to put to sleep for a bit
-			try {
-				Thread.sleep(30000);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
 		}
 	}
 }
