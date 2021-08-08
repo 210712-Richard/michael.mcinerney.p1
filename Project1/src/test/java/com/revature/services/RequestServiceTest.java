@@ -943,9 +943,35 @@ public class RequestServiceTest {
 		service.autoApprove();
 
 		assertEquals(ApprovalStatus.AUTO_APPROVED, request.getDeptHeadApproval().getStatus(),
-				"Assert that the supervisor approval was auto-approved");
+				"Assert that the dept head approval was auto-approved");
 		assertEquals(ApprovalStatus.AWAITING, request.getBenCoApproval().getStatus(),
-				"Assert that the dept head approval was seet to awaiting.");
+				"Assert that the benCo approval was seet to awaiting.");
+		assertNotEquals(Request.PLACEHOLDER, request.getDeadline(), "Assert that the deadline was set");
+		
+		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
+		
+		assertEquals(request, reqCaptor.getValue(), "Assert that the request was passed in to the updateRequest");
+	}
+	
+	@Test
+	public void testAutoApproveBenCo() {
+		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
+		// Set approval status to awaiting and the deadline to expired
+		request.setSupervisorApproval(new Approval(ApprovalStatus.APPROVED, supervisor.getUsername()));
+		request.setDeptHeadApproval(new Approval(ApprovalStatus.APPROVED, deptHead.getUsername()));
+		request.setBenCoApproval(new Approval(ApprovalStatus.AWAITING, benCo.getUsername()));
+		request.setDeadline(Request.PLACEHOLDER);
+
+		// Create the list and add the request to it
+		List<Request> requests = new ArrayList<Request>();
+		requests.add(request);
+
+		Mockito.when(reqDao.getExpiredRequests()).thenReturn(requests);
+
+		service.autoApprove();
+
+		assertEquals(ApprovalStatus.AWAITING, request.getBenCoApproval().getStatus(),
+				"Assert that the benCo approval was seet to awaiting.");
 		assertNotEquals(Request.PLACEHOLDER, request.getDeadline(), "Assert that the deadline was set");
 		
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());

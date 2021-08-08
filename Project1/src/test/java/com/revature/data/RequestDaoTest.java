@@ -21,6 +21,7 @@ import com.revature.beans.Format;
 import com.revature.beans.GradingFormat;
 import com.revature.beans.ReimbursementRequest;
 import com.revature.beans.Request;
+import com.revature.beans.RequestStatus;
 
 public class RequestDaoTest {
 	RequestDao requestDao = null;
@@ -49,6 +50,7 @@ public class RequestDaoTest {
 		request.setSupervisorApproval(new Approval());
 		request.setBenCoApproval(new Approval());
 		request.setFinalApproval(new Approval());
+		request.setStatus(RequestStatus.CANCELLED);
 
 	}
 

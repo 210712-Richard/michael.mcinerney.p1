@@ -332,6 +332,8 @@ public class RequestServiceImpl implements RequestService {
 					// supervisor
 					else if (ApprovalStatus.AWAITING.equals(request.getBenCoApproval().getStatus())
 							|| ApprovalStatus.AWAITING.equals(request.getFinalApproval().getStatus())) {
+						request.startDeadline();
+						reqDao.updateRequest(request);
 
 					}
 					// If none of the requests are waiting, the request is most likely bad
