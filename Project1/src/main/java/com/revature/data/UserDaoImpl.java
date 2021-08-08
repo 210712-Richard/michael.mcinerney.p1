@@ -29,8 +29,8 @@ public class UserDaoImpl implements UserDao {
 		}
 		// Create the query and bind the parameters to it
 		StringBuilder query = new StringBuilder("SELECT username, password, email, firstname, ")
-				.append("lastname, type, departmentname, supervisorusername, pendingbalance, awardedbalance, requests, "
-						+ "reviewrequests FROM user WHERE username = ?;");
+				.append("lastname, type, departmentname, supervisorusername, pendingbalance, awardedbalance, requests "
+						+ "FROM user WHERE username = ?;");
 		SimpleStatement s = new SimpleStatementBuilder(query.toString()).build();
 		BoundStatement bound = session.prepare(s).bind(username);
 
@@ -58,7 +58,6 @@ public class UserDaoImpl implements UserDao {
 		user.setPendingBalance(row.getDouble("pendingbalance"));
 		user.setAwardedBalance(row.getDouble("awardedbalance"));
 		user.setRequests(row.getList("requests", UUID.class));
-		user.setReviewRequests(row.getList("reviewrequests", UUID.class));
 
 		return user;
 	}
@@ -72,8 +71,8 @@ public class UserDaoImpl implements UserDao {
 		}
 		// Create the query and bind the parameters
 		StringBuilder query = new StringBuilder("SELECT username, password, email, firstname, ")
-				.append("lastname, type, departmentname, supervisorusername, pendingbalance, awardedbalance, requests, "
-						+ "reviewrequests FROM user WHERE username = ? AND password = ?;");
+				.append("lastname, type, departmentname, supervisorusername, pendingbalance, awardedbalance, requests "
+						+ "FROM user WHERE username = ? AND password = ?;");
 		SimpleStatement s = new SimpleStatementBuilder(query.toString()).build();
 		BoundStatement bound = session.prepare(s).bind(username, password);
 
@@ -101,7 +100,6 @@ public class UserDaoImpl implements UserDao {
 		user.setPendingBalance(row.getDouble("pendingbalance"));
 		user.setAwardedBalance(row.getDouble("awardedbalance"));
 		user.setRequests(row.getList("requests", UUID.class));
-		user.setReviewRequests(row.getList("reviewrequests", UUID.class));
 
 		return user;
 	}
@@ -111,14 +109,14 @@ public class UserDaoImpl implements UserDao {
 
 		// Create the query and bind the parameters
 		StringBuilder query = new StringBuilder("UPDATE user SET email=?, firstname=?, ").append(
-				"lastname=?, type=?, departmentname=?, supervisorusername=?, pendingbalance=?, awardedbalance=?, requests=?, "
-						+ "reviewrequests=? WHERE username = ? AND password = ?");
+				"lastname=?, type=?, departmentname=?, supervisorusername=?, pendingbalance=?, awardedbalance=?, requests=? "
+						+ "WHERE username = ? AND password = ?");
 		SimpleStatement s = new SimpleStatementBuilder(query.toString())
 				.setConsistencyLevel(DefaultConsistencyLevel.LOCAL_QUORUM).build();
 		BoundStatement bound = session.prepare(s).bind(user.getEmail(), user.getFirstName(), user.getLastName(),
 				user.getType().toString(), user.getDepartmentName(), user.getSupervisorUsername(),
-				user.getPendingBalance(), user.getAwardedBalance(), user.getRequests(), user.getReviewRequests(),
-				user.getUsername(), user.getPassword());
+				user.getPendingBalance(), user.getAwardedBalance(), user.getRequests(), user.getUsername(),
+				user.getPassword());
 
 		// Execute the query
 		session.execute(bound);
@@ -129,15 +127,13 @@ public class UserDaoImpl implements UserDao {
 
 		// Create the query and bind the parameters
 		StringBuilder query = new StringBuilder("INSERT INTO user (username, password, email, firstname, ")
-				.append("lastname, type, departmentname, supervisorusername, pendingbalance, awardedbalance, requests, "
-						+ "reviewrequests")
-				.append(") values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+				.append("lastname, type, departmentname, supervisorusername, pendingbalance, awardedbalance, requests")	
+				.append(") values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
 		SimpleStatement s = new SimpleStatementBuilder(query.toString())
 				.setConsistencyLevel(DefaultConsistencyLevel.LOCAL_QUORUM).build();
 		BoundStatement bound = session.prepare(s).bind(user.getUsername(), user.getPassword(), user.getEmail(),
 				user.getFirstName(), user.getLastName(), user.getType().toString(), user.getDepartmentName(),
-				user.getSupervisorUsername(), user.getPendingBalance(), user.getAwardedBalance(), user.getRequests(),
-				user.getReviewRequests());
+				user.getSupervisorUsername(), user.getPendingBalance(), user.getAwardedBalance(), user.getRequests());
 
 		// Execute the query
 		session.execute(bound);

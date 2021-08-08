@@ -32,13 +32,17 @@ import com.revature.util.Verifier;
 
 @TraceLog
 public class RequestServiceImpl implements RequestService {
+	
+	//All the DAO's needed to access resources
 	RequestDao reqDao = (RequestDao) BeanFactory.getFactory().getObject(RequestDao.class, RequestDaoImpl.class);
 	UserDao userDao = (UserDao) BeanFactory.getFactory().getObject(UserDao.class, UserDaoImpl.class);
 	DepartmentDao deptDao = (DepartmentDao) BeanFactory.getFactory().getObject(DepartmentDao.class,
 			DepartmentDaoImpl.class);
 
+	//For Logging
 	private static final Logger log = LogManager.getLogger(RequestServiceImpl.class);
 
+	//For verifying strings and objects as not null
 	private static final Verifier VERIFIER = new Verifier();
 
 	@Override
@@ -90,6 +94,7 @@ public class RequestServiceImpl implements RequestService {
 				// requests list.
 				user.getRequests().add(request.getId());
 				user.alterPendingBalance(reimburseMax);
+				log.debug("User's new pending balance: " + user.getPendingBalance());
 
 				// Update the user in the database
 				userDao.updateUser(user);
@@ -194,6 +199,7 @@ public class RequestServiceImpl implements RequestService {
 				if (nextApproval != null) {
 					nextApproval.setStatus(ApprovalStatus.AWAITING);
 					request.startDeadline();
+					log.debug("New request deadline: " + request.getDeadline());
 				}
 
 				reqDao.updateRequest(request);
@@ -247,6 +253,7 @@ public class RequestServiceImpl implements RequestService {
 		log.debug("Amount the user is losing from pendingBalance: " + reimburse);
 		// Subtract the amount from the user
 		user.alterPendingBalance(reimburse * -1.0);
+		log.debug("User's new pending balance: " + user.getPendingBalance());
 		userDao.updateUser(user);
 		reqDao.updateRequest(request);
 	}
@@ -266,6 +273,7 @@ public class RequestServiceImpl implements RequestService {
 			// Change the user's pending balance
 			User user = userDao.getUser(request.getUsername());
 			user.alterPendingBalance(reimburse - request.getReimburseAmount());
+			log.debug("User's new pending balance: " + user.getPendingBalance());
 			userDao.updateUser(user);
 
 			// Update the request and return it
@@ -281,6 +289,7 @@ public class RequestServiceImpl implements RequestService {
 			// Set the request
 			request.setEmployeeAgrees(employeeAgrees);
 			request.setNeedsEmployeeReview(false);
+			log.debug("Employee review set to: " + request.getEmployeeAgrees());
 
 			// If the employee doens't agree, cancel the request and change their pending
 			// balance
@@ -301,6 +310,7 @@ public class RequestServiceImpl implements RequestService {
 			// Set the grade and make sure it is passing
 			request.setFinalGrade(grade);
 			request.setIsPassing(request.getGradingFormat().isPassing(grade));
+			log.debug("Final grade: " + request.getFinalGrade() + ". Is passing: " + request.getIsPassing());
 			reqDao.updateRequest(request);
 		}
 	}

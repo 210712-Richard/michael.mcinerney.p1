@@ -53,9 +53,8 @@ public class RequestControllerImpl implements RequestController {
 				request.getLocation(), request.getDescription(), request.getCost(), request.getGradingFormat(),
 				request.getType());
 
-		// If the request was not found
+		// If the request returned had an issue
 		if (request == null) {
-			// TODO: verify status code
 			ctx.status(400);
 			ctx.html("The Reimbursement Request sent was incorrectly entered.");
 		} else { // Otherwise, return the request
@@ -99,8 +98,7 @@ public class RequestControllerImpl implements RequestController {
 				|| (!approval.getSupervisorApproval().getStatus().equals(ApprovalStatus.APPROVED)
 						&& !approval.getSupervisorApproval().getStatus().equals(ApprovalStatus.DENIED))
 				|| !request.getStatus().equals(RequestStatus.ACTIVE) || request.getNeedsEmployeeReview() == true) {
-			// TODO check status codes
-			ctx.status(406);
+			ctx.status(400);
 			ctx.html("This request cannot be set to the specified status.");
 			return;
 		}
@@ -507,7 +505,7 @@ public class RequestControllerImpl implements RequestController {
 			// amount
 			if (approval.getFinalReimburseAmountReason() == null
 					|| approval.getFinalReimburseAmountReason().isBlank()) {
-				// TODO check status code
+				
 				ctx.status(400);
 				ctx.html("If changing the reimburse amount, need a reason");
 				return;
@@ -517,12 +515,11 @@ public class RequestControllerImpl implements RequestController {
 					approval.getFinalReimburseAmountReason());
 
 			// If the request does not equal null, return the request
-			// else, return a 400 status code
+			// else, return a 500 status code
 			if (request != null) {
 				ctx.json(request);
 			} else {
-				// TODO status code check
-				ctx.status(400);
+				ctx.status(500);
 			}
 			return;
 		}

@@ -28,8 +28,6 @@ public class User {
 	private Double awardedBalance;
 	// The List of Request IDs from requests the user has made
 	private List<UUID> requests;
-	// The list of request IDs the user has to review
-	private List<UUID> reviewRequests;
 
 	/**
 	 * Generates a random id and sets the balances to 0 and the Request Lists to a
@@ -40,7 +38,6 @@ public class User {
 		this.pendingBalance = 0.00;
 		this.awardedBalance = 0.00;
 		this.requests = new ArrayList<>();
-		this.reviewRequests = new ArrayList<>();
 	}
 
 	public User(String username, String password, String email, String firstName, String lastName, UserType type,
@@ -148,27 +145,18 @@ public class User {
 		this.requests = requests;
 	}
 
-	public List<UUID> getReviewRequests() {
-		return reviewRequests;
-	}
-
-	public void setReviewRequests(List<UUID> reviewRequests) {
-		this.reviewRequests = reviewRequests;
-	}
-
 	@Override
 	public String toString() {
 		return "User [username=" + username + ", password=" + password + ", email=" + email + ", firstName=" + firstName
 				+ ", lastName=" + lastName + ", type=" + type + ", departmentName=" + departmentName
 				+ ", supervisorUsername=" + supervisorUsername + ", pendingBalance=" + pendingBalance
-				+ ", awardedBalance=" + awardedBalance + ", requests=" + requests + ", reviewRequests=" + reviewRequests
-				+ "]";
+				+ ", awardedBalance=" + awardedBalance + ", requests=" + requests + "]";
 	}
 
 	@Override
 	public int hashCode() {
 		return Objects.hash(awardedBalance, departmentName, email, firstName, lastName, password, pendingBalance,
-				requests, reviewRequests, supervisorUsername, type, username);
+				requests, supervisorUsername, type, username);
 	}
 
 	@Override
@@ -184,7 +172,7 @@ public class User {
 				&& Objects.equals(departmentName, other.departmentName) && Objects.equals(email, other.email)
 				&& Objects.equals(firstName, other.firstName) && Objects.equals(lastName, other.lastName)
 				&& Objects.equals(password, other.password) && Objects.equals(pendingBalance, other.pendingBalance)
-				&& Objects.equals(requests, other.requests) && Objects.equals(reviewRequests, other.reviewRequests)
+				&& Objects.equals(requests, other.requests)
 				&& Objects.equals(supervisorUsername, other.supervisorUsername) && type == other.type
 				&& Objects.equals(username, other.username);
 	}

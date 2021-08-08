@@ -26,7 +26,7 @@ public class DatabaseCreator {
 				.append("username text, password text, email text, firstName text, ")
 				.append("lastName text, type text, departmentName text, supervisorUsername text, ")
 				.append("pendingBalance double, awardedBalance double, requests list<UUID>, ")
-				.append("reviewRequests list<UUID>,").append("primary key(username, password));");
+				.append("primary key(username, password));");
 		CassandraUtil.getInstance().getSession().execute(query.toString());
 
 		query = new StringBuilder("CREATE TABLE IF NOT EXISTS Request (").append(
@@ -52,22 +52,22 @@ public class DatabaseCreator {
 		Department dept = new Department("Test", "TestHead");
 
 		dao.createDepartment(dept);
-		
+
 		dept = new Department("Business", "john-doe");
 		dao.createDepartment(dept);
-		
+
 		dept = new Department("Math", "jane-doe");
 		dao.createDepartment(dept);
-		
+
 		dept = new Department("Engineering", "daniel-tubb");
 		dao.createDepartment(dept);
-		
+
 		dept = new Department("Science", "shirly-cord");
 		dao.createDepartment(dept);
-		
+
 		dept = new Department("Organization", "geoff-beesos");
 		dao.createDepartment(dept);
-		
+
 		dept = new Department("Benefits", "sean-jones");
 		dao.createDepartment(dept);
 	}
