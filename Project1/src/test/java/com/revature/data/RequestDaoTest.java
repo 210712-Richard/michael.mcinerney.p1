@@ -99,4 +99,12 @@ public class RequestDaoTest {
 		assertTrue(requests != null,
 				"Assert that the request list is not null.");
 	}
+	
+	@Test
+	public void testGetExpiredRequests() {
+		List<Request> requests = requestDao.getExpiredRequests();
+
+		assertTrue(requests != null,
+				"Assert that the request list is not null.");
+	}
 }

@@ -1,6 +1,7 @@
 package com.revature.beans;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +42,7 @@ public class ReimbursementRequest implements Request {
 	private Approval deptHeadApproval;
 	private Approval benCoApproval;
 	private String reason;
+	private LocalDateTime deadline;
 
 	// The final step fields
 	private String finalGrade;
@@ -64,6 +66,7 @@ public class ReimbursementRequest implements Request {
 		deptHeadApproval = new Approval();
 		benCoApproval = new Approval();
 		finalApproval = new Approval();
+		deadline = PLACEHOLDER;
 		
 		employeeAgrees = true;
 		needsEmployeeReview = false;
@@ -279,6 +282,18 @@ public class ReimbursementRequest implements Request {
 		this.reason = reason;
 	}
 
+	public LocalDateTime getDeadline() {
+		return deadline;
+	}
+
+	public void setDeadline(LocalDateTime deadline) {
+		this.deadline = deadline;
+	}
+	
+	public void startDeadline() {
+		this.deadline = LocalDateTime.now().plus(TIME_LIMIT);
+	}
+
 	public String getFinalGrade() {
 		return finalGrade;
 	}
@@ -353,7 +368,7 @@ public class ReimbursementRequest implements Request {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(approvalMsgsURIs, benCoApproval, cost, deptHeadApproval, deptName, description,
+		return Objects.hash(approvalMsgsURIs, benCoApproval, cost, deadline, deptHeadApproval, deptName, description,
 				employeeAgrees, fileURIs, finalApproval, finalGrade, finalReimburseAmount, finalReimburseAmountReason,
 				firstName, gradingFormat, id, isPassing, isUrgent, lastName, location, name, needsEmployeeReview,
 				presFileName, reason, reimburseAmount, startDate, startTime, status, supervisorApproval, type, username,
@@ -371,8 +386,8 @@ public class ReimbursementRequest implements Request {
 		ReimbursementRequest other = (ReimbursementRequest) obj;
 		return Objects.equals(approvalMsgsURIs, other.approvalMsgsURIs)
 				&& Objects.equals(benCoApproval, other.benCoApproval) && Objects.equals(cost, other.cost)
-				&& Objects.equals(deptHeadApproval, other.deptHeadApproval) && Objects.equals(deptName, other.deptName)
-				&& Objects.equals(description, other.description)
+				&& Objects.equals(deadline, other.deadline) && Objects.equals(deptHeadApproval, other.deptHeadApproval)
+				&& Objects.equals(deptName, other.deptName) && Objects.equals(description, other.description)
 				&& Objects.equals(employeeAgrees, other.employeeAgrees) && Objects.equals(fileURIs, other.fileURIs)
 				&& Objects.equals(finalApproval, other.finalApproval) && Objects.equals(finalGrade, other.finalGrade)
 				&& Objects.equals(finalReimburseAmount, other.finalReimburseAmount)
@@ -398,10 +413,10 @@ public class ReimbursementRequest implements Request {
 				+ type + ", fileURIs=" + fileURIs + ", approvalMsgsURIs=" + approvalMsgsURIs + ", workTimeMissed="
 				+ workTimeMissed + ", reimburseAmount=" + reimburseAmount + ", supervisorApproval=" + supervisorApproval
 				+ ", deptHeadApproval=" + deptHeadApproval + ", benCoApproval=" + benCoApproval + ", reason=" + reason
-				+ ", finalGrade=" + finalGrade + ", isPassing=" + isPassing + ", presFileName=" + presFileName
-				+ ", finalApproval=" + finalApproval + ", finalReimburseAmount=" + finalReimburseAmount
-				+ ", finalReimburseAmountReason=" + finalReimburseAmountReason + ", needsEmployeeReview="
-				+ needsEmployeeReview + ", employeeAgrees=" + employeeAgrees + "]";
+				+ ", deadline=" + deadline + ", finalGrade=" + finalGrade + ", isPassing=" + isPassing
+				+ ", presFileName=" + presFileName + ", finalApproval=" + finalApproval + ", finalReimburseAmount="
+				+ finalReimburseAmount + ", finalReimburseAmountReason=" + finalReimburseAmountReason
+				+ ", needsEmployeeReview=" + needsEmployeeReview + ", employeeAgrees=" + employeeAgrees + "]";
 	}
 
 }

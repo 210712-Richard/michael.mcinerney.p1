@@ -1,41 +1,20 @@
 package com.revature.beans;
 
-import java.time.LocalDateTime;
 import java.util.Objects;
 
 public class Approval {
 	private ApprovalStatus status;
-	private LocalDateTime deadline;
 	private String username;
 
 	public Approval() {
 		super();
 		this.status = ApprovalStatus.UNASSIGNED;
-		this.deadline = Request.PLACEHOLDER;
 	}
 
 	public Approval(ApprovalStatus status, String username) {
 		this();
 		this.status = status;
 		this.username = username;
-	}
-
-	public Approval(ApprovalStatus status, LocalDateTime deadline, String reason) {
-		this.status = status;
-		this.deadline = deadline;
-		this.username = reason;
-	}
-
-	public LocalDateTime getDeadline() {
-		return deadline;
-	}
-
-	public void setDeadline(LocalDateTime deadline) {
-		this.deadline = deadline;
-	}
-	
-	public void startDeadline() {
-		this.deadline = LocalDateTime.now().plus(Request.TIME_LIMIT);
 	}
 
 	public ApprovalStatus getStatus() {
@@ -56,12 +35,12 @@ public class Approval {
 
 	@Override
 	public String toString() {
-		return "Approval [status=" + status + ", deadline=" + deadline + ", username=" + username + "]";
+		return "Approval [status=" + status + ", username=" + username + "]";
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(deadline, username, status);
+		return Objects.hash(status, username);
 	}
 
 	@Override
@@ -73,8 +52,7 @@ public class Approval {
 		if (getClass() != obj.getClass())
 			return false;
 		Approval other = (Approval) obj;
-		return Objects.equals(deadline, other.deadline) && Objects.equals(username, other.username)
-				&& status == other.status;
+		return status == other.status && Objects.equals(username, other.username);
 	}
 
 }

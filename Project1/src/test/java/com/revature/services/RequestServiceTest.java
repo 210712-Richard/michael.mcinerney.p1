@@ -133,7 +133,7 @@ public class RequestServiceTest {
 				"Assert that the supervisor that needs to do the approval is the same as the User's supervisor");
 
 		// Make sure deadline is not the default value
-		assertTrue(Request.PLACEHOLDER.isBefore(newRequest.getSupervisorApproval().getDeadline()),
+		assertTrue(Request.PLACEHOLDER.isBefore(newRequest.getDeadline()),
 				"Assert that the deadline changed away from the placeholder.");
 
 		// Make sure supervisor status is awaiting
@@ -326,7 +326,7 @@ public class RequestServiceTest {
 				"Assert that the dept head approval is now awaiting.");
 		assertEquals(request.getDeptHeadApproval().getUsername(), dept.getDeptHeadUsername(),
 				"Assert that the dept head is set to do the approval");
-		assertNotEquals(request.getDeptHeadApproval().getDeadline(), Request.PLACEHOLDER,
+		assertNotEquals(request.getDeadline(), Request.PLACEHOLDER,
 				"Assert that the time limit has changed for the Request from the placeholder");
 
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
@@ -388,7 +388,7 @@ public class RequestServiceTest {
 				"Assert that the supervisor approved the request.");
 		assertEquals(ApprovalStatus.AWAITING, request.getBenCoApproval().getStatus(),
 				"Assert that the BenCo approval is now in awaiting.");
-		assertNotEquals(request.getBenCoApproval().getDeadline(), Request.PLACEHOLDER,
+		assertNotEquals(request.getDeadline(), Request.PLACEHOLDER,
 				"Assert that the time limit has changed for the Request from the placeholder");
 
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
@@ -450,7 +450,7 @@ public class RequestServiceTest {
 				"Assert that the BenCo approval is now in awaiting.");
 		assertEquals(request.getBenCoApproval().getUsername(), request.getFinalApproval().getUsername(),
 				"Assert that the finalApproval username is set to the supervisor's username");
-		assertNotEquals(request.getFinalApproval().getDeadline(), Request.PLACEHOLDER,
+		assertNotEquals(request.getDeadline(), Request.PLACEHOLDER,
 				"Assert that the time limit has changed for the Request from the placeholder");
 
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
@@ -480,7 +480,7 @@ public class RequestServiceTest {
 				"Assert that the final approval is now in awaiting.");
 		assertEquals(request.getSupervisorApproval().getUsername(), request.getFinalApproval().getUsername(),
 				"Assert that the finalApproval username is set to the supervisor's username");
-		assertNotEquals(request.getFinalApproval().getDeadline(), Request.PLACEHOLDER,
+		assertNotEquals(request.getDeadline(), Request.PLACEHOLDER,
 				"Assert that the time limit has changed for the Request from the placeholder");
 
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
