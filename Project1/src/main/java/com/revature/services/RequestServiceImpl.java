@@ -94,7 +94,8 @@ public class RequestServiceImpl implements RequestService {
 				log.debug("Deadline set to " + request.getDeadline());
 				// Add the request to the database and create a notification for the supervisor
 				reqDao.createRequest(request);
-				notDao.createNotification(new Notification(user.getSupervisorUsername(), request.getId(), "An employee has requested reimbursement!"));
+				notDao.createNotification(new Notification(user.getSupervisorUsername(), request.getId(),
+						"An employee has requested reimbursement!"));
 				// Make sure the user's pending amount is changed and the request added to their
 				// requests list.
 				user.getRequests().add(request.getId());
@@ -317,6 +318,8 @@ public class RequestServiceImpl implements RequestService {
 			request.setIsPassing(request.getGradingFormat().isPassing(grade));
 			log.debug("Final grade: " + request.getFinalGrade() + ". Is passing: " + request.getIsPassing());
 			reqDao.updateRequest(request);
+			notDao.createNotification(new Notification(request.getFinalApproval().getUsername(), request.getId(),
+					"Final approval is ready on request"));
 		}
 	}
 

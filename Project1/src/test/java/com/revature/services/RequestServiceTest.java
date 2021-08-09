@@ -887,8 +887,11 @@ public class RequestServiceTest {
 	@Test
 	public void testAddFinalGradeValid() {
 		String grade = "C";
+		String message = "Final approval is ready on request";
 
 		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
+		ArgumentCaptor<Notification> notCaptor = ArgumentCaptor.forClass(Notification.class);
+		
 
 		service.addFinalGrade(request, grade);
 
@@ -896,8 +899,15 @@ public class RequestServiceTest {
 		assertNotNull(request.getIsPassing(), "Assert that the isPassing is set");
 
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
+		Mockito.verify(notDao).createNotification(notCaptor.capture());
 
 		assertEquals(request, reqCaptor.getValue(), "Assert that the request was passed in");
+		
+		assertEquals(request.getFinalApproval().getUsername(), notCaptor.getValue().getUsername(),
+				"Assert that the notification has the supervisor's username");
+		assertEquals(request.getId(), notCaptor.getValue().getRequestId(),
+				"Assert that the notification has the correct requestID");
+		assertEquals(message, notCaptor.getValue().getMessage(), "Assert that the notification has the correct message");
 	}
 
 	@Test
@@ -910,6 +920,7 @@ public class RequestServiceTest {
 		service.addFinalGrade(request, null);
 
 		Mockito.verifyZeroInteractions(reqDao);
+		Mockito.verifyZeroInteractions(notDao);
 	}
 
 	@Test
