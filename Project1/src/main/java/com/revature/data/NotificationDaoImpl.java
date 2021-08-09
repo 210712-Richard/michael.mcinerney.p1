@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
@@ -34,7 +35,7 @@ public class NotificationDaoImpl implements NotificationDao {
 			notification
 					.setNotificationTime(LocalDateTime.ofInstant(row.getInstant("notificationtime"), ZoneOffset.UTC));
 			notification.setMessage(row.getString("message"));
-
+			notifications.add(notification);
 		});
 		return notifications;
 	}
@@ -55,6 +56,14 @@ public class NotificationDaoImpl implements NotificationDao {
 		SimpleStatement s = new SimpleStatementBuilder(query.toString())
 				.setConsistencyLevel(DefaultConsistencyLevel.LOCAL_QUORUM).build();
 		BoundStatement bound = session.prepare(s).bind(username);
+		session.execute(bound);
+	}
+	
+	public void deleteNotification(String username, UUID requestId) {
+		StringBuilder query = new StringBuilder("DELETE FROM notification WHERE username = ? AND requestid = ?;");
+		SimpleStatement s = new SimpleStatementBuilder(query.toString())
+				.setConsistencyLevel(DefaultConsistencyLevel.LOCAL_QUORUM).build();
+		BoundStatement bound = session.prepare(s).bind(username, requestId);
 		session.execute(bound);
 	}
 

@@ -15,12 +15,15 @@ import com.revature.beans.Department;
 import com.revature.beans.EventType;
 import com.revature.beans.Format;
 import com.revature.beans.GradingFormat;
+import com.revature.beans.Notification;
 import com.revature.beans.ReimbursementRequest;
 import com.revature.beans.Request;
 import com.revature.beans.RequestStatus;
 import com.revature.beans.User;
 import com.revature.data.DepartmentDao;
 import com.revature.data.DepartmentDaoImpl;
+import com.revature.data.NotificationDao;
+import com.revature.data.NotificationDaoImpl;
 import com.revature.data.RequestDao;
 import com.revature.data.RequestDaoImpl;
 import com.revature.data.UserDao;
@@ -32,17 +35,19 @@ import com.revature.util.Verifier;
 
 @TraceLog
 public class RequestServiceImpl implements RequestService {
-	
-	//All the DAO's needed to access resources
+
+	// All the DAO's needed to access resources
 	RequestDao reqDao = (RequestDao) BeanFactory.getFactory().getObject(RequestDao.class, RequestDaoImpl.class);
 	UserDao userDao = (UserDao) BeanFactory.getFactory().getObject(UserDao.class, UserDaoImpl.class);
 	DepartmentDao deptDao = (DepartmentDao) BeanFactory.getFactory().getObject(DepartmentDao.class,
 			DepartmentDaoImpl.class);
+	NotificationDao notDao = (NotificationDao) BeanFactory.getFactory().getObject(NotificationDao.class,
+			NotificationDaoImpl.class);
 
-	//For Logging
+	// For Logging
 	private static final Logger log = LogManager.getLogger(RequestServiceImpl.class);
 
-	//For verifying strings and objects as not null
+	// For verifying strings and objects as not null
 	private static final Verifier VERIFIER = new Verifier();
 
 	@Override
@@ -87,9 +92,9 @@ public class RequestServiceImpl implements RequestService {
 				request.startDeadline();
 				request.getSupervisorApproval().setStatus(ApprovalStatus.AWAITING);
 				log.debug("Deadline set to " + request.getDeadline());
-				// Add the request to the database
+				// Add the request to the database and create a notification for the supervisor
 				reqDao.createRequest(request);
-
+				notDao.createNotification(new Notification(user.getSupervisorUsername(), request.getId(), "An employee has requested reimbursement!"));
 				// Make sure the user's pending amount is changed and the request added to their
 				// requests list.
 				user.getRequests().add(request.getId());

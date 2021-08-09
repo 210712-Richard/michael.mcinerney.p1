@@ -44,6 +44,18 @@ public class NotificationDaoTest {
 	}
 	
 	@Test
+	public void testDeleteNotification() {
+		assertAll("Assert that an exception is not thrown for the deletion",
+				() -> notDao.deleteNotification(notification.getUsername(), notification.getRequestId()));
+		
+		assertThrows(Exception.class, () -> notDao.deleteNotification(null, notification.getRequestId()),
+				"Assert that a null username throws an exception.");
+		
+		assertThrows(Exception.class, () -> notDao.deleteNotification(notification.getUsername(), null),
+				"Assert that a null requestId throws an exception.");
+	}
+	
+	@Test
 	public void testCreateNotification() {
 		
 		assertAll("Assert that an exception is not thrown for the deletion",

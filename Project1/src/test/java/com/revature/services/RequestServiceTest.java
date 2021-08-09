@@ -26,12 +26,14 @@ import com.revature.beans.Department;
 import com.revature.beans.EventType;
 import com.revature.beans.Format;
 import com.revature.beans.GradingFormat;
+import com.revature.beans.Notification;
 import com.revature.beans.ReimbursementRequest;
 import com.revature.beans.Request;
 import com.revature.beans.RequestStatus;
 import com.revature.beans.User;
 import com.revature.beans.UserType;
 import com.revature.data.DepartmentDao;
+import com.revature.data.NotificationDao;
 import com.revature.data.RequestDao;
 import com.revature.data.UserDao;
 import com.revature.exceptions.IllegalApprovalAttemptException;
@@ -43,6 +45,7 @@ public class RequestServiceTest {
 	private RequestDao reqDao = null;
 	private UserDao userDao = null;
 	private DepartmentDao deptDao = null;
+	private NotificationDao notDao = null;
 
 	private User user = null;
 	private User supervisor = null;
@@ -91,6 +94,7 @@ public class RequestServiceTest {
 		reqDao = (RequestDao) mock.setPrivateMock(service, "reqDao", RequestDao.class);
 		userDao = (UserDao) mock.setPrivateMock(service, "userDao", UserDao.class);
 		deptDao = (DepartmentDao) mock.setPrivateMock(service, "deptDao", DepartmentDao.class);
+		notDao = (NotificationDao) mock.setPrivateMock(service, "notDao", NotificationDao.class);
 
 		Mockito.when(userDao.getUser(user.getUsername())).thenReturn(user);
 		Mockito.when(userDao.getUser(supervisor.getUsername())).thenReturn(supervisor);
@@ -104,7 +108,9 @@ public class RequestServiceTest {
 	public void testCreateRequestValid() {
 		// Set up the argument captor
 		ArgumentCaptor<Request> captor = ArgumentCaptor.forClass(Request.class);
+		ArgumentCaptor<Notification> notCaptor = ArgumentCaptor.forClass(Notification.class);
 
+		String message = "An employee has requested reimbursement!";
 		// Call the method
 		Request newRequest = service.createRequest(request.getUsername(), request.getFirstName(), request.getLastName(),
 				request.getDeptName(), request.getName(), request.getStartDate(), request.getStartTime(),
@@ -147,6 +153,14 @@ public class RequestServiceTest {
 		Mockito.verify(reqDao).createRequest(captor.capture());
 		assertEquals(newRequest, captor.getValue(),
 				"Assert that the arguments passed to the dao are the same returned.");
+
+		// Verify createNotification was called
+		Mockito.verify(notDao).createNotification(notCaptor.capture());
+		assertEquals(user.getSupervisorUsername(), notCaptor.getValue().getUsername(),
+				"Assert that the notification has the supervisor's username");
+		assertEquals(newRequest.getId(), notCaptor.getValue().getRequestId(),
+				"Assert that the notification has the correct requestID");
+		assertEquals(message, notCaptor.getValue().getMessage(), "Assert that the notification has the correct message");
 
 		// If the user has a pending and awarded balance that is less than the max
 		// amount alloted but less than the cost,
@@ -900,7 +914,7 @@ public class RequestServiceTest {
 
 	@Test
 	public void testAutoApproveSupervisor() {
-		
+
 		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
 		// Set approval status to awaiting and the deadline to expired
 		request.setSupervisorApproval(new Approval(ApprovalStatus.AWAITING, supervisor.getUsername()));
@@ -919,15 +933,15 @@ public class RequestServiceTest {
 		assertEquals(ApprovalStatus.AWAITING, request.getDeptHeadApproval().getStatus(),
 				"Assert that the dept head approval was seet to awaiting.");
 		assertNotEquals(Request.PLACEHOLDER, request.getDeadline(), "Assert that the deadline was set");
-		
+
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
-		
+
 		assertEquals(request, reqCaptor.getValue(), "Assert that the request was passed in to the updateRequest");
 	}
 
 	@Test
 	public void testAutoApproveDeptHead() {
-		
+
 		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
 		// Set approval status to awaiting and the deadline to expired
 		request.setSupervisorApproval(new Approval(ApprovalStatus.APPROVED, supervisor.getUsername()));
@@ -947,12 +961,12 @@ public class RequestServiceTest {
 		assertEquals(ApprovalStatus.AWAITING, request.getBenCoApproval().getStatus(),
 				"Assert that the benCo approval was seet to awaiting.");
 		assertNotEquals(Request.PLACEHOLDER, request.getDeadline(), "Assert that the deadline was set");
-		
+
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
-		
+
 		assertEquals(request, reqCaptor.getValue(), "Assert that the request was passed in to the updateRequest");
 	}
-	
+
 	@Test
 	public void testAutoApproveBenCo() {
 		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
@@ -973,9 +987,9 @@ public class RequestServiceTest {
 		assertEquals(ApprovalStatus.AWAITING, request.getBenCoApproval().getStatus(),
 				"Assert that the benCo approval was seet to awaiting.");
 		assertNotEquals(Request.PLACEHOLDER, request.getDeadline(), "Assert that the deadline was set");
-		
+
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
-		
+
 		assertEquals(request, reqCaptor.getValue(), "Assert that the request was passed in to the updateRequest");
 	}
 
