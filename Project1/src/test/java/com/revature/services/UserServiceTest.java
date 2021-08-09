@@ -13,6 +13,7 @@ import org.mockito.Mockito;
 
 import com.revature.beans.User;
 import com.revature.beans.UserType;
+import com.revature.data.NotificationDao;
 import com.revature.data.UserDao;
 import com.revature.util.MockitoHelper;
 
@@ -20,6 +21,7 @@ public class UserServiceTest {
 	private UserService service = null;
 	private User user = null;
 	private UserDao dao = null;
+	private NotificationDao notDao = null;
 
 	private static MockitoHelper mock = null;
 
@@ -35,6 +37,8 @@ public class UserServiceTest {
 		user = new User("Tester", "TestPass", "user@test.com", "Test", "User", UserType.EMPLOYEE, "Test", "TestSuper");
 
 		dao = (UserDao) mock.setPrivateMock(service, "userDao", UserDao.class);
+		
+		notDao = (NotificationDao) mock.setPrivateMock(service, "notDao", NotificationDao.class);
 	}
 
 	@Test
@@ -46,6 +50,8 @@ public class UserServiceTest {
 		// Use ArgumentCaptor to get arguments
 		ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
 		ArgumentCaptor<String> passwordCaptor = ArgumentCaptor.forClass(String.class);
+		ArgumentCaptor<String> notUserCaptor = ArgumentCaptor.forClass(String.class);
+		
 		// Get the user using the user credentials
 		User loginUser = service.login(user.getUsername(), user.getPassword());
 
@@ -54,12 +60,16 @@ public class UserServiceTest {
 
 		// Verify getUser was called and get the arguments used
 		Mockito.verify(dao).getUser(usernameCaptor.capture(), passwordCaptor.capture());
+		
+		Mockito.verify(notDao).getUserNotificationList(notUserCaptor.capture());
 
 		// Make sure the arguments are correct
 		assertEquals(user.getUsername(), usernameCaptor.getValue(),
 				"Assert that the username used is the user's username.");
 		assertEquals(user.getPassword(), passwordCaptor.getValue(),
 				"Assert that the password used is the user's password.");
+		assertEquals(user.getUsername(), notUserCaptor.getValue(),
+				"Assert that the username used for getting notifications is the user's username.");
 	}
 
 	@Test

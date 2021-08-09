@@ -12,8 +12,10 @@ import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatementBuilder;
 import com.revature.beans.Notification;
+import com.revature.factory.TraceLog;
 import com.revature.util.CassandraUtil;
 
+@TraceLog
 public class NotificationDaoImpl implements NotificationDao {
 	private CqlSession session = CassandraUtil.getInstance().getSession();
 
