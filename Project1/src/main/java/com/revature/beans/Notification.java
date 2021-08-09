@@ -10,7 +10,10 @@ public class Notification {
 	private LocalDateTime notificationTime;
 	private String message;
 
-	public Notification(String username, String message, UUID requestId) {
+	public Notification() {
+		super();
+	}
+	public Notification(String username, UUID requestId, String message) {
 		this.username = username;
 		this.message = message;
 		this.requestId = requestId;
