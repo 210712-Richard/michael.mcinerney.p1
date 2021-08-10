@@ -17,5 +17,9 @@ public enum RequestStatus {
 	/**
 	 * The Request has been cancelled by the user who created it
 	 */
-	CANCELLED
+	CANCELLED, 
+	/**
+	 * The request has been awarded to the user
+	 */
+	AWARDED
 }

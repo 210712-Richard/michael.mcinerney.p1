@@ -76,5 +76,12 @@ public class UserServiceImpl implements UserService {
 		userDao.updateUser(user);
 		return user;
 	}
+	
+	@Override
+	public void deleteNotifications(String username) {
+		if (VERIFIER.verifyStrings(username)) {
+			notDao.deleteUserNotifications(username);
+		}
+	}
 
 }

@@ -51,8 +51,10 @@ public class RequestServiceTest {
 	private User supervisor = null;
 	private User deptHead = null;
 	private User benCo = null;
+	private User benCoSuper = null;
 
 	private Department dept = null;
+	private Department benCoDept = null;
 
 	private static MockitoHelper mock = null;
 
@@ -88,8 +90,11 @@ public class RequestServiceTest {
 				"TestCEO");
 		benCo = new User("TestBenCo", "TestPass", "user@test.com", "Test", "BenCo", UserType.BENEFITS_COORDINATOR,
 				"Benefits", "TestCEO");
+		benCoSuper = new User("TestBenCoSuper", "TestPass", "user@test.com", "Test", "BenCo",
+				UserType.BENEFITS_COORDINATOR, "Benefits", "TestCEO");
 
 		dept = new Department("Test", "TestHead");
+		benCoDept = new Department("Benefits", benCoSuper.getUsername());
 
 		reqDao = (RequestDao) mock.setPrivateMock(service, "reqDao", RequestDao.class);
 		userDao = (UserDao) mock.setPrivateMock(service, "userDao", UserDao.class);
@@ -102,6 +107,7 @@ public class RequestServiceTest {
 		Mockito.when(userDao.getUser(benCo.getUsername())).thenReturn(benCo);
 		Mockito.when(reqDao.getRequest(request.getId())).thenReturn(request);
 		Mockito.when(deptDao.getDepartment(dept.getName())).thenReturn(dept);
+		Mockito.when(deptDao.getDepartment(benCoDept.getName())).thenReturn(benCoDept);
 	}
 
 	@Test
@@ -157,10 +163,11 @@ public class RequestServiceTest {
 		// Verify createNotification was called
 		Mockito.verify(notDao).createNotification(notCaptor.capture());
 		assertEquals(user.getSupervisorUsername(), notCaptor.getValue().getUsername(),
-				"Assert that the notification has the supervisor's username");
+				"Assert that the notification has the correct username");
 		assertEquals(newRequest.getId(), notCaptor.getValue().getRequestId(),
 				"Assert that the notification has the correct requestID");
-		assertEquals(message, notCaptor.getValue().getMessage(), "Assert that the notification has the correct message");
+		assertEquals(message, notCaptor.getValue().getMessage(),
+				"Assert that the notification has the correct message");
 
 		// If the user has a pending and awarded balance that is less than the max
 		// amount alloted but less than the cost,
@@ -330,9 +337,13 @@ public class RequestServiceTest {
 		request.getSupervisorApproval().setStatus(ApprovalStatus.AWAITING);
 		request.setReimburseAmount(request.getCost() * request.getType().getPercent());
 		user.setPendingBalance(request.getReimburseAmount());
+		String message = "A new request needs your approval";
 
 		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
 		ArgumentCaptor<String> deptNameCaptor = ArgumentCaptor.forClass(String.class);
+		ArgumentCaptor<Notification> notCaptor = ArgumentCaptor.forClass(Notification.class);
+		ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
+		ArgumentCaptor<UUID> idCaptor = ArgumentCaptor.forClass(UUID.class);
 
 		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.APPROVED, "This is a test");
 
@@ -348,11 +359,24 @@ public class RequestServiceTest {
 
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
 		Mockito.verify(deptDao).getDepartment(deptNameCaptor.capture());
+		Mockito.verify(notDao).createNotification(notCaptor.capture());
+		Mockito.verify(notDao).deleteNotification(usernameCaptor.capture(), idCaptor.capture());
 
 		assertEquals(request, reqCaptor.getValue(),
 				"Assert that the request passed into updateRequest is the same request");
 		assertEquals(dept.getName(), deptNameCaptor.getValue(),
 				"Assert that the department name passed into getDepartment is the same");
+
+		assertEquals(deptHead.getUsername(), notCaptor.getValue().getUsername(),
+				"Assert that the notification has the correct username");
+		assertEquals(request.getId(), notCaptor.getValue().getRequestId(),
+				"Assert that the notification has the correct requestID");
+		assertEquals(message, notCaptor.getValue().getMessage(),
+				"Assert that the notification has the correct message");
+
+		assertEquals(supervisor.getUsername(), usernameCaptor.getValue(),
+				"Assert that the username passed in is the benCo's username.");
+		assertEquals(request.getId(), idCaptor.getValue(), "Assert that the requestId passed in is the request's id");
 
 	}
 
@@ -363,12 +387,17 @@ public class RequestServiceTest {
 		request.getSupervisorApproval().setStatus(ApprovalStatus.AWAITING);
 		request.setReimburseAmount(request.getCost() * request.getType().getPercent());
 		user.setPendingBalance(request.getReimburseAmount());
+		String reason = "This is a test";
+		String message = "Your request has been denied. Reason: " + reason;
 
 		ArgumentCaptor<String> getUserCaptor = ArgumentCaptor.forClass(String.class);
 		ArgumentCaptor<User> updateUserCaptor = ArgumentCaptor.forClass(User.class);
 		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
+		ArgumentCaptor<Notification> notCaptor = ArgumentCaptor.forClass(Notification.class);
+		ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
+		ArgumentCaptor<UUID> idCaptor = ArgumentCaptor.forClass(UUID.class);
 
-		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.DENIED, "This is a test");
+		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.DENIED, reason);
 
 		assertEquals(request, retRequest, "Assert that the request returned is the same request");
 		assertEquals(ApprovalStatus.DENIED, request.getSupervisorApproval().getStatus(),
@@ -379,6 +408,8 @@ public class RequestServiceTest {
 		Mockito.verify(userDao).getUser(getUserCaptor.capture());
 		Mockito.verify(userDao).updateUser(updateUserCaptor.capture());
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
+		Mockito.verify(notDao).createNotification(notCaptor.capture());
+		Mockito.verify(notDao).deleteNotification(usernameCaptor.capture(), idCaptor.capture());
 
 		assertEquals(request, reqCaptor.getValue(),
 				"Assert that the request passed into updateRequest is the same request");
@@ -386,6 +417,17 @@ public class RequestServiceTest {
 		assertEquals(user.getUsername(), getUserCaptor.getValue(),
 				"Assert that the user's username is passed in to get user");
 		assertEquals(user, updateUserCaptor.getValue(), "Assert that the the user is updated.");
+
+		assertEquals(request.getUsername(), notCaptor.getValue().getUsername(),
+				"Assert that the notification has the correct username");
+		assertEquals(request.getId(), notCaptor.getValue().getRequestId(),
+				"Assert that the notification has the correct requestID");
+		assertEquals(message, notCaptor.getValue().getMessage(),
+				"Assert that the notification has the correct message");
+
+		assertEquals(supervisor.getUsername(), usernameCaptor.getValue(),
+				"Assert that the username passed in is the benCo's username.");
+		assertEquals(request.getId(), idCaptor.getValue(), "Assert that the requestId passed in is the request's id");
 	}
 
 	@Test
@@ -397,6 +439,8 @@ public class RequestServiceTest {
 		request.setReimburseAmount(request.getCost() * request.getType().getPercent());
 
 		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
+		ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
+		ArgumentCaptor<UUID> idCaptor = ArgumentCaptor.forClass(UUID.class);
 
 		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.APPROVED, null);
 
@@ -409,9 +453,18 @@ public class RequestServiceTest {
 				"Assert that the time limit has changed for the Request from the placeholder");
 
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
+		Mockito.verify(notDao).deleteNotification(usernameCaptor.capture(), idCaptor.capture());
 
 		assertEquals(request, reqCaptor.getValue(),
 				"Assert that the request passed into updateRequest is the same request");
+
+		assertEquals(deptHead.getUsername(), usernameCaptor.getValue(),
+				"Assert that the username passed in is the benCo's username.");
+		assertEquals(request.getId(), idCaptor.getValue(), "Assert that the requestId passed in is the request's id");
+
+		assertEquals(deptHead.getUsername(), usernameCaptor.getValue(),
+				"Assert that the username passed in is the benCo's username.");
+		assertEquals(request.getId(), idCaptor.getValue(), "Assert that the requestId passed in is the request's id");
 
 	}
 
@@ -423,12 +476,17 @@ public class RequestServiceTest {
 		request.getDeptHeadApproval().setStatus(ApprovalStatus.AWAITING);
 		request.setReimburseAmount(request.getCost() * request.getType().getPercent());
 		user.setPendingBalance(request.getReimburseAmount());
+		String reason = "This is a test";
+		String message = "Your request has been denied. Reason: " + reason;
 
 		ArgumentCaptor<String> getUserCaptor = ArgumentCaptor.forClass(String.class);
 		ArgumentCaptor<User> updateUserCaptor = ArgumentCaptor.forClass(User.class);
 		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
+		ArgumentCaptor<Notification> notCaptor = ArgumentCaptor.forClass(Notification.class);
+		ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
+		ArgumentCaptor<UUID> idCaptor = ArgumentCaptor.forClass(UUID.class);
 
-		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.DENIED, "This is a test");
+		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.DENIED, reason);
 
 		assertEquals(request, retRequest, "Assert that the request returned is the same request");
 		assertEquals(ApprovalStatus.DENIED, request.getDeptHeadApproval().getStatus(),
@@ -439,12 +497,25 @@ public class RequestServiceTest {
 		Mockito.verify(userDao).getUser(getUserCaptor.capture());
 		Mockito.verify(userDao).updateUser(updateUserCaptor.capture());
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
+		Mockito.verify(notDao).createNotification(notCaptor.capture());
+		Mockito.verify(notDao).deleteNotification(usernameCaptor.capture(), idCaptor.capture());
 
 		assertEquals(request, reqCaptor.getValue(),
 				"Assert that the request passed into updateRequest is the same request");
 		assertEquals(user.getUsername(), getUserCaptor.getValue(),
 				"Assert that the user's username is passed in to get user");
 		assertEquals(user, updateUserCaptor.getValue(), "Assert that the the user is updated.");
+
+		assertEquals(request.getUsername(), notCaptor.getValue().getUsername(),
+				"Assert that the notification has the correct username");
+		assertEquals(request.getId(), notCaptor.getValue().getRequestId(),
+				"Assert that the notification has the correct requestID");
+		assertEquals(message, notCaptor.getValue().getMessage(),
+				"Assert that the notification has the correct message");
+
+		assertEquals(deptHead.getUsername(), usernameCaptor.getValue(),
+				"Assert that the username passed in is the benCo's username.");
+		assertEquals(request.getId(), idCaptor.getValue(), "Assert that the requestId passed in is the request's id");
 	}
 
 	@Test
@@ -455,25 +526,44 @@ public class RequestServiceTest {
 		request.getBenCoApproval().setUsername(benCo.getUsername());
 		request.getBenCoApproval().setStatus(ApprovalStatus.AWAITING);
 		request.setReimburseAmount(request.getCost() * request.getType().getPercent());
+		String message = "Your request has been approved. Please enter your final submission when ready.";
 
 		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
+		ArgumentCaptor<Notification> notCaptor = ArgumentCaptor.forClass(Notification.class);
+		ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
+		ArgumentCaptor<UUID> idCaptor = ArgumentCaptor.forClass(UUID.class);
 
 		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.APPROVED, null);
 
 		assertEquals(request, retRequest, "Assert that the request returned is the same request");
+		assertEquals(RequestStatus.APPROVED, request.getStatus(), "Assert that the request status is set to APPROVED");
 		assertEquals(ApprovalStatus.APPROVED, request.getBenCoApproval().getStatus(),
 				"Assert that the supervisor approved the request.");
 		assertEquals(ApprovalStatus.AWAITING, request.getFinalApproval().getStatus(),
 				"Assert that the BenCo approval is now in awaiting.");
 		assertEquals(request.getBenCoApproval().getUsername(), request.getFinalApproval().getUsername(),
-				"Assert that the finalApproval username is set to the supervisor's username");
+				"Assert that the finalApproval username is set to the benCo's username");
 		assertNotEquals(request.getDeadline(), Request.PLACEHOLDER,
 				"Assert that the time limit has changed for the Request from the placeholder");
 
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
+		Mockito.verify(notDao).createNotification(notCaptor.capture());
+		Mockito.verify(notDao).deleteNotification(usernameCaptor.capture(), idCaptor.capture());
 
 		assertEquals(request, reqCaptor.getValue(),
 				"Assert that the request passed into updateRequest is the same request");
+
+		assertEquals(user.getUsername(), notCaptor.getValue().getUsername(),
+				"Assert that the notification has the correct username");
+		assertEquals(request.getId(), notCaptor.getValue().getRequestId(),
+				"Assert that the notification has the correct requestID");
+		assertEquals(message, notCaptor.getValue().getMessage(),
+				"Assert that the notification has the correct message");
+
+		assertEquals(benCo.getUsername(), usernameCaptor.getValue(),
+				"Assert that the username passed in is the benCo's username.");
+		assertEquals(request.getId(), idCaptor.getValue(), "Assert that the requestId passed in is the request's id");
+
 	}
 
 	@Test
@@ -485,25 +575,43 @@ public class RequestServiceTest {
 		request.getBenCoApproval().setStatus(ApprovalStatus.AWAITING);
 		request.setReimburseAmount(request.getCost() * request.getType().getPercent());
 		request.setGradingFormat(new GradingFormat(Format.PRESENTATION));
+		String message = "Your request has been approved. Please enter your final submission when ready.";
 
 		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
+		ArgumentCaptor<Notification> notCaptor = ArgumentCaptor.forClass(Notification.class);
+		ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
+		ArgumentCaptor<UUID> idCaptor = ArgumentCaptor.forClass(UUID.class);
 
 		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.APPROVED, null);
 
 		assertEquals(request, retRequest, "Assert that the request returned is the same request");
+		assertEquals(RequestStatus.APPROVED, request.getStatus(), "Assert that the request status is set to APPROVED");
 		assertEquals(ApprovalStatus.APPROVED, request.getBenCoApproval().getStatus(),
 				"Assert that the benCo approved the request.");
 		assertEquals(ApprovalStatus.AWAITING, request.getFinalApproval().getStatus(),
 				"Assert that the final approval is now in awaiting.");
 		assertEquals(request.getSupervisorApproval().getUsername(), request.getFinalApproval().getUsername(),
-				"Assert that the finalApproval username is set to the supervisor's username");
+				"Assert that the finalApproval username is set to the correct username");
 		assertNotEquals(request.getDeadline(), Request.PLACEHOLDER,
 				"Assert that the time limit has changed for the Request from the placeholder");
 
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
+		Mockito.verify(notDao).createNotification(notCaptor.capture());
+		Mockito.verify(notDao).deleteNotification(usernameCaptor.capture(), idCaptor.capture());
 
 		assertEquals(request, reqCaptor.getValue(),
 				"Assert that the request passed into updateRequest is the same request");
+
+		assertEquals(user.getUsername(), notCaptor.getValue().getUsername(),
+				"Assert that the notification has the correct username");
+		assertEquals(request.getId(), notCaptor.getValue().getRequestId(),
+				"Assert that the notification has the correct requestID");
+		assertEquals(message, notCaptor.getValue().getMessage(),
+				"Assert that the notification has the correct message");
+
+		assertEquals(benCo.getUsername(), usernameCaptor.getValue(),
+				"Assert that the username passed in is the benCo's username.");
+		assertEquals(request.getId(), idCaptor.getValue(), "Assert that the requestId passed in is the request's id");
 	}
 
 	@Test
@@ -515,12 +623,17 @@ public class RequestServiceTest {
 		request.getBenCoApproval().setStatus(ApprovalStatus.AWAITING);
 		request.setReimburseAmount(request.getCost() * request.getType().getPercent());
 		user.setPendingBalance(request.getReimburseAmount());
+		String reason = "This is a test";
+		String message = "Your request has been denied. Reason: " + reason;
 
 		ArgumentCaptor<String> getUserCaptor = ArgumentCaptor.forClass(String.class);
 		ArgumentCaptor<User> updateUserCaptor = ArgumentCaptor.forClass(User.class);
 		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
+		ArgumentCaptor<Notification> notCaptor = ArgumentCaptor.forClass(Notification.class);
+		ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
+		ArgumentCaptor<UUID> idCaptor = ArgumentCaptor.forClass(UUID.class);
 
-		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.DENIED, "This is a test");
+		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.DENIED, reason);
 
 		assertEquals(request, retRequest, "Assert that the request returned is the same request");
 		assertEquals(ApprovalStatus.DENIED, request.getBenCoApproval().getStatus(),
@@ -531,12 +644,25 @@ public class RequestServiceTest {
 		Mockito.verify(userDao).getUser(getUserCaptor.capture());
 		Mockito.verify(userDao).updateUser(updateUserCaptor.capture());
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
+		Mockito.verify(notDao).createNotification(notCaptor.capture());
+		Mockito.verify(notDao).deleteNotification(usernameCaptor.capture(), idCaptor.capture());
 
 		assertEquals(request, reqCaptor.getValue(),
 				"Assert that the request passed into updateRequest is the same request");
 		assertEquals(user.getUsername(), getUserCaptor.getValue(),
 				"Assert that the user's username is passed in to get user");
 		assertEquals(user, updateUserCaptor.getValue(), "Assert that the the user is updated.");
+
+		assertEquals(request.getUsername(), notCaptor.getValue().getUsername(),
+				"Assert that the notification has the correct username");
+		assertEquals(request.getId(), notCaptor.getValue().getRequestId(),
+				"Assert that the notification has the correct requestID");
+		assertEquals(message, notCaptor.getValue().getMessage(),
+				"Assert that the notification has the correct message");
+
+		assertEquals(benCo.getUsername(), usernameCaptor.getValue(),
+				"Assert that the username passed in is the benCo's username.");
+		assertEquals(request.getId(), idCaptor.getValue(), "Assert that the requestId passed in is the request's id");
 	}
 
 	@Test
@@ -549,17 +675,22 @@ public class RequestServiceTest {
 		request.getFinalApproval().setUsername(benCo.getUsername());
 		request.getFinalApproval().setStatus(ApprovalStatus.AWAITING);
 		request.setReimburseAmount(request.getCost() * request.getType().getPercent());
+		request.setStatus(RequestStatus.APPROVED);
+		String message = "Your request has been finalized and the amount will be awarded.";
 
 		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
 		ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
 		ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+		ArgumentCaptor<Notification> notCaptor = ArgumentCaptor.forClass(Notification.class);
+		ArgumentCaptor<String> usernameNotCaptor = ArgumentCaptor.forClass(String.class);
+		ArgumentCaptor<UUID> idCaptor = ArgumentCaptor.forClass(UUID.class);
 
 		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.APPROVED, null);
 
 		assertEquals(request, retRequest, "Assert that the request returned is the same request");
 		assertEquals(ApprovalStatus.APPROVED, request.getFinalApproval().getStatus(),
 				"Assert that the supervisor approved the request.");
-		assertEquals(RequestStatus.APPROVED, request.getStatus(), "Assert that the request was approved.");
+		assertEquals(RequestStatus.AWARDED, request.getStatus(), "Assert that the request was approved.");
 		assertEquals(0.0, user.getPendingBalance(), "Assert that the pending balance was set back to zero.");
 		assertEquals(request.getReimburseAmount(), user.getAwardedBalance(),
 				"Assert that the awarded balance is equal to the reimbursement amount.");
@@ -567,12 +698,25 @@ public class RequestServiceTest {
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
 		Mockito.verify(userDao).getUser(usernameCaptor.capture());
 		Mockito.verify(userDao).updateUser(userCaptor.capture());
+		Mockito.verify(notDao).createNotification(notCaptor.capture());
+		Mockito.verify(notDao).deleteNotification(usernameNotCaptor.capture(), idCaptor.capture());
 
 		assertEquals(request, reqCaptor.getValue(),
 				"Assert that the request passed into updateRequest is the same request");
 		assertEquals(user.getUsername(), usernameCaptor.getValue(),
 				"Assert that the user's username is passed in to get user");
 		assertEquals(user, userCaptor.getValue(), "Assert that the the user is updated.");
+
+		assertEquals(user.getUsername(), notCaptor.getValue().getUsername(),
+				"Assert that the notification has the correct username");
+		assertEquals(request.getId(), notCaptor.getValue().getRequestId(),
+				"Assert that the notification has the correct requestID");
+		assertEquals(message, notCaptor.getValue().getMessage(),
+				"Assert that the notification has the correct message");
+
+		assertEquals(request.getFinalApproval().getUsername(), usernameNotCaptor.getValue(),
+				"Assert that the username passed in is the benCo's username.");
+		assertEquals(request.getId(), idCaptor.getValue(), "Assert that the requestId passed in is the request's id");
 	}
 
 	@Test
@@ -584,13 +728,19 @@ public class RequestServiceTest {
 		request.getFinalApproval().setUsername(user.getSupervisorUsername());
 		request.getFinalApproval().setStatus(ApprovalStatus.AWAITING);
 		request.setReimburseAmount(request.getCost() * request.getType().getPercent());
+		request.setStatus(RequestStatus.APPROVED);
 		user.setPendingBalance(request.getReimburseAmount());
+		String reason = "This is a test";
+		String message = "Your request has been denied. Reason: " + reason;
 
 		ArgumentCaptor<String> getUserCaptor = ArgumentCaptor.forClass(String.class);
 		ArgumentCaptor<User> updateUserCaptor = ArgumentCaptor.forClass(User.class);
 		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
+		ArgumentCaptor<Notification> notCaptor = ArgumentCaptor.forClass(Notification.class);
+		ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
+		ArgumentCaptor<UUID> idCaptor = ArgumentCaptor.forClass(UUID.class);
 
-		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.DENIED, "This is a test");
+		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.DENIED, reason);
 
 		assertEquals(request, retRequest, "Assert that the request returned is the same request");
 		assertEquals(ApprovalStatus.DENIED, request.getFinalApproval().getStatus(),
@@ -601,12 +751,25 @@ public class RequestServiceTest {
 		Mockito.verify(userDao).getUser(getUserCaptor.capture());
 		Mockito.verify(userDao).updateUser(updateUserCaptor.capture());
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
+		Mockito.verify(notDao).createNotification(notCaptor.capture());
+		Mockito.verify(notDao).deleteNotification(usernameCaptor.capture(), idCaptor.capture());
 
 		assertEquals(request, reqCaptor.getValue(),
 				"Assert that the request passed into updateRequest is the same request");
 		assertEquals(user.getUsername(), getUserCaptor.getValue(),
 				"Assert that the user's username is passed in to get user");
 		assertEquals(user, updateUserCaptor.getValue(), "Assert that the the user is updated.");
+
+		assertEquals(user.getUsername(), notCaptor.getValue().getUsername(),
+				"Assert that the notification has the correct username");
+		assertEquals(request.getId(), notCaptor.getValue().getRequestId(),
+				"Assert that the notification has the correct requestID");
+		assertEquals(message, notCaptor.getValue().getMessage(),
+				"Assert that the notification has the correct message");
+
+		assertEquals(request.getFinalApproval().getUsername(), usernameCaptor.getValue(),
+				"Assert that the username passed in is the benCo's username.");
+		assertEquals(request.getId(), idCaptor.getValue(), "Assert that the requestId passed in is the request's id");
 
 	}
 
@@ -619,11 +782,6 @@ public class RequestServiceTest {
 
 		nullRequest = service.changeApprovalStatus(request, null, "reason");
 		assertNull("Assert that a null status returns a null", nullRequest);
-
-		// If the request has been approved, denied, or cancelled already.
-		request.setStatus(RequestStatus.APPROVED);
-		nullRequest = service.changeApprovalStatus(request, ApprovalStatus.APPROVED, "reason");
-		assertNull("Assert that an approved request returns a null", nullRequest);
 
 		request.setStatus(RequestStatus.DENIED);
 		nullRequest = service.changeApprovalStatus(request, ApprovalStatus.APPROVED, "reason");
@@ -766,9 +924,11 @@ public class RequestServiceTest {
 	public void testChangeReimburseAmountValid() {
 		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
 		ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+		ArgumentCaptor<Notification> notCaptor = ArgumentCaptor.forClass(Notification.class);
 		Double reimburse = 200.00;
 		Double finalReimburse = 100.00;
 		String reason = "this is a reason";
+		String message = "Your request reimburse amount has changed and needs your approval.";
 
 		request.setReimburseAmount(reimburse);
 		user.setPendingBalance(reimburse);
@@ -787,8 +947,17 @@ public class RequestServiceTest {
 		// Verify updateRequest was called and the request was set in
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
 		Mockito.verify(userDao).updateUser(userCaptor.capture());
+		Mockito.verify(notDao).createNotification(notCaptor.capture());
+
 		assertEquals(request, reqCaptor.getValue(), "Assert that the request passed in is the same request");
 		assertEquals(user, userCaptor.getValue(), "Assert that the user passed in is the same user");
+
+		assertEquals(request.getUsername(), notCaptor.getValue().getUsername(),
+				"Assert that the notification has the correct username");
+		assertEquals(request.getId(), notCaptor.getValue().getRequestId(),
+				"Assert that the notification has the correct requestID");
+		assertEquals(message, notCaptor.getValue().getMessage(),
+				"Assert that the notification has the correct message");
 	}
 
 	@Test
@@ -822,15 +991,18 @@ public class RequestServiceTest {
 
 		Mockito.verifyZeroInteractions(reqDao);
 		Mockito.verifyZeroInteractions(userDao);
+		Mockito.verifyZeroInteractions(notDao);
 	}
 
 	@Test
 	public void testChangeEmployeeAgreesValidTrue() {
 		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
+		ArgumentCaptor<Notification> notCaptor = ArgumentCaptor.forClass(Notification.class);
 		request.getBenCoApproval().setStatus(ApprovalStatus.AWAITING);
 		Double finalReimburse = 200.00;
 		request.setFinalReimburseAmount(finalReimburse);
 		Boolean employeeAgrees = true;
+		String message = "The employee agrees with the reimbursement change.";
 
 		service.changeEmployeeAgrees(request, employeeAgrees);
 
@@ -839,14 +1011,24 @@ public class RequestServiceTest {
 				"Assert that needs employee review is set in the request");
 
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
+		Mockito.verify(notDao).createNotification(notCaptor.capture());
 
 		assertEquals(request, reqCaptor.getValue(), "Assert that the request passed in is the same request");
+		assertEquals(request.getBenCoApproval().getUsername(), notCaptor.getValue().getUsername(),
+				"Assert that the notification has the correct username");
+		assertEquals(request.getId(), notCaptor.getValue().getRequestId(),
+				"Assert that the notification has the correct requestID");
+		assertEquals(message, notCaptor.getValue().getMessage(),
+				"Assert that the notification has the correct message");
 	}
 
 	@Test
 	public void testChangEmployeeAgreesValidFalse() {
 		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
 		ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+		ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
+		ArgumentCaptor<UUID> idCaptor = ArgumentCaptor.forClass(UUID.class);
+
 		request.getBenCoApproval().setStatus(ApprovalStatus.AWAITING);
 		Double finalReimburse = 200.00;
 		request.setFinalReimburseAmount(finalReimburse);
@@ -865,9 +1047,13 @@ public class RequestServiceTest {
 
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
 		Mockito.verify(userDao).updateUser(userCaptor.capture());
+		Mockito.verify(notDao).deleteNotification(usernameCaptor.capture(), idCaptor.capture());
 
 		assertEquals(request, reqCaptor.getValue(), "Assert that the request passed in is the same request");
 		assertEquals(user, userCaptor.getValue(), "Assert that the user passed in is the same user");
+		assertEquals(request.getBenCoApproval().getUsername(), usernameCaptor.getValue(),
+				"Assert that the username passed in is the benCo's username.");
+		assertEquals(request.getId(), idCaptor.getValue(), "Assert that the requestId passed in is the request's id");
 	}
 
 	@Test
@@ -882,6 +1068,7 @@ public class RequestServiceTest {
 
 		Mockito.verifyZeroInteractions(reqDao);
 		Mockito.verifyZeroInteractions(userDao);
+		Mockito.verifyZeroInteractions(notDao);
 	}
 
 	@Test
@@ -891,7 +1078,6 @@ public class RequestServiceTest {
 
 		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
 		ArgumentCaptor<Notification> notCaptor = ArgumentCaptor.forClass(Notification.class);
-		
 
 		service.addFinalGrade(request, grade);
 
@@ -902,12 +1088,13 @@ public class RequestServiceTest {
 		Mockito.verify(notDao).createNotification(notCaptor.capture());
 
 		assertEquals(request, reqCaptor.getValue(), "Assert that the request was passed in");
-		
+
 		assertEquals(request.getFinalApproval().getUsername(), notCaptor.getValue().getUsername(),
-				"Assert that the notification has the supervisor's username");
+				"Assert that the notification has the correct username");
 		assertEquals(request.getId(), notCaptor.getValue().getRequestId(),
 				"Assert that the notification has the correct requestID");
-		assertEquals(message, notCaptor.getValue().getMessage(), "Assert that the notification has the correct message");
+		assertEquals(message, notCaptor.getValue().getMessage(),
+				"Assert that the notification has the correct message");
 	}
 
 	@Test
@@ -981,6 +1168,7 @@ public class RequestServiceTest {
 	@Test
 	public void testAutoApproveBenCo() {
 		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
+		ArgumentCaptor<Notification> notCaptor = ArgumentCaptor.forClass(Notification.class);
 		// Set approval status to awaiting and the deadline to expired
 		request.setSupervisorApproval(new Approval(ApprovalStatus.APPROVED, supervisor.getUsername()));
 		request.setDeptHeadApproval(new Approval(ApprovalStatus.APPROVED, deptHead.getUsername()));
@@ -990,6 +1178,7 @@ public class RequestServiceTest {
 		// Create the list and add the request to it
 		List<Request> requests = new ArrayList<Request>();
 		requests.add(request);
+		String message = "This request needs further approval.";
 
 		Mockito.when(reqDao.getExpiredRequests()).thenReturn(requests);
 
@@ -1000,8 +1189,16 @@ public class RequestServiceTest {
 		assertNotEquals(Request.PLACEHOLDER, request.getDeadline(), "Assert that the deadline was set");
 
 		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
+		Mockito.verify(notDao).createNotification(notCaptor.capture());
 
 		assertEquals(request, reqCaptor.getValue(), "Assert that the request was passed in to the updateRequest");
+
+		assertEquals(benCoSuper.getUsername(), notCaptor.getValue().getUsername(),
+				"Assert that the notification has the correct username");
+		assertEquals(request.getId(), notCaptor.getValue().getRequestId(),
+				"Assert that the notification has the correct requestID");
+		assertEquals(message, notCaptor.getValue().getMessage(),
+				"Assert that the notification has the correct message");
 	}
 
 	@Test

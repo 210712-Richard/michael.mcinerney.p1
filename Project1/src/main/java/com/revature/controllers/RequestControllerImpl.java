@@ -73,14 +73,15 @@ public class RequestControllerImpl implements RequestController {
 			return;
 		}
 
-		// Get the request. If auto approve is auto approving a request right now, then need to wait
+		// Get the request. If auto approve is auto approving a request right now, then
+		// need to wait
 		Request request = null;
 		synchronized (RequestService.APPROVAL_LOCK) {
 			request = reqService.getRequest(UUID.fromString(ctx.pathParam("requestId")));
 			log.debug("Request from requestId: " + request);
 		}
-		
-		//Get the approval status from the body
+
+		// Get the approval status from the body
 		Request approval = ctx.bodyAsClass(ReimbursementRequest.class);
 		log.debug("Request from body: " + approval);
 		// If the request was not found
@@ -97,7 +98,9 @@ public class RequestControllerImpl implements RequestController {
 		if (approval == null || approval.getSupervisorApproval() == null
 				|| (!approval.getSupervisorApproval().getStatus().equals(ApprovalStatus.APPROVED)
 						&& !approval.getSupervisorApproval().getStatus().equals(ApprovalStatus.DENIED))
-				|| !request.getStatus().equals(RequestStatus.ACTIVE) || request.getNeedsEmployeeReview() == true) {
+				|| (!request.getStatus().equals(RequestStatus.ACTIVE)
+						&& !request.getStatus().equals(RequestStatus.APPROVED))
+				|| request.getNeedsEmployeeReview() == true) {
 			ctx.status(400);
 			ctx.html("This request cannot be set to the specified status.");
 			return;
@@ -353,7 +356,7 @@ public class RequestControllerImpl implements RequestController {
 
 		// If the request is ready to be processed by BenCo or cancelled by the
 		// user or is not supposed to accept a presentation
-		if (!request.getStatus().equals(RequestStatus.ACTIVE)
+		if (!request.getStatus().equals(RequestStatus.APPROVED)
 				|| !request.getFinalApproval().getStatus().equals(ApprovalStatus.AWAITING)
 				|| !request.getGradingFormat().getFormat().equals(Format.PRESENTATION)) {
 			ctx.status(403);
@@ -505,12 +508,13 @@ public class RequestControllerImpl implements RequestController {
 			// amount
 			if (approval.getFinalReimburseAmountReason() == null
 					|| approval.getFinalReimburseAmountReason().isBlank()) {
-				
+
 				ctx.status(400);
 				ctx.html("If changing the reimburse amount, need a reason");
 				return;
 			}
 			// Set the final reimburse amount
+			request.getBenCoApproval().setUsername(loggedUser.getUsername());
 			request = reqService.changeReimburseAmount(request, approval.getFinalReimburseAmount(),
 					approval.getFinalReimburseAmountReason());
 
@@ -588,7 +592,7 @@ public class RequestControllerImpl implements RequestController {
 		// request isn't awaiting
 		if (Format.PRESENTATION.equals(request.getGradingFormat().getFormat())
 				|| !(loggedUser.getUsername().equals(request.getUsername())
-						&& RequestStatus.ACTIVE.equals(request.getStatus())
+						&& RequestStatus.APPROVED.equals(request.getStatus())
 						&& ApprovalStatus.AWAITING.equals(request.getFinalApproval().getStatus()))) {
 			ctx.status(403);
 			return;

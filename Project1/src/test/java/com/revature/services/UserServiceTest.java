@@ -182,5 +182,25 @@ public class UserServiceTest {
 		assertNull("Assert that a null user argument returns a null user", updated);
 		
 	}
+	
+	@Test
+	public void testDeleteNotificationsValid() {
+		ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
+		
+		service.deleteNotifications(user.getUsername());
+		
+		Mockito.verify(notDao).deleteUserNotifications(usernameCaptor.capture());
+		
+		assertEquals(user.getUsername(), usernameCaptor.getValue(), "Assert that the username passed in is the same username.");
+		
+	}
+	
+	@Test
+	public void testDeleteNotificationsInvalid() {
+		service.deleteNotifications(null);
+		service.deleteNotifications(" ");
+		
+		Mockito.verifyZeroInteractions(notDao);
+	}
 
 }

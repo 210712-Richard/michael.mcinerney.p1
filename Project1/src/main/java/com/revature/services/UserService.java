@@ -41,4 +41,10 @@ public interface UserService {
 	 * @return The updated user
 	 */
 	public User updateUser(User user);
+	
+	/**
+	 * Delete the user's notifications
+	 * @param username The username of the user
+	 */
+	public void deleteNotifications(String username);
 }
