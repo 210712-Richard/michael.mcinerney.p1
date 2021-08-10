@@ -44,7 +44,7 @@ public class RequestDaoImpl implements RequestDao {
 		StringBuilder query = new StringBuilder("SELECT ")
 				.append("id, username, status, isurgent, name, firstname, lastname, ")
 				.append("deptname, startdate, starttime, location, description, cost, gradingFormat, ")
-				.append("type, fileuris, approvalmsgsuris, worktimemissed, reimburseamount, supervisorapproval, ")
+				.append("type, fileuris, approvalmsguri, worktimemissed, reimburseamount, supervisorapproval, ")
 				.append("deptheadapproval, bencoapproval, reason, deadline, ")
 				.append("finalgrade, ispassing, presfilename, finalapproval, finalreimburseamount, ")
 				.append("finalreimburseamountreason, needsemployeereview, employeeagrees ")
@@ -81,7 +81,7 @@ public class RequestDaoImpl implements RequestDao {
 						row.getTupleValue("gradingformat").get(1, String.class)));
 		request.setType(EventType.valueOf(row.getString("type")));
 		request.setFileURIs(row.getList("fileuris", String.class));
-		request.setApprovalMsgsURIs(row.getList("approvalmsgsuris", String.class));
+		request.setApprovalMsgURI(row.getString("approvalmsguri"));
 		request.setWorkTimeMissed(row.getString("worktimemissed"));
 		request.setReimburseAmount(row.getDouble("reimburseamount"));
 		request.setSupervisorApproval(
@@ -117,7 +117,7 @@ public class RequestDaoImpl implements RequestDao {
 		StringBuilder query = new StringBuilder("SELECT ")
 				.append("id, username, status, isurgent, name, firstname, lastname, ")
 				.append("deptname, startdate, starttime, location, description, cost, gradingFormat, ")
-				.append("type, fileuris, approvalmsgsuris, worktimemissed, reimburseamount, supervisorapproval, ")
+				.append("type, fileuris, approvalmsguri, worktimemissed, reimburseamount, supervisorapproval, ")
 				.append("deptheadapproval, bencoapproval, reason, deadline, ")
 				.append("finalgrade, ispassing, presfilename, finalapproval, finalreimburseamount, ")
 				.append("finalreimburseamountreason, needsemployeereview, employeeagrees ").append("FROM request;");
@@ -145,7 +145,7 @@ public class RequestDaoImpl implements RequestDao {
 							row.getTupleValue("gradingformat").get(1, String.class)));
 			request.setType(EventType.valueOf(row.getString("type")));
 			request.setFileURIs(row.getList("fileuris", String.class));
-			request.setApprovalMsgsURIs(row.getList("approvalmsgsuris", String.class));
+			request.setApprovalMsgURI(row.getString("approvalmsguri"));
 			request.setWorkTimeMissed(row.getString("worktimemissed"));
 			request.setReimburseAmount(row.getDouble("reimburseamount"));
 			request.setSupervisorApproval(
@@ -184,7 +184,7 @@ public class RequestDaoImpl implements RequestDao {
 		StringBuilder query = new StringBuilder("SELECT ")
 				.append("id, username, status, isurgent, name, firstname, lastname, ")
 				.append("deptname, startdate, starttime, location, description, cost, gradingFormat, ")
-				.append("type, fileuris, approvalmsgsuris, worktimemissed, reimburseamount, supervisorapproval, ")
+				.append("type, fileuris, approvalmsguri, worktimemissed, reimburseamount, supervisorapproval, ")
 				.append("deptheadapproval, bencoapproval, reason, deadline, ")
 				.append("finalgrade, ispassing, presfilename, finalapproval, finalreimburseamount, ")
 				.append("finalreimburseamountreason, needsemployeereview, employeeagrees ").append("FROM request ")
@@ -214,7 +214,7 @@ public class RequestDaoImpl implements RequestDao {
 							row.getTupleValue("gradingformat").get(1, String.class)));
 			request.setType(EventType.valueOf(row.getString("type")));
 			request.setFileURIs(row.getList("fileuris", String.class));
-			request.setApprovalMsgsURIs(row.getList("approvalmsgsuris", String.class));
+			request.setApprovalMsgURI(row.getString("approvalmsguri"));
 			request.setWorkTimeMissed(row.getString("worktimemissed"));
 			request.setReimburseAmount(row.getDouble("reimburseamount"));
 			request.setSupervisorApproval(
@@ -251,7 +251,7 @@ public class RequestDaoImpl implements RequestDao {
 		StringBuilder query = new StringBuilder("UPDATE request SET ")
 				.append("status = ?, isurgent = ?, name = ?, firstname = ?, lastname = ?, ")
 				.append("deptname = ?, startdate = ?, starttime = ?, location = ?, description = ?, cost = ?, gradingFormat = ?, ")
-				.append("type = ?, fileuris = ?, approvalmsgsuris = ?, worktimemissed = ?, reimburseamount = ?, supervisorapproval = ?, ")
+				.append("type = ?, fileuris = ?, approvalmsguri = ?, worktimemissed = ?, reimburseamount = ?, supervisorapproval = ?, ")
 				.append("deptheadapproval = ?, bencoapproval = ?, reason = ?, deadline = ?, ")
 				.append("finalgrade = ?, ispassing = ?, presfilename = ?, finalapproval = ?, finalreimburseamount = ?, ")
 				.append("finalreimburseamountreason = ?, needsemployeereview = ?, employeeagrees = ?")
@@ -281,7 +281,7 @@ public class RequestDaoImpl implements RequestDao {
 				request.getName(), request.getFirstName(), request.getLastName(), request.getDeptName(),
 				request.getStartDate(), request.getStartTime(), request.getLocation(), request.getDescription(),
 				request.getCost(), grade, request.getType().toString(), request.getFileURIs(),
-				request.getApprovalMsgsURIs(), request.getWorkTimeMissed(), request.getReimburseAmount(),
+				request.getApprovalMsgURI(), request.getWorkTimeMissed(), request.getReimburseAmount(),
 				supervisorApproval, deptHeadApproval, benCoApproval, request.getReason(),
 				request.getDeadline().toInstant(ZoneOffset.UTC), request.getFinalGrade(), request.getIsPassing(),
 				request.getPresFileName(), finalApproval, request.getFinalReimburseAmount(),
@@ -297,7 +297,7 @@ public class RequestDaoImpl implements RequestDao {
 		StringBuilder query = new StringBuilder("INSERT INTO request (")
 				.append("id, username, status, isurgent, name, firstname, lastname, ")
 				.append("deptname, startdate, starttime, location, description, cost, gradingFormat, ")
-				.append("type, fileuris, approvalmsgsuris, worktimemissed, reimburseamount, supervisorapproval, ")
+				.append("type, fileuris, approvalmsguri, worktimemissed, reimburseamount, supervisorapproval, ")
 				.append("deptheadapproval, bencoapproval, reason, deadline, ")
 				.append("finalgrade, ispassing, presfilename, finalapproval, finalreimburseamount, ")
 				.append("finalreimburseamountreason, needsemployeereview, employeeagrees")
@@ -327,7 +327,7 @@ public class RequestDaoImpl implements RequestDao {
 				request.getStatus().toString(), request.getIsUrgent(), request.getName(), request.getFirstName(),
 				request.getLastName(), request.getDeptName(), request.getStartDate(), request.getStartTime(),
 				request.getLocation(), request.getDescription(), request.getCost(), grade, request.getType().toString(),
-				request.getFileURIs(), request.getApprovalMsgsURIs(), request.getWorkTimeMissed(),
+				request.getFileURIs(), request.getApprovalMsgURI(), request.getWorkTimeMissed(),
 				request.getReimburseAmount(), supervisorApproval, deptHeadApproval, benCoApproval, request.getReason(),
 				request.getDeadline().toInstant(ZoneOffset.UTC), request.getFinalGrade(), request.getIsPassing(),
 				request.getPresFileName(), finalApproval, request.getFinalReimburseAmount(),

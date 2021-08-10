@@ -295,10 +295,10 @@ public class RequestControllerImpl implements RequestController {
 			return;
 		}
 
-		// If the request is ready to be processed by BenCo or cancelled by the
+		// If the request has already been processed by the supervisor or cancelled by the
 		// user
 		if (!request.getStatus().equals(RequestStatus.ACTIVE)
-				|| request.getBenCoApproval().getStatus().equals(ApprovalStatus.AWAITING)) {
+				|| !request.getSupervisorApproval().getStatus().equals(ApprovalStatus.AWAITING)) {
 			ctx.status(403);
 			return;
 		}
@@ -310,15 +310,13 @@ public class RequestControllerImpl implements RequestController {
 		}
 
 		// Generate the key and upload to the bucket
-		String key = request.getId() + "/messages/" + request.getApprovalMsgsURIs().size() + "." + filetype;
+		String key = request.getId() + "/messages/apprvoaEmail." + filetype;
 		s3Instance.uploadToBucket(key, ctx.bodyAsBytes());
-		request.getApprovalMsgsURIs().add(key);
+		request.setApprovalMsgURI(key);
 
-		// Bypass the request if the supervisor or department head are awaiting
-		if (request.getSupervisorApproval().getStatus().equals(ApprovalStatus.AWAITING)
-				|| request.getDeptHeadApproval().getStatus().equals(ApprovalStatus.AWAITING)) {
-			reqService.changeApprovalStatus(request, ApprovalStatus.BYPASSED, null);
-		}
+		// Bypass the request
+		reqService.changeApprovalStatus(request, ApprovalStatus.BYPASSED, null);
+		
 		// Return request
 		ctx.json(request);
 
@@ -423,21 +421,18 @@ public class RequestControllerImpl implements RequestController {
 
 		Request request = reqService.getRequest(UUID.fromString(ctx.pathParam("requestId")));
 		log.debug("Request from the requestId in path: " + request);
-		Integer index = Integer.parseInt(ctx.pathParam("index"));
-		log.debug("The index from the path: " + index);
-
 		// If the request was not found
 		if (request == null) {
 			ctx.status(404);
 			ctx.html("The request wasn't found");
 			return;
 		}
-		if (index == null || index < 0 || index > request.getApprovalMsgsURIs().size()) {
+		if (request.getApprovalMsgURI() == null) {
 			ctx.status(404);
 			ctx.html("The file wasn't found");
 			return;
 		}
-		String key = request.getApprovalMsgsURIs().get(index);
+		String key = request.getApprovalMsgURI();
 
 		try {
 			InputStream file = s3Instance.getObject(key);

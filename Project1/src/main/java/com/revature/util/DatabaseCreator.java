@@ -36,7 +36,7 @@ public class DatabaseCreator {
 				"id uuid, username text, status text, isUrgent boolean, name text, firstName text, lastName text, ")
 				.append("deptName text, startDate date, startTime time, location text, ")
 				.append("description text, cost double, gradingFormat tuple<text, text>, ")
-				.append("type text, fileURIs List<text>, approvalMsgsURIs List<text>, workTimeMissed text, ")
+				.append("type text, fileURIs List<text>, approvalMsgURI text, workTimeMissed text, ")
 				.append("reimburseAmount double, supervisorApproval tuple<text, text>, ")
 				.append(", deptHeadApproval tuple<text, text>, ")
 				.append(", benCoApproval tuple<text, text>, reason text, deadline timestamp, ")

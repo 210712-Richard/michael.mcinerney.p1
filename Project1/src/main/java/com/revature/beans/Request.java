@@ -91,9 +91,9 @@ public interface Request {
 
 	void setFileURIs(List<String> fileURIs);
 
-	List<String> getApprovalMsgsURIs();
+	String getApprovalMsgURI();
 
-	void setApprovalMsgsURIs(List<String> approvalMsgsURIs);
+	void setApprovalMsgURI(String approvalMsgURI);
 
 	String getWorkTimeMissed();
 

@@ -32,7 +32,7 @@ public class ReimbursementRequest implements Request {
 
 	// Optional Fields
 	private List<String> fileURIs;
-	private List<String> approvalMsgsURIs;
+	private String approvalMsgURI;
 	private String workTimeMissed;
 
 	// The approval fields , approver IDs, and reimbursement amount
@@ -60,7 +60,6 @@ public class ReimbursementRequest implements Request {
 		isUrgent = false;
 
 		fileURIs = new ArrayList<>();
-		approvalMsgsURIs = new ArrayList<>();
 
 		supervisorApproval = new Approval();
 		deptHeadApproval = new Approval();
@@ -226,12 +225,12 @@ public class ReimbursementRequest implements Request {
 		this.fileURIs = fileURIs;
 	}
 
-	public List<String> getApprovalMsgsURIs() {
-		return approvalMsgsURIs;
+	public String getApprovalMsgURI() {
+		return approvalMsgURI;
 	}
 
-	public void setApprovalMsgsURIs(List<String> approvalMsgsURIs) {
-		this.approvalMsgsURIs = approvalMsgsURIs;
+	public void setApprovalMsgURI(String approvalMsgsURIs) {
+		this.approvalMsgURI = approvalMsgsURIs;
 	}
 
 	public String getWorkTimeMissed() {
@@ -368,7 +367,7 @@ public class ReimbursementRequest implements Request {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(approvalMsgsURIs, benCoApproval, cost, deadline, deptHeadApproval, deptName, description,
+		return Objects.hash(approvalMsgURI, benCoApproval, cost, deadline, deptHeadApproval, deptName, description,
 				employeeAgrees, fileURIs, finalApproval, finalGrade, finalReimburseAmount, finalReimburseAmountReason,
 				firstName, gradingFormat, id, isPassing, isUrgent, lastName, location, name, needsEmployeeReview,
 				presFileName, reason, reimburseAmount, startDate, startTime, status, supervisorApproval, type, username,
@@ -384,7 +383,7 @@ public class ReimbursementRequest implements Request {
 		if (getClass() != obj.getClass())
 			return false;
 		ReimbursementRequest other = (ReimbursementRequest) obj;
-		return Objects.equals(approvalMsgsURIs, other.approvalMsgsURIs)
+		return Objects.equals(approvalMsgURI, other.approvalMsgURI)
 				&& Objects.equals(benCoApproval, other.benCoApproval) && Objects.equals(cost, other.cost)
 				&& Objects.equals(deadline, other.deadline) && Objects.equals(deptHeadApproval, other.deptHeadApproval)
 				&& Objects.equals(deptName, other.deptName) && Objects.equals(description, other.description)
@@ -410,7 +409,7 @@ public class ReimbursementRequest implements Request {
 				+ isUrgent + ", name=" + name + ", firstName=" + firstName + ", lastName=" + lastName + ", deptName="
 				+ deptName + ", startDate=" + startDate + ", startTime=" + startTime + ", location=" + location
 				+ ", description=" + description + ", cost=" + cost + ", gradingFormat=" + gradingFormat + ", type="
-				+ type + ", fileURIs=" + fileURIs + ", approvalMsgsURIs=" + approvalMsgsURIs + ", workTimeMissed="
+				+ type + ", fileURIs=" + fileURIs + ", approvalMsgsURIs=" + approvalMsgURI + ", workTimeMissed="
 				+ workTimeMissed + ", reimburseAmount=" + reimburseAmount + ", supervisorApproval=" + supervisorApproval
 				+ ", deptHeadApproval=" + deptHeadApproval + ", benCoApproval=" + benCoApproval + ", reason=" + reason
 				+ ", deadline=" + deadline + ", finalGrade=" + finalGrade + ", isPassing=" + isPassing
