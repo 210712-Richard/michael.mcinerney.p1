@@ -15,12 +15,15 @@ import com.revature.beans.Department;
 import com.revature.beans.EventType;
 import com.revature.beans.Format;
 import com.revature.beans.GradingFormat;
+import com.revature.beans.Notification;
 import com.revature.beans.ReimbursementRequest;
 import com.revature.beans.Request;
 import com.revature.beans.RequestStatus;
 import com.revature.beans.User;
 import com.revature.data.DepartmentDao;
 import com.revature.data.DepartmentDaoImpl;
+import com.revature.data.NotificationDao;
+import com.revature.data.NotificationDaoImpl;
 import com.revature.data.RequestDao;
 import com.revature.data.RequestDaoImpl;
 import com.revature.data.UserDao;
@@ -32,17 +35,19 @@ import com.revature.util.Verifier;
 
 @TraceLog
 public class RequestServiceImpl implements RequestService {
-	
-	//All the DAO's needed to access resources
+
+	// All the DAO's needed to access resources
 	RequestDao reqDao = (RequestDao) BeanFactory.getFactory().getObject(RequestDao.class, RequestDaoImpl.class);
 	UserDao userDao = (UserDao) BeanFactory.getFactory().getObject(UserDao.class, UserDaoImpl.class);
 	DepartmentDao deptDao = (DepartmentDao) BeanFactory.getFactory().getObject(DepartmentDao.class,
 			DepartmentDaoImpl.class);
+	NotificationDao notDao = (NotificationDao) BeanFactory.getFactory().getObject(NotificationDao.class,
+			NotificationDaoImpl.class);
 
-	//For Logging
+	// For Logging
 	private static final Logger log = LogManager.getLogger(RequestServiceImpl.class);
 
-	//For verifying strings and objects as not null
+	// For verifying strings and objects as not null
 	private static final Verifier VERIFIER = new Verifier();
 
 	@Override
@@ -87,9 +92,10 @@ public class RequestServiceImpl implements RequestService {
 				request.startDeadline();
 				request.getSupervisorApproval().setStatus(ApprovalStatus.AWAITING);
 				log.debug("Deadline set to " + request.getDeadline());
-				// Add the request to the database
+				// Add the request to the database and create a notification for the supervisor
 				reqDao.createRequest(request);
-
+				notDao.createNotification(new Notification(user.getSupervisorUsername(), request.getId(),
+						"An employee has requested reimbursement!"));
 				// Make sure the user's pending amount is changed and the request added to their
 				// requests list.
 				user.getRequests().add(request.getId());
@@ -111,7 +117,8 @@ public class RequestServiceImpl implements RequestService {
 		Request retRequest = null;
 		// If the status is denied and there is a reason, or the request status is
 		// active and the arguments are not empty
-		if (VERIFIER.verifyNotNull(request, status) && request.getStatus().equals(RequestStatus.ACTIVE)) {
+		if (VERIFIER.verifyNotNull(request, status) && (request.getStatus().equals(RequestStatus.ACTIVE)
+				|| request.getStatus().equals(RequestStatus.APPROVED))) {
 			// Put all of the approvals into an array
 			Approval[] approvals = request.getApprovalArray();
 
@@ -149,6 +156,9 @@ public class RequestServiceImpl implements RequestService {
 					user.alterPendingBalance(request.getReimburseAmount() * -1.0);
 					reqDao.updateRequest(request);
 					userDao.updateUser(user);
+					notDao.createNotification(new Notification(request.getUsername(), request.getId(),
+							"Your request has been denied. Reason: " + reason));
+					notDao.deleteNotification(currentApproval.getUsername(), request.getId());
 					retRequest = request;
 					break;
 				}
@@ -167,6 +177,7 @@ public class RequestServiceImpl implements RequestService {
 						log.debug("Status changed to " + status);
 						continue;
 					}
+
 				}
 				// On the BenCo approval
 				else if (i == Request.BENCO_INDEX) {
@@ -178,11 +189,14 @@ public class RequestServiceImpl implements RequestService {
 					} else {
 						nextApproval.setUsername(request.getBenCoApproval().getUsername());
 					}
+					request.setStatus(RequestStatus.APPROVED);
+					notDao.createNotification(new Notification(request.getUsername(), request.getId(),
+							"Your request has been approved. Please enter your final submission when ready."));
 				}
 				// On final approval
 				else if (i == Request.FINAL_INDEX) {
 					// Set the user's balances and set the request to approved
-					request.setStatus(RequestStatus.APPROVED);
+					request.setStatus(RequestStatus.AWARDED);
 					User user = userDao.getUser(request.getUsername());
 
 					// If the reimburse amount was never changed, set it to the current reimburse
@@ -192,6 +206,8 @@ public class RequestServiceImpl implements RequestService {
 					}
 					user.alterPendingBalance(request.getFinalReimburseAmount() * -1.0);
 					user.alterAwardedBalance(request.getFinalReimburseAmount());
+					notDao.createNotification(new Notification(request.getUsername(), request.getId(),
+							"Your request has been finalized and the amount will be awarded."));
 					userDao.updateUser(user);
 				}
 
@@ -200,8 +216,14 @@ public class RequestServiceImpl implements RequestService {
 					nextApproval.setStatus(ApprovalStatus.AWAITING);
 					request.startDeadline();
 					log.debug("New request deadline: " + request.getDeadline());
+					// If the next approval is not benCo or final
+					if (nextApproval.getUsername() != null && i != Request.BENCO_INDEX) {
+						notDao.createNotification(new Notification(nextApproval.getUsername(), request.getId(),
+								"A new request needs your approval"));
+					}
 				}
-
+				// Clear out the notifications of the current approver
+				notDao.deleteNotification(currentApproval.getUsername(), request.getId());
 				reqDao.updateRequest(request);
 				retRequest = request;
 				break;
@@ -275,6 +297,8 @@ public class RequestServiceImpl implements RequestService {
 			user.alterPendingBalance(reimburse - request.getReimburseAmount());
 			log.debug("User's new pending balance: " + user.getPendingBalance());
 			userDao.updateUser(user);
+			notDao.createNotification(new Notification(request.getUsername(), request.getId(),
+					"Your request reimburse amount has changed and needs your approval."));
 
 			// Update the request and return it
 			reqDao.updateRequest(request);
@@ -296,8 +320,11 @@ public class RequestServiceImpl implements RequestService {
 			if (!employeeAgrees) {
 				request.getBenCoApproval().setStatus(ApprovalStatus.UNASSIGNED);
 				cancelRequest(request);
+				notDao.deleteNotification(request.getBenCoApproval().getUsername(), request.getId());
 			} else { // Else, update the request
 				reqDao.updateRequest(request);
+				notDao.createNotification(new Notification(request.getBenCoApproval().getUsername(), request.getId(),
+						"The employee agrees with the reimbursement change."));
 			}
 
 		}
@@ -312,6 +339,8 @@ public class RequestServiceImpl implements RequestService {
 			request.setIsPassing(request.getGradingFormat().isPassing(grade));
 			log.debug("Final grade: " + request.getFinalGrade() + ". Is passing: " + request.getIsPassing());
 			reqDao.updateRequest(request);
+			notDao.createNotification(new Notification(request.getFinalApproval().getUsername(), request.getId(),
+					"Final approval is ready on request"));
 		}
 	}
 
@@ -335,16 +364,16 @@ public class RequestServiceImpl implements RequestService {
 					if (ApprovalStatus.AWAITING.equals(request.getSupervisorApproval().getStatus())
 							|| ApprovalStatus.AWAITING.equals(request.getDeptHeadApproval().getStatus())) {
 						changeApprovalStatus(request, ApprovalStatus.AUTO_APPROVED, null);
-
 					}
 
 					// If the benCo or finalApproval user didn't approve, will need to message benCo
 					// supervisor
-					else if (ApprovalStatus.AWAITING.equals(request.getBenCoApproval().getStatus())
-							|| ApprovalStatus.AWAITING.equals(request.getFinalApproval().getStatus())) {
+					else if (ApprovalStatus.AWAITING.equals(request.getBenCoApproval().getStatus())) {
 						request.startDeadline();
 						reqDao.updateRequest(request);
-
+						String benCoSupervisorUsername = deptDao.getDepartment("Benefits").getDeptHeadUsername();
+						notDao.createNotification(new Notification(benCoSupervisorUsername, request.getId(),
+								"This request needs further approval."));
 					}
 					// If none of the requests are waiting, the request is most likely bad
 					else {

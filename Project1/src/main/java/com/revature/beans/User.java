@@ -28,6 +28,8 @@ public class User {
 	private Double awardedBalance;
 	// The List of Request IDs from requests the user has made
 	private List<UUID> requests;
+	// The List of Notifications the user has to read
+	private List<Notification> notifications;
 
 	/**
 	 * Generates a random id and sets the balances to 0 and the Request Lists to a
@@ -145,18 +147,27 @@ public class User {
 		this.requests = requests;
 	}
 
+	public List<Notification> getNotifications() {
+		return notifications;
+	}
+
+	public void setNotifications(List<Notification> notifications) {
+		this.notifications = notifications;
+	}
+
 	@Override
 	public String toString() {
 		return "User [username=" + username + ", password=" + password + ", email=" + email + ", firstName=" + firstName
 				+ ", lastName=" + lastName + ", type=" + type + ", departmentName=" + departmentName
 				+ ", supervisorUsername=" + supervisorUsername + ", pendingBalance=" + pendingBalance
-				+ ", awardedBalance=" + awardedBalance + ", requests=" + requests + "]";
+				+ ", awardedBalance=" + awardedBalance + ", requests=" + requests + ", notifications=" + notifications
+				+ "]";
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(awardedBalance, departmentName, email, firstName, lastName, password, pendingBalance,
-				requests, supervisorUsername, type, username);
+		return Objects.hash(awardedBalance, departmentName, email, firstName, lastName, notifications, password,
+				pendingBalance, requests, supervisorUsername, type, username);
 	}
 
 	@Override
@@ -171,8 +182,8 @@ public class User {
 		return Objects.equals(awardedBalance, other.awardedBalance)
 				&& Objects.equals(departmentName, other.departmentName) && Objects.equals(email, other.email)
 				&& Objects.equals(firstName, other.firstName) && Objects.equals(lastName, other.lastName)
-				&& Objects.equals(password, other.password) && Objects.equals(pendingBalance, other.pendingBalance)
-				&& Objects.equals(requests, other.requests)
+				&& Objects.equals(notifications, other.notifications) && Objects.equals(password, other.password)
+				&& Objects.equals(pendingBalance, other.pendingBalance) && Objects.equals(requests, other.requests)
 				&& Objects.equals(supervisorUsername, other.supervisorUsername) && type == other.type
 				&& Objects.equals(username, other.username);
 	}
@@ -180,10 +191,9 @@ public class User {
 	public void alterPendingBalance(Double cost) {
 		this.pendingBalance += cost;
 	}
-	
+
 	public void alterAwardedBalance(Double cost) {
 		this.awardedBalance += cost;
 	}
-	
 
 }

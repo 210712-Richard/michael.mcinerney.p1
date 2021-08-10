@@ -78,4 +78,23 @@ public class UserControllerImpl implements UserController {
 			ctx.html("Username is already taken");
 		}
 	}
+	
+	@Override
+	public void deleteNotifications(Context ctx) {
+		User loggedUser = ctx.sessionAttribute("loggedUser");
+		log.debug("Logged in user: " + loggedUser);
+		String username = ctx.pathParam("username");
+		log.debug("Username from the path: " + username);
+		
+		if (loggedUser == null || !loggedUser.getUsername().equals(username)) {
+			ctx.status(403);
+			return;
+		}
+		
+		//Delete the notifications from the database and clear them in the currently logged in user
+		userService.deleteNotifications(username);
+		loggedUser.getNotifications().clear();
+		
+		ctx.status(204);
+	}
 }

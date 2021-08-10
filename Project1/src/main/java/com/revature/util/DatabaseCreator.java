@@ -19,6 +19,9 @@ public class DatabaseCreator {
 
 		query = new StringBuilder("DROP TABLE IF EXISTS Department;");
 		CassandraUtil.getInstance().getSession().execute(query.toString());
+		
+		query = new StringBuilder("DROP TABLE IF EXISTS Notification;");
+		CassandraUtil.getInstance().getSession().execute(query.toString());
 	}
 
 	public static void createTables() {
@@ -44,6 +47,11 @@ public class DatabaseCreator {
 
 		query = new StringBuilder("CREATE TABLE IF NOT EXISTS Department (")
 				.append("name text PRIMARY KEY, deptHeadUsername text").append(");");
+		CassandraUtil.getInstance().getSession().execute(query.toString());
+		
+		query = new StringBuilder("CREATE TABLE IF NOT EXISTS Notification (")
+				.append("username text, requestId uuid, notificationTime timestamp, message text, ")
+				.append("primary key(username, requestId, notificationTime));");
 		CassandraUtil.getInstance().getSession().execute(query.toString());
 	}
 

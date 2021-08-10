@@ -188,7 +188,7 @@ public class RequestDaoImpl implements RequestDao {
 				.append("deptheadapproval, bencoapproval, reason, deadline, ")
 				.append("finalgrade, ispassing, presfilename, finalapproval, finalreimburseamount, ")
 				.append("finalreimburseamountreason, needsemployeereview, employeeagrees ").append("FROM request ")
-				.append("WHERE status = 'ACTIVE' AND deadline < ? LIMIT 1 ALLOW FILTERING;");
+				.append("WHERE status = 'ACTIVE' AND deadline < ? AND employeeAgrees = true LIMIT 1 ALLOW FILTERING;");
 		SimpleStatement s = new SimpleStatementBuilder(query.toString()).build();
 		BoundStatement bound = session.prepare(s).bind(LocalDateTime.now().toInstant(ZoneOffset.UTC));
 		ResultSet rs = session.execute(bound);

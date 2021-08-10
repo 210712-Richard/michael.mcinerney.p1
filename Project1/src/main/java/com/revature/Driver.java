@@ -121,6 +121,9 @@ public class Driver {
 		app.put("/requests/:requestId/finalReimburseAmount/finalReimburseAmountReason",
 				reqControl::changeReimburseAmount);
 		app.put("/requests/:requestId/employeeAgrees", reqControl::finalReimburseCheck);
+		
+		//Clear notifications from the user
+		app.delete("/users/:username/notifications", userControl::deleteNotifications);
 
 	}
 

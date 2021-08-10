@@ -5,6 +5,8 @@ import org.apache.logging.log4j.Logger;
 
 import com.revature.beans.User;
 import com.revature.beans.UserType;
+import com.revature.data.NotificationDao;
+import com.revature.data.NotificationDaoImpl;
 import com.revature.data.UserDao;
 import com.revature.data.UserDaoImpl;
 import com.revature.factory.BeanFactory;
@@ -14,6 +16,7 @@ import com.revature.util.Verifier;
 @TraceLog
 public class UserServiceImpl implements UserService {
 	UserDao userDao = (UserDao) BeanFactory.getFactory().getObject(UserDao.class, UserDaoImpl.class);
+	NotificationDao notDao = (NotificationDao) BeanFactory.getFactory().getObject(NotificationDao.class, NotificationDaoImpl.class);
 	private static Logger log = LogManager.getLogger(UserServiceImpl.class);
 	
 	private static final Verifier VERIFIER = new Verifier();
@@ -25,6 +28,12 @@ public class UserServiceImpl implements UserService {
 		}
 		User user = userDao.getUser(username, password);
 		log.debug("User returned: " + user);
+		
+		//Get the user's notifications if the user was found
+		if (user != null) {
+			user.setNotifications(notDao.getUserNotificationList(username));
+		}
+		
 		return user;
 	}
 
@@ -66,6 +75,13 @@ public class UserServiceImpl implements UserService {
 		//Send the updated user to the database to put the new data
 		userDao.updateUser(user);
 		return user;
+	}
+	
+	@Override
+	public void deleteNotifications(String username) {
+		if (VERIFIER.verifyStrings(username)) {
+			notDao.deleteUserNotifications(username);
+		}
 	}
 
 }

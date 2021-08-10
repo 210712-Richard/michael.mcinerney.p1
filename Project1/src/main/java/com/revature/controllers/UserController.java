@@ -25,4 +25,10 @@ public interface UserController {
 	 * deptname, and supervisorusername in the body.
 	 */
 	public void createUser(Context ctx);
+	
+	/**
+	 * Deletes the logged in user's notifications
+	 * @param ctx The context
+	 */
+	public void deleteNotifications(Context ctx);
 }
