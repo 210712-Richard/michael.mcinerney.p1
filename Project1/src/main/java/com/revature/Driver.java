@@ -97,7 +97,7 @@ public class Driver {
 
 		// Upload files as part of creating the reimbursement requests.
 		app.post("/requests/:requestId/fileURIs", reqControl::uploadExtraFile);
-		app.post("/requests/:requestId/approvalMsgsURIs", reqControl::uploadMessageFile);
+		app.put("/requests/:requestId/approvalMsgsURIs", reqControl::uploadMessageFile);
 
 		// Get the files
 		app.get("/requests/:requestId/fileURIs/:index", reqControl::getFile);
