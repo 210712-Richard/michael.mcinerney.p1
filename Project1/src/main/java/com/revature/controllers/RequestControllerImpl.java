@@ -683,6 +683,7 @@ public class RequestControllerImpl implements RequestController {
 			return;
 		}
 
+		//Add the final grade and return a 204
 		reqService.addFinalGrade(request, grade.getFinalGrade());
 		ctx.status(204);
 	}
