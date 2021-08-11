@@ -21,6 +21,7 @@ import com.revature.factory.TraceLog;
 import com.revature.services.RequestService;
 import com.revature.services.RequestServiceImpl;
 import com.revature.util.S3Util;
+import com.revature.util.Verifier;
 
 import io.javalin.http.Context;
 
@@ -29,6 +30,7 @@ public class RequestControllerImpl implements RequestController {
 	RequestService reqService = (RequestService) BeanFactory.getFactory().getObject(RequestService.class,
 			RequestServiceImpl.class);
 	private static Logger log = LogManager.getLogger(RequestControllerImpl.class);
+	private static final Verifier VERIFIER = new Verifier();
 
 	private static final String[] FILETYPES = { "pdf", "jpg", "png", "txt", "doc" };
 	private static final S3Util s3Instance = S3Util.getInstance();
@@ -100,7 +102,7 @@ public class RequestControllerImpl implements RequestController {
 						&& !approval.getSupervisorApproval().getStatus().equals(ApprovalStatus.DENIED))
 				|| (!request.getStatus().equals(RequestStatus.ACTIVE)
 						&& !request.getStatus().equals(RequestStatus.APPROVED))
-				|| request.getNeedsEmployeeReview() == true) {
+				|| request.getNeedsEmployeeReview()) {
 			ctx.status(400);
 			ctx.html("This request cannot be set to the specified status.");
 			return;
@@ -124,15 +126,23 @@ public class RequestControllerImpl implements RequestController {
 				return;
 			}
 			if ((i == Request.BENCO_INDEX && loggedUser.getDepartmentName().equals("Benefits"))
-					|| currentApproval.getUsername().equals(loggedUser.getUsername())) {
+					|| loggedUser.getUsername().equals(currentApproval.getUsername())) {
 				// If it is on BenCoApproval, set the BenCoApproval username to the current user
 				if (i == Request.BENCO_INDEX) {
 					currentApproval.setUsername(loggedUser.getUsername());
 
 				}
+				
+				//If evaluating the final request and the final grade or final presentation have not been set yet
+				if (i == Request.FINAL_INDEX && !VERIFIER.verifyStrings(request.getFinalGrade())
+						&& !VERIFIER.verifyStrings(request.getPresFileName())) {
+					ctx.status(403);
+					ctx.html("Waiting for the user to get the final grade");
+					return;
+				}
 				try {
 					request = reqService.changeApprovalStatus(request, approval.getSupervisorApproval().getStatus(),
-							approval.getReason());
+							approval.getReason(), i);
 					// If the request returned null, then the request was bad
 					if (request == null) {
 						ctx.status(400);
@@ -295,7 +305,8 @@ public class RequestControllerImpl implements RequestController {
 			return;
 		}
 
-		// If the request has already been processed by the supervisor or cancelled by the
+		// If the request has already been processed by the supervisor or cancelled by
+		// the
 		// user
 		if (!request.getStatus().equals(RequestStatus.ACTIVE)
 				|| !request.getSupervisorApproval().getStatus().equals(ApprovalStatus.AWAITING)) {
@@ -315,8 +326,8 @@ public class RequestControllerImpl implements RequestController {
 		request.setApprovalMsgURI(key);
 
 		// Bypass the request
-		reqService.changeApprovalStatus(request, ApprovalStatus.BYPASSED, null);
-		
+		reqService.changeApprovalStatus(request, ApprovalStatus.BYPASSED, null, Request.SUPERVISOR_INDEX);
+
 		// Return request
 		ctx.json(request);
 
@@ -372,7 +383,8 @@ public class RequestControllerImpl implements RequestController {
 		s3Instance.uploadToBucket(key, ctx.bodyAsBytes());
 		request.setPresFileName(key);
 		// Update and return request
-		reqService.addFinalGrade(request, "true");;
+		reqService.addFinalGrade(request, "true");
+		;
 		ctx.json(request);
 
 	}

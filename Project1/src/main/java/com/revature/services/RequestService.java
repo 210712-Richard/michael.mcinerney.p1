@@ -39,9 +39,10 @@ public interface RequestService {
 	 * @param status The status the request is adding 
 	 * @param reason The potential reason (can be null if just being approved)
 	 * @param username The username of the user doing the approving
+	 * @param index The location of the approval in the array
 	 * @return The request. Will return null if there was an issue
 	 */
-	public Request changeApprovalStatus(Request request, ApprovalStatus status, String reason);
+	public Request changeApprovalStatus(Request request, ApprovalStatus status, String reason, Integer index);
 	
 	/**
 	 * Get the Request based on the ID of the request

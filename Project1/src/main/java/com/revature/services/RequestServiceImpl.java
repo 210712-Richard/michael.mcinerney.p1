@@ -113,57 +113,46 @@ public class RequestServiceImpl implements RequestService {
 	}
 
 	@Override
-	public Request changeApprovalStatus(Request request, ApprovalStatus status, String reason) {
+	public Request changeApprovalStatus(Request request, ApprovalStatus status, String reason, Integer index) {
 		Request retRequest = null;
-		// If the status is denied and there is a reason, or the request status is
-		// active and the arguments are not empty
-		if (VERIFIER.verifyNotNull(request, status) && (request.getStatus().equals(RequestStatus.ACTIVE)
-				|| request.getStatus().equals(RequestStatus.APPROVED))) {
+		// Verify the objects (except reason) are not null and that the index is in the
+		// correct range
+		if (VERIFIER.verifyNotNull(request, status, index) && index >= Request.SUPERVISOR_INDEX
+				&& index <= Request.FINAL_INDEX) {
 			// Put all of the approvals into an array
 			Approval[] approvals = request.getApprovalArray();
 
-			for (int i = 0; i < approvals.length; i++) {
-				Approval currentApproval = approvals[i];
-				log.debug("Current Approval being evaluated: " + currentApproval);
+			Approval currentApproval = approvals[index];
+			log.debug("Current Approval being evaluated: " + currentApproval);
 
-				// If the approval has already been approved, move to the next one
-				if (currentApproval.getStatus().equals(ApprovalStatus.APPROVED)
-						|| currentApproval.getStatus().equals(ApprovalStatus.AUTO_APPROVED)
-						|| currentApproval.getStatus().equals(ApprovalStatus.BYPASSED)) {
-					continue;
+			// If the approval somehow made it to a denied or unassigned approval (this
+			// should not happen, need to throw exception
+			if (!currentApproval.getStatus().equals(ApprovalStatus.AWAITING)) {
+				throw new IllegalApprovalAttemptException(
+						"The approval that is being evaluated is " + currentApproval.getStatus());
+			}
+			Approval nextApproval = (index + 1 < approvals.length) ? approvals[index + 1] : null;
+			log.debug("The next Approval to be evaluated: " + nextApproval);
 
+			log.debug("Current Approval status changed to " + currentApproval.getStatus());
+			if (status.equals(ApprovalStatus.DENIED)) {
+				// If the reason is blank or null, return null
+				if (!VERIFIER.verifyStrings(reason)) {
+					return null;
 				}
-				// If the approval somehow made it to a denied or unassigned approval (this
-				// should not happen, need to throw exception
-				else if (currentApproval.getStatus().equals(ApprovalStatus.DENIED)
-						|| currentApproval.getStatus().equals(ApprovalStatus.UNASSIGNED)) {
-					break;
-				}
-				Approval nextApproval = (i + 1 < approvals.length) ? approvals[i + 1] : null;
-				log.debug("The next Approval to be evaluated: " + nextApproval);
 				currentApproval.setStatus(status);
-				log.debug("Current Approval status changed to " + currentApproval.getStatus());
-				if (status.equals(ApprovalStatus.DENIED)) {
+				request.setStatus(RequestStatus.DENIED);
+				request.setReason(reason);
+				User user = userDao.getUser(request.getUsername());
+				user.alterPendingBalance(request.getReimburseAmount() * -1.0);
+				userDao.updateUser(user);
+				notDao.createNotification(new Notification(request.getUsername(), request.getId(),
+						"Your request has been denied. Reason: " + reason));
 
-					// If the reason is blank or null, return null
-					if (!VERIFIER.verifyStrings(reason)) {
-						break;
-					}
-					request.setStatus(RequestStatus.DENIED);
-					request.setReason(reason);
-					User user = userDao.getUser(request.getUsername());
-					user.alterPendingBalance(request.getReimburseAmount() * -1.0);
-					reqDao.updateRequest(request);
-					userDao.updateUser(user);
-					notDao.createNotification(new Notification(request.getUsername(), request.getId(),
-							"Your request has been denied. Reason: " + reason));
-					notDao.deleteNotification(currentApproval.getUsername(), request.getId());
-					retRequest = request;
-					break;
-				}
-
+			} else {
+				currentApproval.setStatus(status);
 				// On the supervisor approval
-				if (i == Request.SUPERVISOR_INDEX) {
+				if (index == Request.SUPERVISOR_INDEX) {
 					// Need to check if the supervisor is also the department head
 					Department dept = deptDao.getDepartment(request.getDeptName());
 
@@ -174,12 +163,12 @@ public class RequestServiceImpl implements RequestService {
 					if (dept.getDeptHeadUsername().equals(request.getSupervisorApproval().getUsername())) {
 						status = ApprovalStatus.BYPASSED;
 						log.debug("Status changed to " + status);
-						continue;
+						return changeApprovalStatus(request, status, reason, index + 1);
 					}
 
 				}
 				// On the BenCo approval
-				else if (i == Request.BENCO_INDEX) {
+				else if (index == Request.BENCO_INDEX) {
 					// If the grading format is a presentation, the supervisor will be set to the
 					// final approval
 					// else, the BenCo will be set to the final approval
@@ -193,7 +182,7 @@ public class RequestServiceImpl implements RequestService {
 							"Your request has been approved. Please enter your final submission when ready."));
 				}
 				// On final approval
-				else if (i == Request.FINAL_INDEX) {
+				else if (index == Request.FINAL_INDEX) {
 					// Set the user's balances and set the request to approved
 					request.setStatus(RequestStatus.AWARDED);
 					User user = userDao.getUser(request.getUsername());
@@ -216,20 +205,19 @@ public class RequestServiceImpl implements RequestService {
 					request.startDeadline();
 					log.debug("New request deadline: " + request.getDeadline());
 					// If the next approval is not benCo or final
-					if (nextApproval.getUsername() != null && i != Request.BENCO_INDEX) {
+					if (nextApproval.getUsername() != null && index != Request.BENCO_INDEX) {
 						notDao.createNotification(new Notification(nextApproval.getUsername(), request.getId(),
 								"A new request needs your approval"));
 					}
 				}
-				// Clear out the notifications of the current approver
-				notDao.deleteNotification(currentApproval.getUsername(), request.getId());
-				reqDao.updateRequest(request);
-				retRequest = request;
-				break;
 
 			}
-
+			// Clear out the notifications of the current approver
+			notDao.deleteNotification(currentApproval.getUsername(), request.getId());
+			reqDao.updateRequest(request);
+			retRequest = request;
 		}
+
 		return retRequest;
 	}
 
@@ -352,7 +340,7 @@ public class RequestServiceImpl implements RequestService {
 		// deadline
 		if (requests != null && !requests.isEmpty()) {
 
-			// Make sure the controller doesn't approve the request
+			// Make sure the controller doesn't get the request while it is getting the request
 			synchronized (RequestService.APPROVAL_LOCK) {
 
 				for (Request request : requests) {
@@ -362,7 +350,10 @@ public class RequestServiceImpl implements RequestService {
 					// those
 					if (ApprovalStatus.AWAITING.equals(request.getSupervisorApproval().getStatus())
 							|| ApprovalStatus.AWAITING.equals(request.getDeptHeadApproval().getStatus())) {
-						changeApprovalStatus(request, ApprovalStatus.AUTO_APPROVED, null);
+						Integer index = ApprovalStatus.AWAITING.equals(request.getSupervisorApproval().getStatus())
+								? Request.SUPERVISOR_INDEX
+								: Request.DEPT_HEAD_INDEX;
+						changeApprovalStatus(request, ApprovalStatus.AUTO_APPROVED, null, index);
 					}
 
 					// If the benCo or finalApproval user didn't approve, will need to message benCo
