@@ -12,8 +12,8 @@ import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 public class S3Util {
-	public static final Region REGION = Region.US_EAST_2;
-	public static final String BUCKET_NAME = "mtm-project1";
+	private static final Region REGION = Region.US_EAST_2;
+	private static final String BUCKET_NAME = "mtm-project1";
 
 	private static Logger log = LogManager.getLogger(S3Util.class);
 

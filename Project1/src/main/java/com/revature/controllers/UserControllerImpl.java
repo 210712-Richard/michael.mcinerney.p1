@@ -15,7 +15,7 @@ import io.javalin.http.Context;
 public class UserControllerImpl implements UserController {
 
 	// The service for handling User objects
-	UserService userService = (UserService) BeanFactory.getFactory().getObject(UserService.class,
+	private UserService userService = (UserService) BeanFactory.getFactory().getObject(UserService.class,
 			UserServiceImpl.class);
 
 	// Log

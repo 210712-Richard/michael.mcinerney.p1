@@ -15,11 +15,21 @@ import com.revature.util.Verifier;
 
 @TraceLog
 public class UserServiceImpl implements UserService {
-	UserDao userDao = (UserDao) BeanFactory.getFactory().getObject(UserDao.class, UserDaoImpl.class);
-	NotificationDao notDao = (NotificationDao) BeanFactory.getFactory().getObject(NotificationDao.class, NotificationDaoImpl.class);
+	private UserDao userDao;
+	private NotificationDao notDao;
 	private static Logger log = LogManager.getLogger(UserServiceImpl.class);
 	
 	private static final Verifier VERIFIER = new Verifier();
+	
+	public UserServiceImpl() {
+		userDao = (UserDao) BeanFactory.getFactory().getObject(UserDao.class, UserDaoImpl.class);
+		notDao = (NotificationDao) BeanFactory.getFactory().getObject(NotificationDao.class, NotificationDaoImpl.class);
+	}
+
+	public UserServiceImpl(UserDao userDao, NotificationDao notDao) {
+		this.userDao = userDao;
+		this.notDao = notDao;
+	}
 
 	@Override
 	public User login(String username, String password) {

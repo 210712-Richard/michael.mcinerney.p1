@@ -37,18 +37,32 @@ import com.revature.util.Verifier;
 public class RequestServiceImpl implements RequestService {
 
 	// All the DAO's needed to access resources
-	RequestDao reqDao = (RequestDao) BeanFactory.getFactory().getObject(RequestDao.class, RequestDaoImpl.class);
-	UserDao userDao = (UserDao) BeanFactory.getFactory().getObject(UserDao.class, UserDaoImpl.class);
-	DepartmentDao deptDao = (DepartmentDao) BeanFactory.getFactory().getObject(DepartmentDao.class,
-			DepartmentDaoImpl.class);
-	NotificationDao notDao = (NotificationDao) BeanFactory.getFactory().getObject(NotificationDao.class,
-			NotificationDaoImpl.class);
+	private RequestDao reqDao;
+	private UserDao userDao;
+	private DepartmentDao deptDao;
+	private NotificationDao notDao;
 
 	// For Logging
 	private static final Logger log = LogManager.getLogger(RequestServiceImpl.class);
 
 	// For verifying strings and objects as not null
 	private static final Verifier VERIFIER = new Verifier();
+	
+	public RequestServiceImpl(){
+		reqDao = (RequestDao) BeanFactory.getFactory().getObject(RequestDao.class, RequestDaoImpl.class);
+		userDao = (UserDao) BeanFactory.getFactory().getObject(UserDao.class, UserDaoImpl.class);
+		deptDao = (DepartmentDao) BeanFactory.getFactory().getObject(DepartmentDao.class,
+				DepartmentDaoImpl.class);
+		notDao = (NotificationDao) BeanFactory.getFactory().getObject(NotificationDao.class,
+				NotificationDaoImpl.class);
+	}
+	
+	public RequestServiceImpl(RequestDao reqDao, UserDao userDao, DepartmentDao deptDao, NotificationDao notDao) {
+		this.reqDao = reqDao;
+		this.userDao = userDao;
+		this.deptDao = deptDao;
+		this.notDao = notDao;
+	}
 
 	@Override
 	public Request createRequest(String username, String firstName, String lastName, String deptName, String name,
@@ -375,3 +389,5 @@ public class RequestServiceImpl implements RequestService {
 		}
 	}
 }
+
+	

@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -15,7 +14,6 @@ import com.revature.beans.User;
 import com.revature.beans.UserType;
 import com.revature.data.NotificationDao;
 import com.revature.data.UserDao;
-import com.revature.util.MockitoHelper;
 
 public class UserServiceTest {
 	private UserService service = null;
@@ -23,22 +21,15 @@ public class UserServiceTest {
 	private UserDao dao = null;
 	private NotificationDao notDao = null;
 
-	private static MockitoHelper mock = null;
-
-	@BeforeAll
-	public static void beforeAll() {
-		mock = new MockitoHelper();
-	}
-
 	@BeforeEach
 	public void beforeTest() {
-		service = new UserServiceImpl();
 
 		user = new User("Tester", "TestPass", "user@test.com", "Test", "User", UserType.EMPLOYEE, "Test", "TestSuper");
 
-		dao = (UserDao) mock.setPrivateMock(service, "userDao", UserDao.class);
+		dao = Mockito.mock(UserDao.class);
+		notDao = Mockito.mock(NotificationDao.class);
 		
-		notDao = (NotificationDao) mock.setPrivateMock(service, "notDao", NotificationDao.class);
+		service = new UserServiceImpl(dao, notDao);
 	}
 
 	@Test

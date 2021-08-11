@@ -37,7 +37,6 @@ import com.revature.data.NotificationDao;
 import com.revature.data.RequestDao;
 import com.revature.data.UserDao;
 import com.revature.exceptions.IllegalApprovalAttemptException;
-import com.revature.util.MockitoHelper;
 
 public class RequestServiceTest {
 	private RequestService service = null;
@@ -56,18 +55,8 @@ public class RequestServiceTest {
 	private Department dept = null;
 	private Department benCoDept = null;
 
-	private static MockitoHelper mock = null;
-
-	@BeforeAll
-	public static void beforeAll() {
-		mock = new MockitoHelper();
-
-	}
-
 	@BeforeEach
 	public void beforeTest() {
-		service = new RequestServiceImpl();
-
 		request = new ReimbursementRequest();
 		request.setId(UUID.fromString("ddd9e879-52d3-47ad-a1b6-87a94cbb321d"));
 		request.setUsername("Tester");
@@ -96,10 +85,12 @@ public class RequestServiceTest {
 		dept = new Department("Test", "TestHead");
 		benCoDept = new Department("Benefits", benCoSuper.getUsername());
 
-		reqDao = (RequestDao) mock.setPrivateMock(service, "reqDao", RequestDao.class);
-		userDao = (UserDao) mock.setPrivateMock(service, "userDao", UserDao.class);
-		deptDao = (DepartmentDao) mock.setPrivateMock(service, "deptDao", DepartmentDao.class);
-		notDao = (NotificationDao) mock.setPrivateMock(service, "notDao", NotificationDao.class);
+		reqDao = Mockito.mock(RequestDao.class);
+		userDao = Mockito.mock(UserDao.class);
+		deptDao = Mockito.mock(DepartmentDao.class);
+		notDao = Mockito.mock(NotificationDao.class);
+		
+		service = new RequestServiceImpl(reqDao, userDao, deptDao, notDao);
 
 		Mockito.when(userDao.getUser(user.getUsername())).thenReturn(user);
 		Mockito.when(userDao.getUser(supervisor.getUsername())).thenReturn(supervisor);

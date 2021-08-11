@@ -97,11 +97,11 @@ public class Driver {
 
 		// Upload files as part of creating the reimbursement requests.
 		app.post("/requests/:requestId/fileURIs", reqControl::uploadExtraFile);
-		app.put("/requests/:requestId/approvalMsgsURIs", reqControl::uploadMessageFile);
+		app.put("/requests/:requestId/approvalMsgURI", reqControl::uploadMessageFile);
 
 		// Get the files
 		app.get("/requests/:requestId/fileURIs/:index", reqControl::getFile);
-		app.get("requests/:requestId/approvalMsgURI/", reqControl::getMessage);
+		app.get("/requests/:requestId/approvalMsgURI", reqControl::getMessage);
 
 		// As an employee, I can cancel my reimbursement request.
 		app.put("/requests/:requestId/status", reqControl::cancelRequest);

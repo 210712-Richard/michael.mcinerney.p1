@@ -13,7 +13,7 @@ public interface Request {
 	// The maximum amount that can be reimbursed for the user
 	Double MAX_REIMBURSEMENT = 1000.00;
 	// The amount of time each approver has to respond to the Request
-	TemporalAmount TIME_LIMIT = Duration.of(30, ChronoUnit.SECONDS);
+	TemporalAmount TIME_LIMIT = Duration.of(1, ChronoUnit.MINUTES);
 	//Used to set a placeholder value to the Approval deadline
 	LocalDateTime PLACEHOLDER = LocalDateTime.of(LocalDate.of(2020, 12, 31), LocalTime.of(0, 0));
 	

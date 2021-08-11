@@ -27,7 +27,7 @@ import io.javalin.http.Context;
 
 @TraceLog
 public class RequestControllerImpl implements RequestController {
-	RequestService reqService = (RequestService) BeanFactory.getFactory().getObject(RequestService.class,
+	private RequestService reqService = (RequestService) BeanFactory.getFactory().getObject(RequestService.class,
 			RequestServiceImpl.class);
 	private static Logger log = LogManager.getLogger(RequestControllerImpl.class);
 	private static final Verifier VERIFIER = new Verifier();
@@ -321,7 +321,7 @@ public class RequestControllerImpl implements RequestController {
 		}
 
 		// Generate the key and upload to the bucket
-		String key = request.getId() + "/messages/apprvoaEmail." + filetype;
+		String key = request.getId() + "/messages/approvalEmail." + filetype;
 		s3Instance.uploadToBucket(key, ctx.bodyAsBytes());
 		request.setApprovalMsgURI(key);
 
