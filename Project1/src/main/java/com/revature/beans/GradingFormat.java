@@ -86,6 +86,11 @@ public class GradingFormat {
 			}
 			break;
 		default: //For presentation
+			if (Boolean.parseBoolean(grade)) {
+				retGrade = true;
+			} else {
+				retGrade = false;
+			}
 			break;
 			
 		}

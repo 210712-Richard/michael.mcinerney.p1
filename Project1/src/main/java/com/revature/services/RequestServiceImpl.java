@@ -137,8 +137,7 @@ public class RequestServiceImpl implements RequestService {
 				// should not happen, need to throw exception
 				else if (currentApproval.getStatus().equals(ApprovalStatus.DENIED)
 						|| currentApproval.getStatus().equals(ApprovalStatus.UNASSIGNED)) {
-					throw new IllegalApprovalAttemptException(
-							"The approval that is being evaluated is " + currentApproval.getStatus());
+					break;
 				}
 				Approval nextApproval = (i + 1 < approvals.length) ? approvals[i + 1] : null;
 				log.debug("The next Approval to be evaluated: " + nextApproval);

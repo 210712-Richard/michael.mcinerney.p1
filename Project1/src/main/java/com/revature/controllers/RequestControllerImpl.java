@@ -372,7 +372,7 @@ public class RequestControllerImpl implements RequestController {
 		s3Instance.uploadToBucket(key, ctx.bodyAsBytes());
 		request.setPresFileName(key);
 		// Update and return request
-		reqService.updateRequest(request);
+		reqService.addFinalGrade(request, "true");;
 		ctx.json(request);
 
 	}
