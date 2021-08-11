@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -37,7 +36,6 @@ import com.revature.data.NotificationDao;
 import com.revature.data.RequestDao;
 import com.revature.data.UserDao;
 import com.revature.exceptions.IllegalApprovalAttemptException;
-import com.revature.util.MockitoHelper;
 
 public class RequestServiceTest {
 	private RequestService service = null;
@@ -56,18 +54,8 @@ public class RequestServiceTest {
 	private Department dept = null;
 	private Department benCoDept = null;
 
-	private static MockitoHelper mock = null;
-
-	@BeforeAll
-	public static void beforeAll() {
-		mock = new MockitoHelper();
-
-	}
-
 	@BeforeEach
 	public void beforeTest() {
-		service = new RequestServiceImpl();
-
 		request = new ReimbursementRequest();
 		request.setId(UUID.fromString("ddd9e879-52d3-47ad-a1b6-87a94cbb321d"));
 		request.setUsername("Tester");
@@ -96,10 +84,12 @@ public class RequestServiceTest {
 		dept = new Department("Test", "TestHead");
 		benCoDept = new Department("Benefits", benCoSuper.getUsername());
 
-		reqDao = (RequestDao) mock.setPrivateMock(service, "reqDao", RequestDao.class);
-		userDao = (UserDao) mock.setPrivateMock(service, "userDao", UserDao.class);
-		deptDao = (DepartmentDao) mock.setPrivateMock(service, "deptDao", DepartmentDao.class);
-		notDao = (NotificationDao) mock.setPrivateMock(service, "notDao", NotificationDao.class);
+		reqDao = Mockito.mock(RequestDao.class);
+		userDao = Mockito.mock(UserDao.class);
+		deptDao = Mockito.mock(DepartmentDao.class);
+		notDao = Mockito.mock(NotificationDao.class);
+		
+		service = new RequestServiceImpl(reqDao, userDao, deptDao, notDao);
 
 		Mockito.when(userDao.getUser(user.getUsername())).thenReturn(user);
 		Mockito.when(userDao.getUser(supervisor.getUsername())).thenReturn(supervisor);
@@ -116,7 +106,7 @@ public class RequestServiceTest {
 		ArgumentCaptor<Request> captor = ArgumentCaptor.forClass(Request.class);
 		ArgumentCaptor<Notification> notCaptor = ArgumentCaptor.forClass(Notification.class);
 
-		String message = "An employee has requested reimbursement!";
+		String message = "An employee has requested reimbursement.";
 		// Call the method
 		Request newRequest = service.createRequest(request.getUsername(), request.getFirstName(), request.getLastName(),
 				request.getDeptName(), request.getName(), request.getStartDate(), request.getStartTime(),
@@ -345,7 +335,8 @@ public class RequestServiceTest {
 		ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
 		ArgumentCaptor<UUID> idCaptor = ArgumentCaptor.forClass(UUID.class);
 
-		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.APPROVED, "This is a test");
+		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.APPROVED, "This is a test",
+				Request.SUPERVISOR_INDEX);
 
 		assertEquals(request, retRequest, "Assert that the request returned is the same request");
 		assertEquals(ApprovalStatus.APPROVED, request.getSupervisorApproval().getStatus(),
@@ -379,6 +370,49 @@ public class RequestServiceTest {
 		assertEquals(request.getId(), idCaptor.getValue(), "Assert that the requestId passed in is the request's id");
 
 	}
+	
+	@Test
+	public void testChangeApprovalStatusSupervisorIsDeptHead() {
+		// Set the pending balance to the request cost
+		request.getSupervisorApproval().setUsername(deptHead.getUsername());
+		request.getSupervisorApproval().setStatus(ApprovalStatus.AWAITING);
+		request.setReimburseAmount(request.getCost() * request.getType().getPercent());
+		user.setPendingBalance(request.getReimburseAmount());
+
+		ArgumentCaptor<Request> reqCaptor = ArgumentCaptor.forClass(Request.class);
+		ArgumentCaptor<String> deptNameCaptor = ArgumentCaptor.forClass(String.class);
+		ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
+		ArgumentCaptor<UUID> idCaptor = ArgumentCaptor.forClass(UUID.class);
+
+		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.APPROVED, "This is a test",
+				Request.SUPERVISOR_INDEX);
+
+		assertEquals(request, retRequest, "Assert that the request returned is the same request");
+		assertEquals(ApprovalStatus.APPROVED, request.getSupervisorApproval().getStatus(),
+				"Assert that the supervisor approved the request.");
+		assertEquals(ApprovalStatus.BYPASSED, request.getDeptHeadApproval().getStatus(),
+				"Assert that the dept head approval has been bypassed.");
+		assertEquals(ApprovalStatus.AWAITING, request.getBenCoApproval().getStatus(),
+				"Assert that the dept head approval is now awaiting.");
+		assertEquals(request.getDeptHeadApproval().getUsername(), dept.getDeptHeadUsername(),
+				"Assert that the dept head is set to do the approval");
+		assertNotEquals(request.getDeadline(), Request.PLACEHOLDER,
+				"Assert that the time limit has changed for the Request from the placeholder");
+
+		Mockito.verify(reqDao).updateRequest(reqCaptor.capture());
+		Mockito.verify(deptDao).getDepartment(deptNameCaptor.capture());
+		Mockito.verify(notDao).deleteNotification(usernameCaptor.capture(), idCaptor.capture());
+
+		assertEquals(request, reqCaptor.getValue(),
+				"Assert that the request passed into updateRequest is the same request");
+		assertEquals(dept.getName(), deptNameCaptor.getValue(),
+				"Assert that the department name passed into getDepartment is the same");
+
+		assertEquals(deptHead.getUsername(), usernameCaptor.getValue(),
+				"Assert that the username passed in is the benCo's username.");
+		assertEquals(request.getId(), idCaptor.getValue(), "Assert that the requestId passed in is the request's id");
+
+	}
 
 	@Test
 	public void testChangeApprovalStatusSupervisorDenied() {
@@ -397,7 +431,8 @@ public class RequestServiceTest {
 		ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
 		ArgumentCaptor<UUID> idCaptor = ArgumentCaptor.forClass(UUID.class);
 
-		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.DENIED, reason);
+		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.DENIED, reason,
+				Request.SUPERVISOR_INDEX);
 
 		assertEquals(request, retRequest, "Assert that the request returned is the same request");
 		assertEquals(ApprovalStatus.DENIED, request.getSupervisorApproval().getStatus(),
@@ -442,7 +477,7 @@ public class RequestServiceTest {
 		ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
 		ArgumentCaptor<UUID> idCaptor = ArgumentCaptor.forClass(UUID.class);
 
-		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.APPROVED, null);
+		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.APPROVED, null, Request.DEPT_HEAD_INDEX);
 
 		assertEquals(request, retRequest, "Assert that the request returned is the same request");
 		assertEquals(ApprovalStatus.APPROVED, request.getDeptHeadApproval().getStatus(),
@@ -486,7 +521,7 @@ public class RequestServiceTest {
 		ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
 		ArgumentCaptor<UUID> idCaptor = ArgumentCaptor.forClass(UUID.class);
 
-		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.DENIED, reason);
+		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.DENIED, reason, Request.DEPT_HEAD_INDEX);
 
 		assertEquals(request, retRequest, "Assert that the request returned is the same request");
 		assertEquals(ApprovalStatus.DENIED, request.getDeptHeadApproval().getStatus(),
@@ -533,7 +568,7 @@ public class RequestServiceTest {
 		ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
 		ArgumentCaptor<UUID> idCaptor = ArgumentCaptor.forClass(UUID.class);
 
-		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.APPROVED, null);
+		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.APPROVED, null, Request.BENCO_INDEX);
 
 		assertEquals(request, retRequest, "Assert that the request returned is the same request");
 		assertEquals(RequestStatus.APPROVED, request.getStatus(), "Assert that the request status is set to APPROVED");
@@ -582,7 +617,7 @@ public class RequestServiceTest {
 		ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
 		ArgumentCaptor<UUID> idCaptor = ArgumentCaptor.forClass(UUID.class);
 
-		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.APPROVED, null);
+		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.APPROVED, null, Request.BENCO_INDEX);
 
 		assertEquals(request, retRequest, "Assert that the request returned is the same request");
 		assertEquals(RequestStatus.APPROVED, request.getStatus(), "Assert that the request status is set to APPROVED");
@@ -633,7 +668,7 @@ public class RequestServiceTest {
 		ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
 		ArgumentCaptor<UUID> idCaptor = ArgumentCaptor.forClass(UUID.class);
 
-		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.DENIED, reason);
+		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.DENIED, reason, Request.BENCO_INDEX);
 
 		assertEquals(request, retRequest, "Assert that the request returned is the same request");
 		assertEquals(ApprovalStatus.DENIED, request.getBenCoApproval().getStatus(),
@@ -685,7 +720,7 @@ public class RequestServiceTest {
 		ArgumentCaptor<String> usernameNotCaptor = ArgumentCaptor.forClass(String.class);
 		ArgumentCaptor<UUID> idCaptor = ArgumentCaptor.forClass(UUID.class);
 
-		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.APPROVED, null);
+		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.APPROVED, null, Request.FINAL_INDEX);
 
 		assertEquals(request, retRequest, "Assert that the request returned is the same request");
 		assertEquals(ApprovalStatus.APPROVED, request.getFinalApproval().getStatus(),
@@ -740,7 +775,7 @@ public class RequestServiceTest {
 		ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
 		ArgumentCaptor<UUID> idCaptor = ArgumentCaptor.forClass(UUID.class);
 
-		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.DENIED, reason);
+		Request retRequest = service.changeApprovalStatus(request, ApprovalStatus.DENIED, reason, Request.FINAL_INDEX);
 
 		assertEquals(request, retRequest, "Assert that the request returned is the same request");
 		assertEquals(ApprovalStatus.DENIED, request.getFinalApproval().getStatus(),
@@ -776,39 +811,40 @@ public class RequestServiceTest {
 	@Test
 	public void testChangeApprovalStatusInvalid() {
 		// Request and status can't be null
+		request.getSupervisorApproval().setStatus(ApprovalStatus.AWAITING);
 
-		Request nullRequest = service.changeApprovalStatus(null, ApprovalStatus.APPROVED, "reason");
+		Request nullRequest = service.changeApprovalStatus(null, ApprovalStatus.APPROVED, "reason", Request.SUPERVISOR_INDEX);
 		assertNull("Assert that a null request returns a null", nullRequest);
 
-		nullRequest = service.changeApprovalStatus(request, null, "reason");
+		nullRequest = service.changeApprovalStatus(request, null, "reason", Request.SUPERVISOR_INDEX);
 		assertNull("Assert that a null status returns a null", nullRequest);
-
-		request.setStatus(RequestStatus.DENIED);
-		nullRequest = service.changeApprovalStatus(request, ApprovalStatus.APPROVED, "reason");
-		assertNull("Assert that a denied request returns a null", nullRequest);
-
-		request.setStatus(RequestStatus.CANCELLED);
-		nullRequest = service.changeApprovalStatus(request, ApprovalStatus.APPROVED, "reason");
-		assertNull("Assert that a cancelled request returns a null", nullRequest);
-
+		
 		// Request can't be null or blank if status is DENIED
-		nullRequest = service.changeApprovalStatus(request, ApprovalStatus.DENIED, " ");
+		nullRequest = service.changeApprovalStatus(request, ApprovalStatus.DENIED, " ", Request.SUPERVISOR_INDEX);
 		assertNull("Assert that a blank reason with a DENIED approval status returns a null", nullRequest);
 
-		nullRequest = service.changeApprovalStatus(request, ApprovalStatus.DENIED, null);
+		nullRequest = service.changeApprovalStatus(request, ApprovalStatus.DENIED, null, Request.SUPERVISOR_INDEX);
 		assertNull("Assert that a null reason with a DENIED approval status returns a null", nullRequest);
+		
+		nullRequest = service.changeApprovalStatus(request, ApprovalStatus.DENIED, null, -1);
+		assertNull("Assert that a null reason with a negative index returns a null", nullRequest);
+		
+		nullRequest = service.changeApprovalStatus(request, ApprovalStatus.DENIED, null, 4);
+		assertNull("Assert that a null reason with a greater than 3 index returns a null", nullRequest);
+		
+		nullRequest = service.changeApprovalStatus(request, ApprovalStatus.DENIED, null, null);
+		assertNull("Assert that a null reason with a null index returns a null", nullRequest);
 
 		// Make sure an exception is thrown if an approval has DENIED or AWAITING and is
 		// evaluated
 		request.getSupervisorApproval().setStatus(ApprovalStatus.DENIED);
-		request.setStatus(RequestStatus.ACTIVE);
 		assertThrows(IllegalApprovalAttemptException.class, () -> {
-			service.changeApprovalStatus(request, ApprovalStatus.APPROVED, null);
+			service.changeApprovalStatus(request, ApprovalStatus.APPROVED, null, Request.SUPERVISOR_INDEX);
 		});
 
 		request.getSupervisorApproval().setStatus(ApprovalStatus.UNASSIGNED);
 		assertThrows(IllegalApprovalAttemptException.class, () -> {
-			service.changeApprovalStatus(request, ApprovalStatus.APPROVED, null);
+			service.changeApprovalStatus(request, ApprovalStatus.APPROVED, null, Request.SUPERVISOR_INDEX);
 		});
 	}
 

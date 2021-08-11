@@ -15,7 +15,7 @@ import io.javalin.http.Context;
 public class UserControllerImpl implements UserController {
 
 	// The service for handling User objects
-	UserService userService = (UserService) BeanFactory.getFactory().getObject(UserService.class,
+	private UserService userService = (UserService) BeanFactory.getFactory().getObject(UserService.class,
 			UserServiceImpl.class);
 
 	// Log
@@ -86,6 +86,7 @@ public class UserControllerImpl implements UserController {
 		String username = ctx.pathParam("username");
 		log.debug("Username from the path: " + username);
 		
+		//Make sure it is the correct user
 		if (loggedUser == null || !loggedUser.getUsername().equals(username)) {
 			ctx.status(403);
 			return;

@@ -21,14 +21,16 @@ import com.revature.factory.TraceLog;
 import com.revature.services.RequestService;
 import com.revature.services.RequestServiceImpl;
 import com.revature.util.S3Util;
+import com.revature.util.Verifier;
 
 import io.javalin.http.Context;
 
 @TraceLog
 public class RequestControllerImpl implements RequestController {
-	RequestService reqService = (RequestService) BeanFactory.getFactory().getObject(RequestService.class,
+	private RequestService reqService = (RequestService) BeanFactory.getFactory().getObject(RequestService.class,
 			RequestServiceImpl.class);
 	private static Logger log = LogManager.getLogger(RequestControllerImpl.class);
+	private static final Verifier VERIFIER = new Verifier();
 
 	private static final String[] FILETYPES = { "pdf", "jpg", "png", "txt", "doc" };
 	private static final S3Util s3Instance = S3Util.getInstance();
@@ -75,82 +77,107 @@ public class RequestControllerImpl implements RequestController {
 
 		// Get the request. If auto approve is auto approving a request right now, then
 		// need to wait
-		Request request = null;
 		synchronized (RequestService.APPROVAL_LOCK) {
-			request = reqService.getRequest(UUID.fromString(ctx.pathParam("requestId")));
+			Request request = reqService.getRequest(UUID.fromString(ctx.pathParam("requestId")));
 			log.debug("Request from requestId: " + request);
-		}
 
-		// Get the approval status from the body
-		Request approval = ctx.bodyAsClass(ReimbursementRequest.class);
-		log.debug("Request from body: " + approval);
-		// If the request was not found
-		if (request == null) {
-			ctx.status(404);
-			ctx.html("No Request with that ID found");
-			return;
-		}
-
-		// If the request in the body is null, or the approval passed in is null,
-		// or the status the used sent in is not approved nor denied or the request is
-		// not active
-		// or the employee needs to review the application still
-		if (approval == null || approval.getSupervisorApproval() == null
-				|| (!approval.getSupervisorApproval().getStatus().equals(ApprovalStatus.APPROVED)
-						&& !approval.getSupervisorApproval().getStatus().equals(ApprovalStatus.DENIED))
-				|| (!request.getStatus().equals(RequestStatus.ACTIVE)
-						&& !request.getStatus().equals(RequestStatus.APPROVED))
-				|| request.getNeedsEmployeeReview() == true) {
-			ctx.status(400);
-			ctx.html("This request cannot be set to the specified status.");
-			return;
-		}
-
-		// Verify the user is allowed to change the approval status
-		Approval[] approvals = request.getApprovalArray();
-		for (int i = 0; i < approvals.length; i++) {
-			Approval currentApproval = approvals[i];
-
-			// If the approval has been approved or bypassed already, move to the next one
-			if (currentApproval.getStatus().equals(ApprovalStatus.APPROVED)
-					|| currentApproval.getStatus().equals(ApprovalStatus.AUTO_APPROVED)
-					|| currentApproval.getStatus().equals(ApprovalStatus.BYPASSED)) {
-				continue;
-
-			}
-			// If the current approval is unassigned, need to send back a 403
-			if (currentApproval.getStatus().equals(ApprovalStatus.UNASSIGNED)) {
-				ctx.status(403);
+			// Get the approval status from the body
+			Request approval = ctx.bodyAsClass(ReimbursementRequest.class);
+			log.debug("Request from body: " + approval);
+			// If the request was not found
+			if (request == null) {
+				ctx.status(404);
+				ctx.html("No Request with that ID found");
 				return;
 			}
-			if ((i == Request.BENCO_INDEX && loggedUser.getDepartmentName().equals("Benefits"))
-					|| currentApproval.getUsername().equals(loggedUser.getUsername())) {
-				// If it is on BenCoApproval, set the BenCoApproval username to the current user
-				if (i == Request.BENCO_INDEX) {
-					currentApproval.setUsername(loggedUser.getUsername());
 
+			// If the approval in the body is null or if the user is trying to do a status
+			// that isn't APPROVED or DENIED
+			if (approval == null || approval.getSupervisorApproval() == null
+					|| (!ApprovalStatus.APPROVED.equals(approval.getSupervisorApproval().getStatus())
+							&& !ApprovalStatus.APPROVED.equals(approval.getSupervisorApproval().getStatus()))) {
+				ctx.status(400);
+				ctx.html("This request needs a status of APPROVED or DENIED.");
+				return;
+			}
+
+			// If the request isn't active, approved, or if the request needs employee
+			// review, then can't do a Approval yet
+			if ((!RequestStatus.ACTIVE.equals(request.getStatus())
+					&& !RequestStatus.APPROVED.equals(request.getStatus())) || request.getNeedsEmployeeReview()) {
+				ctx.status(409);
+				ctx.html("The request cannot be approved further at this time");
+				return;
+			}
+
+			// Verify the user is allowed to change the approval status
+			Approval[] approvals = request.approvalArray();
+			for (int i = 0; i < approvals.length; i++) {
+				Approval currentApproval = approvals[i];
+
+				// If the approval has been approved, auto approved, or bypassed already, move
+				// to the next one
+				if (ApprovalStatus.APPROVED.equals(currentApproval.getStatus())
+						|| ApprovalStatus.AUTO_APPROVED.equals(currentApproval.getStatus())
+						|| ApprovalStatus.BYPASSED.equals(currentApproval.getStatus())) {
+					continue;
 				}
-				try {
-					request = reqService.changeApprovalStatus(request, approval.getSupervisorApproval().getStatus(),
-							approval.getReason());
-					// If the request returned null, then the request was bad
-					if (request == null) {
-						ctx.status(400);
-						ctx.html("Approval is invalid.");
-					} else {
-						ctx.json(request);
+
+				// If the current approval is unassigned, this means the user is not assigned to
+				// this status and need to send back a 403
+				if (currentApproval.getStatus().equals(ApprovalStatus.UNASSIGNED)) {
+					ctx.status(403);
+					return;
+				}
+
+				// If the user is part of Benefits and is trying to access the BenCo approval or
+				// the user's username is set to the currentApproval
+				if ((i == Request.BENCO_INDEX && loggedUser.getDepartmentName().equals("Benefits"))
+						|| loggedUser.getUsername().equals(currentApproval.getUsername())) {
+
+					// If it is on BenCoApproval, set the BenCoApproval username to the current user
+					if (i == Request.BENCO_INDEX) {
+						currentApproval.setUsername(loggedUser.getUsername());
+
 					}
 
-					return;
-				} catch (IllegalApprovalAttemptException e) {
-					ctx.status(500);
-					ctx.html("Server Error");
-					return;
+					// If evaluating the final request and the final grade or final presentation
+					// have not been set yet
+					if (i == Request.FINAL_INDEX && !VERIFIER.verifyStrings(request.getFinalGrade())
+							&& !VERIFIER.verifyStrings(request.getPresFileName())) {
+						ctx.status(409);
+						ctx.html("Waiting for the user to get the final grade");
+						return;
+					}
+					try {
+
+						// Perform the approval request
+						request = reqService.changeApprovalStatus(request, approval.getSupervisorApproval().getStatus(),
+								approval.getReason(), i);
+
+						/// If the request returned null, then there is an issue with the Approval
+						if (request == null) {
+							ctx.status(400);
+							ctx.html("Approval is invalid.");
+						} else { // Otherwise, the request was approved and send it back
+							ctx.json(request);
+						}
+						return;
+						// IllegalApprovalAttemptException means an Approval was attempted that
+						// shouldn't have been, and that is on the server, so send back 500
+					} catch (IllegalApprovalAttemptException e) {
+						ctx.status(500);
+						ctx.html("Server Error");
+						return;
+					}
 				}
 			}
 		}
 
-		ctx.status(403);
+		// This status shouldn't be called, but if it is, there is an issue with the
+		// server
+		ctx.status(500);
+		ctx.html("The request had no more approvals to check");
 	}
 
 	@Override
@@ -165,21 +192,25 @@ public class RequestControllerImpl implements RequestController {
 		UUID requestId = UUID.fromString(ctx.pathParam("requestId"));
 		Request request = reqService.getRequest(requestId);
 		log.debug("Request from the requestId" + request);
+		// Make sure the request exists
 		if (request == null) {
 			ctx.status(404);
 			ctx.html("No request with that ID");
 			return;
 		}
 
-		// If the user is not authorized to see the final grade, set the return request
-		// to null
+		// If the user is not authorized to see the final grade, set the final grade
+		// and presentation file name to null
 		// NOTE: This will not be saved, this is just for returning it
 		if (!loggedUser.getUsername().equals(request.getUsername())
 				&& !loggedUser.getUsername().equals(request.getFinalApproval().getUsername())) {
+
 			request.setFinalGrade(null);
 			request.setIsPassing(null);
-		}
+			request.setPresFileName(null);
 
+		}
+		log.debug("Request being send back: " + request);
 		ctx.json(request);
 	}
 
@@ -201,11 +232,12 @@ public class RequestControllerImpl implements RequestController {
 			return;
 		}
 
-		if (request.getStatus().equals(RequestStatus.ACTIVE)) {
+		// If the Request is ACTIVE or APPROVED, then the user can cancel.
+		if (RequestStatus.ACTIVE.equals(request.getStatus()) || RequestStatus.APPROVED.equals(request.getStatus())) {
 			reqService.cancelRequest(request);
 			ctx.status(204);
-		} else {
-			ctx.status(406);
+		} else { // Otherwise, send back a 409
+			ctx.status(409);
 			ctx.html("The request cannot be cancelled");
 		}
 
@@ -215,6 +247,8 @@ public class RequestControllerImpl implements RequestController {
 	public void uploadExtraFile(Context ctx) {
 		User loggedUser = ctx.sessionAttribute("loggedUser");
 		String filetype = ctx.header("filetype");
+		log.debug("Filetype from header: " + filetype);
+
 		// Make sure the user is logged in
 		if (loggedUser == null) {
 			ctx.status(401);
@@ -243,8 +277,8 @@ public class RequestControllerImpl implements RequestController {
 
 		// If the request has already been processed by a supervisor or cancelled by the
 		// user
-		if (!request.getStatus().equals(RequestStatus.ACTIVE)
-				|| !request.getSupervisorApproval().getStatus().equals(ApprovalStatus.AWAITING)) {
+		if (!RequestStatus.ACTIVE.equals(request.getStatus())
+				|| !ApprovalStatus.AWAITING.equals(request.getSupervisorApproval().getStatus())) {
 			ctx.status(403);
 			return;
 		}
@@ -269,6 +303,9 @@ public class RequestControllerImpl implements RequestController {
 	public void uploadMessageFile(Context ctx) {
 		User loggedUser = ctx.sessionAttribute("loggedUser");
 		String filetype = ctx.header("filetype");
+		log.debug("Filetype from header: " + filetype);
+
+		// The only filetype allowed to send for approval messages
 		final String MSG = "msg";
 		// Make sure the user is logged in
 		if (loggedUser == null) {
@@ -295,10 +332,10 @@ public class RequestControllerImpl implements RequestController {
 			return;
 		}
 
-		// If the request has already been processed by the supervisor or cancelled by the
-		// user
-		if (!request.getStatus().equals(RequestStatus.ACTIVE)
-				|| !request.getSupervisorApproval().getStatus().equals(ApprovalStatus.AWAITING)) {
+		// If the request has already been processed by the supervisor or cancelled by
+		// the user
+		if (!RequestStatus.ACTIVE.equals(request.getStatus())
+				|| !ApprovalStatus.AWAITING.equals(request.getSupervisorApproval().getStatus())) {
 			ctx.status(403);
 			return;
 		}
@@ -310,13 +347,13 @@ public class RequestControllerImpl implements RequestController {
 		}
 
 		// Generate the key and upload to the bucket
-		String key = request.getId() + "/messages/apprvoaEmail." + filetype;
+		String key = request.getId() + "/messages/approvalEmail." + filetype;
 		s3Instance.uploadToBucket(key, ctx.bodyAsBytes());
 		request.setApprovalMsgURI(key);
 
 		// Bypass the request
-		reqService.changeApprovalStatus(request, ApprovalStatus.BYPASSED, null);
-		
+		reqService.changeApprovalStatus(request, ApprovalStatus.BYPASSED, null, Request.SUPERVISOR_INDEX);
+
 		// Return request
 		ctx.json(request);
 
@@ -326,7 +363,11 @@ public class RequestControllerImpl implements RequestController {
 	public void uploadPresentation(Context ctx) {
 		User loggedUser = ctx.sessionAttribute("loggedUser");
 		String filetype = ctx.header("filetype");
+		log.debug("Filetype from header: " + filetype);
+
+		// The only filetype allowed for presentations
 		final String PPT = "pptx";
+
 		// Make sure the user is logged in
 		if (loggedUser == null) {
 			ctx.status(401);
@@ -352,12 +393,13 @@ public class RequestControllerImpl implements RequestController {
 			return;
 		}
 
-		// If the request is ready to be processed by BenCo or cancelled by the
-		// user or is not supposed to accept a presentation
-		if (!request.getStatus().equals(RequestStatus.APPROVED)
-				|| !request.getFinalApproval().getStatus().equals(ApprovalStatus.AWAITING)
-				|| !request.getGradingFormat().getFormat().equals(Format.PRESENTATION)) {
-			ctx.status(403);
+		// If the request has not been approved or if the final approval is not ready or
+		// if the request doesn't need a presentation, send back a 406
+		if (!RequestStatus.APPROVED.equals(request.getStatus())
+				|| !ApprovalStatus.AWAITING.equals(request.getFinalApproval().getStatus())
+				|| !Format.PRESENTATION.equals(request.getGradingFormat().getFormat())) {
+			ctx.status(409);
+			ctx.html("The request cannot accept a final grade.");
 			return;
 		}
 
@@ -372,7 +414,8 @@ public class RequestControllerImpl implements RequestController {
 		s3Instance.uploadToBucket(key, ctx.bodyAsBytes());
 		request.setPresFileName(key);
 		// Update and return request
-		reqService.addFinalGrade(request, "true");;
+		reqService.addFinalGrade(request, "true");
+		;
 		ctx.json(request);
 
 	}
@@ -396,17 +439,19 @@ public class RequestControllerImpl implements RequestController {
 			ctx.html("The request wasn't found");
 			return;
 		}
+
+		// Make sure the index being looked up isn't null or out of range
 		if (index == null || index < 0 || index >= request.getFileURIs().size()) {
-			ctx.status(404);
-			ctx.html("The file wasn't found");
+			ctx.status(400);
+			ctx.html("The file needs to have a valid position.");
 			return;
 		}
 		String key = request.getFileURIs().get(index);
-
+		// Read the file and send it back
 		try {
 			InputStream file = s3Instance.getObject(key);
 			ctx.result(file);
-		} catch (Exception e) {
+		} catch (Exception e) { // Error reading file. Will send back a 500
 			ctx.status(500);
 		}
 	}
@@ -422,22 +467,18 @@ public class RequestControllerImpl implements RequestController {
 		Request request = reqService.getRequest(UUID.fromString(ctx.pathParam("requestId")));
 		log.debug("Request from the requestId in path: " + request);
 		// If the request was not found
-		if (request == null) {
-			ctx.status(404);
-			ctx.html("The request wasn't found");
-			return;
-		}
-		if (request.getApprovalMsgURI() == null) {
+		if (request == null || request.getApprovalMsgURI() == null) {
 			ctx.status(404);
 			ctx.html("The file wasn't found");
 			return;
 		}
 		String key = request.getApprovalMsgURI();
 
+		// Attempt to read the file
 		try {
 			InputStream file = s3Instance.getObject(key);
 			ctx.result(file);
-		} catch (Exception e) {
+		} catch (Exception e) { // If exception, return a 500
 			ctx.status(500);
 		}
 	}
@@ -468,10 +509,11 @@ public class RequestControllerImpl implements RequestController {
 		}
 		String key = request.getPresFileName();
 
+		// Attempt to read the file
 		try {
 			InputStream file = s3Instance.getObject(key);
 			ctx.result(file);
-		} catch (Exception e) {
+		} catch (Exception e) { // If exception, return a 500
 			ctx.status(500);
 		}
 	}
@@ -480,27 +522,47 @@ public class RequestControllerImpl implements RequestController {
 	public void changeReimburseAmount(Context ctx) {
 		User loggedUser = ctx.sessionAttribute("loggedUser");
 
-		// Make sure the user is logged in
-		if (loggedUser == null || !loggedUser.getType().equals(UserType.BENEFITS_COORDINATOR)) {
+		// Make sure the user is logged in and is a BenCo
+		if (loggedUser == null || !UserType.BENEFITS_COORDINATOR.equals(loggedUser.getType())) {
 			ctx.status(403);
 			return;
 		}
 
 		Request request = reqService.getRequest(UUID.fromString(ctx.pathParam("requestId")));
+		log.debug("Request found from requestId path param: " + request);
 		Request approval = ctx.bodyAsClass(ReimbursementRequest.class);
+		log.debug("Request from the body: " + approval);
+
+		// If the request was not found
+		if (request == null) {
+			ctx.status(404);
+			ctx.html("The request was not found");
+			return;
+		}
 
 		// Make sure the request is awaiting BenCo approval
-		if (!request.getBenCoApproval().getStatus().equals(ApprovalStatus.AWAITING)) {
+		if (!ApprovalStatus.AWAITING.equals(request.getBenCoApproval().getStatus())) {
 			ctx.status(403);
+			return;
+		}
+
+		// If the request final reimburse amount has been set already
+		if (request.getFinalReimburseAmount() != null && request.getFinalReimburseAmount() >= 0) {
+			ctx.status(409);
+			ctx.html("The reimburse amount has been finalized already.");
 			return;
 		}
 		// If the final reimburseamount was set and is different then the actual
 		// reimburseamount
-		if (request != null && approval.getFinalReimburseAmount() != null && request.getFinalReimburseAmount() != null
-				&& request.getFinalReimburseAmount() <= 0.0
-				&& approval.getFinalReimburseAmount() != request.getReimburseAmount()) {
+		if (approval.getFinalReimburseAmount() != null && approval.getFinalReimburseAmount() > 0.0) {
+
+			// If the final amount is the same as the reimburse amount, no change needed
+			if (approval.getFinalReimburseAmount() == request.getReimburseAmount()) {
+				ctx.json(request);
+				return;
+			}
 			// If the user did not provide a reason for why they are changing the reimburse
-			// amount
+			// amount, need to send back a 400
 			if (approval.getFinalReimburseAmountReason() == null
 					|| approval.getFinalReimburseAmountReason().isBlank()) {
 
@@ -520,9 +582,11 @@ public class RequestControllerImpl implements RequestController {
 			} else {
 				ctx.status(500);
 			}
-			return;
+		} else { // The reimburse amount was not set correctly
+			ctx.status(400);
+			ctx.html("The reimburse amount was not set correctly");
 		}
-		ctx.status(403);
+
 	}
 
 	@Override
@@ -554,9 +618,12 @@ public class RequestControllerImpl implements RequestController {
 
 		// Get the review. If it is null or the getEmployeeAgrees is not a part of it
 		Request review = ctx.bodyAsClass(ReimbursementRequest.class);
+		log.debug("Request from the body: " + review);
 
-		if (review == null || review.getEmployeeAgrees() == null) {
+		// If the employeeAgrees was not set, return a 400
+		if (review.getEmployeeAgrees() == null) {
 			ctx.status(400);
+			ctx.html("Need to know if the employee agrees or not");
 			return;
 		}
 
@@ -575,6 +642,7 @@ public class RequestControllerImpl implements RequestController {
 		}
 
 		Request request = reqService.getRequest(UUID.fromString(ctx.pathParam("requestId")));
+		log.debug("Request from the requestId path param: " + request);
 
 		// If the request wasn't found
 		if (request == null) {
@@ -583,20 +651,26 @@ public class RequestControllerImpl implements RequestController {
 			return;
 		}
 
-		// If the user doesn't own the request or request isn't active or if the the
-		// request isn't awaiting
-		if (Format.PRESENTATION.equals(request.getGradingFormat().getFormat())
-				|| !(loggedUser.getUsername().equals(request.getUsername())
-						&& RequestStatus.APPROVED.equals(request.getStatus())
-						&& ApprovalStatus.AWAITING.equals(request.getFinalApproval().getStatus()))) {
+		// If the user does not own the request, return a 403
+		if (loggedUser.getUsername().equals(request.getUsername())) {
 			ctx.status(403);
+			return;
+		}
+		// If the request is looking for a presentation or is not ready to accept a
+		// grade, return a 409
+		if (Format.PRESENTATION.equals(request.getGradingFormat().getFormat())
+				|| !(RequestStatus.APPROVED.equals(request.getStatus())
+						&& ApprovalStatus.AWAITING.equals(request.getFinalApproval().getStatus()))) {
+			ctx.status(409);
+			ctx.html("This request can't take the grade.");
 			return;
 		}
 
 		Request grade = ctx.bodyAsClass(ReimbursementRequest.class);
+		log.debug("Request from the body: " + grade);
 
 		// If the grade was null
-		if (grade == null) {
+		if (grade.getFinalGrade() == null) {
 			ctx.status(400);
 			ctx.html("The grade was not entered correctly");
 			return;
@@ -609,6 +683,7 @@ public class RequestControllerImpl implements RequestController {
 			return;
 		}
 
+		//Add the final grade and return a 204
 		reqService.addFinalGrade(request, grade.getFinalGrade());
 		ctx.status(204);
 	}
