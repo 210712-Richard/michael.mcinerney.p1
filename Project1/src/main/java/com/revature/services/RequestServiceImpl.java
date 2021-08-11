@@ -146,6 +146,8 @@ public class RequestServiceImpl implements RequestService {
 
 	@Override
 	public Request changeApprovalStatus(Request request, ApprovalStatus status, String reason, Integer index) {
+		
+		//The request that will be returned
 		Request retRequest = null;
 		// Verify the objects (except reason) are not null and that the index is in the
 		// correct range
@@ -283,6 +285,8 @@ public class RequestServiceImpl implements RequestService {
 			}
 			// Clear out the notifications of the current approver
 			notDao.deleteNotification(currentApproval.getUsername(), request.getId());
+			
+			//Update the request and set the return request to the current request
 			reqDao.updateRequest(request);
 			retRequest = request;
 		}
