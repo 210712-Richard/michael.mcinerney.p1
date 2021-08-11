@@ -155,7 +155,7 @@ public class RequestServiceImpl implements RequestService {
 				&& index <= Request.FINAL_INDEX) {
 
 			// Put all of the approvals into an array
-			Approval[] approvals = request.getApprovalArray();
+			Approval[] approvals = request.approvalArray();
 			log.debug("Approvals array: " + Arrays.toString(approvals));
 
 			Approval currentApproval = approvals[index];
@@ -443,7 +443,7 @@ public class RequestServiceImpl implements RequestService {
 						
 						//Update the approval
 						changeApprovalStatus(request, ApprovalStatus.AUTO_APPROVED, null, index);
-						log.debug("Approval status changed to " + request.getApprovalArray()[index].getStatus());
+						log.debug("Approval status changed to " + request.approvalArray()[index].getStatus());
 					}
 
 					// If the benCo or finalApproval user didn't approve, will need to message benCo

@@ -86,6 +86,7 @@ public class UserControllerImpl implements UserController {
 		String username = ctx.pathParam("username");
 		log.debug("Username from the path: " + username);
 		
+		//Make sure it is the correct user
 		if (loggedUser == null || !loggedUser.getUsername().equals(username)) {
 			ctx.status(403);
 			return;

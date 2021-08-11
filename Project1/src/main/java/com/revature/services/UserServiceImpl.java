@@ -15,17 +15,28 @@ import com.revature.util.Verifier;
 
 @TraceLog
 public class UserServiceImpl implements UserService {
+	
+	//The DAO for users and notifications
 	private UserDao userDao;
 	private NotificationDao notDao;
+	
+	//For logging
 	private static Logger log = LogManager.getLogger(UserServiceImpl.class);
 	
+	//For verifying objects and strings
 	private static final Verifier VERIFIER = new Verifier();
 	
+	/**
+	 * Constructor use for normal use
+	 */
 	public UserServiceImpl() {
 		userDao = (UserDao) BeanFactory.getFactory().getObject(UserDao.class, UserDaoImpl.class);
 		notDao = (NotificationDao) BeanFactory.getFactory().getObject(NotificationDao.class, NotificationDaoImpl.class);
 	}
 
+	/**
+	 * Constructor used for tests
+	 */
 	public UserServiceImpl(UserDao userDao, NotificationDao notDao) {
 		this.userDao = userDao;
 		this.notDao = notDao;
@@ -33,9 +44,13 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public User login(String username, String password) {
+		
+		// Make sure the username and password are not blank and null
 		if (!VERIFIER.verifyStrings(username, password)) {
 			return null;
 		}
+		
+		//Get the user
 		User user = userDao.getUser(username, password);
 		log.debug("User returned: " + user);
 		
@@ -89,7 +104,10 @@ public class UserServiceImpl implements UserService {
 	
 	@Override
 	public void deleteNotifications(String username) {
+		
+		// Make sure the username is not null or blank
 		if (VERIFIER.verifyStrings(username)) {
+			// Delete all notifications that this user has received
 			notDao.deleteUserNotifications(username);
 		}
 	}

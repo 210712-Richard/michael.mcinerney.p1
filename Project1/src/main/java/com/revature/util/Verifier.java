@@ -6,8 +6,13 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * Class used to make sure string are not blank and null and to make sure objects are not null
+ *
+ */
 public class Verifier {
 
+	// For logging
 	private static final Logger log = LogManager.getLogger(Verifier.class);
 
 	/**
@@ -36,6 +41,7 @@ public class Verifier {
 	 * @return true if all objects are not null; false otherwise
 	 */
 	public Boolean verifyNotNull(Object...objects) {
+		log.trace("Checking some objects: " + Arrays.toString(objects));
 		//If the objects array is null or the length is 0
 		if (objects == null || objects.length == 0) {
 			return false;

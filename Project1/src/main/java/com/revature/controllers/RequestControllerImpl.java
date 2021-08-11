@@ -111,7 +111,7 @@ public class RequestControllerImpl implements RequestController {
 			}
 
 			// Verify the user is allowed to change the approval status
-			Approval[] approvals = request.getApprovalArray();
+			Approval[] approvals = request.approvalArray();
 			for (int i = 0; i < approvals.length; i++) {
 				Approval currentApproval = approvals[i];
 

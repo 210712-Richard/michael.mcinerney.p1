@@ -152,7 +152,7 @@ public interface Request {
 
 	void setFinalReimburseAmountReason(String finalReimburseAmountReason);
 	
-	Approval[] getApprovalArray();
+	Approval[] approvalArray();
 	
 	Boolean getFinalReimburseChanged();
 

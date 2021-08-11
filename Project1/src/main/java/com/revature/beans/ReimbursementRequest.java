@@ -355,7 +355,7 @@ public class ReimbursementRequest implements Request {
 		this.finalReimburseAmountReason = finalReimburseAmountReason;
 	}
 
-	public Approval[] getApprovalArray() {
+	public Approval[] approvalArray() {
 		Approval[] arr = { supervisorApproval, deptHeadApproval, benCoApproval, finalApproval };
 		return arr;
 	}
