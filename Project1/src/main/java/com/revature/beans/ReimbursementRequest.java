@@ -66,7 +66,7 @@ public class ReimbursementRequest implements Request {
 		benCoApproval = new Approval();
 		finalApproval = new Approval();
 		deadline = PLACEHOLDER;
-		
+
 		employeeAgrees = true;
 		needsEmployeeReview = false;
 	}
@@ -288,7 +288,7 @@ public class ReimbursementRequest implements Request {
 	public void setDeadline(LocalDateTime deadline) {
 		this.deadline = deadline;
 	}
-	
+
 	public void startDeadline() {
 		this.deadline = LocalDateTime.now().plus(TIME_LIMIT);
 	}
@@ -356,13 +356,12 @@ public class ReimbursementRequest implements Request {
 	}
 
 	public Approval[] getApprovalArray() {
-		Approval [] arr = { supervisorApproval, deptHeadApproval,
-			benCoApproval, finalApproval };
+		Approval[] arr = { supervisorApproval, deptHeadApproval, benCoApproval, finalApproval };
 		return arr;
 	}
-	
+
 	public Boolean getFinalReimburseChanged() {
-		return finalReimburseAmount != reimburseAmount;
+		return finalReimburseAmount != null && finalReimburseAmount >= 0.0 && finalReimburseAmount != reimburseAmount;
 	}
 
 	@Override

@@ -106,7 +106,7 @@ public class RequestServiceTest {
 		ArgumentCaptor<Request> captor = ArgumentCaptor.forClass(Request.class);
 		ArgumentCaptor<Notification> notCaptor = ArgumentCaptor.forClass(Notification.class);
 
-		String message = "An employee has requested reimbursement!";
+		String message = "An employee has requested reimbursement.";
 		// Call the method
 		Request newRequest = service.createRequest(request.getUsername(), request.getFirstName(), request.getLastName(),
 				request.getDeptName(), request.getName(), request.getStartDate(), request.getStartTime(),
