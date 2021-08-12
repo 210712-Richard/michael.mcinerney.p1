@@ -33,7 +33,7 @@ public class RequestControllerImpl implements RequestController {
 	private static final Verifier VERIFIER = new Verifier();
 
 	private static final String[] FILETYPES = { "pdf", "jpg", "png", "txt", "doc" };
-	private static final S3Util s3Instance = S3Util.getInstance();
+	private static final S3Util S3_INSTANCE = S3Util.getInstance();
 
 	@Override
 	public void createRequest(Context ctx) {
@@ -291,7 +291,7 @@ public class RequestControllerImpl implements RequestController {
 
 		// Generate the key and upload to the bucket
 		String key = request.getId() + "/files/" + request.getFileURIs().size() + "." + filetype;
-		s3Instance.uploadToBucket(key, ctx.bodyAsBytes());
+		S3_INSTANCE.uploadToBucket(key, ctx.bodyAsBytes());
 
 		// Add the key to the request, update database, and return request
 		request.getFileURIs().add(key);
@@ -348,7 +348,7 @@ public class RequestControllerImpl implements RequestController {
 
 		// Generate the key and upload to the bucket
 		String key = request.getId() + "/messages/approvalEmail." + filetype;
-		s3Instance.uploadToBucket(key, ctx.bodyAsBytes());
+		S3_INSTANCE.uploadToBucket(key, ctx.bodyAsBytes());
 		request.setApprovalMsgURI(key);
 
 		// Bypass the request
@@ -411,7 +411,7 @@ public class RequestControllerImpl implements RequestController {
 
 		// Generate the key and upload to the bucket
 		String key = request.getId() + "/presentations/presentation." + filetype;
-		s3Instance.uploadToBucket(key, ctx.bodyAsBytes());
+		S3_INSTANCE.uploadToBucket(key, ctx.bodyAsBytes());
 		request.setPresFileName(key);
 		// Update and return request
 		reqService.addFinalGrade(request, "true");
@@ -449,7 +449,7 @@ public class RequestControllerImpl implements RequestController {
 		String key = request.getFileURIs().get(index);
 		// Read the file and send it back
 		try {
-			InputStream file = s3Instance.getObject(key);
+			InputStream file = S3_INSTANCE.getObject(key);
 			ctx.result(file);
 		} catch (Exception e) { // Error reading file. Will send back a 500
 			ctx.status(500);
@@ -476,7 +476,7 @@ public class RequestControllerImpl implements RequestController {
 
 		// Attempt to read the file
 		try {
-			InputStream file = s3Instance.getObject(key);
+			InputStream file = S3_INSTANCE.getObject(key);
 			ctx.result(file);
 		} catch (Exception e) { // If exception, return a 500
 			ctx.status(500);
@@ -511,7 +511,7 @@ public class RequestControllerImpl implements RequestController {
 
 		// Attempt to read the file
 		try {
-			InputStream file = s3Instance.getObject(key);
+			InputStream file = S3_INSTANCE.getObject(key);
 			ctx.result(file);
 		} catch (Exception e) { // If exception, return a 500
 			ctx.status(500);
@@ -547,7 +547,7 @@ public class RequestControllerImpl implements RequestController {
 		}
 
 		// If the request final reimburse amount has been set already
-		if (request.getFinalReimburseAmount() != null && request.getFinalReimburseAmount() >= 0) {
+		if (request.getFinalReimburseChanged()) {
 			ctx.status(409);
 			ctx.html("The reimburse amount has been finalized already.");
 			return;
@@ -652,7 +652,7 @@ public class RequestControllerImpl implements RequestController {
 		}
 
 		// If the user does not own the request, return a 403
-		if (loggedUser.getUsername().equals(request.getUsername())) {
+		if (!loggedUser.getUsername().equals(request.getUsername())) {
 			ctx.status(403);
 			return;
 		}

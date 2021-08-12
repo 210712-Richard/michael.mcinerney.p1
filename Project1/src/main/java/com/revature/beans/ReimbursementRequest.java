@@ -361,7 +361,7 @@ public class ReimbursementRequest implements Request {
 	}
 
 	public Boolean getFinalReimburseChanged() {
-		return finalReimburseAmount != null && finalReimburseAmount >= 0.0 && finalReimburseAmount != reimburseAmount;
+		return finalReimburseAmount != null && finalReimburseAmount != 0.0 && finalReimburseAmount != reimburseAmount;
 	}
 
 	@Override
