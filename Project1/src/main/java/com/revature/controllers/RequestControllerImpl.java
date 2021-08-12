@@ -95,7 +95,7 @@ public class RequestControllerImpl implements RequestController {
 			// that isn't APPROVED or DENIED
 			if (approval == null || approval.getSupervisorApproval() == null
 					|| (!ApprovalStatus.APPROVED.equals(approval.getSupervisorApproval().getStatus())
-							&& !ApprovalStatus.APPROVED.equals(approval.getSupervisorApproval().getStatus()))) {
+							&& !ApprovalStatus.DENIED.equals(approval.getSupervisorApproval().getStatus()))) {
 				ctx.status(400);
 				ctx.html("This request needs a status of APPROVED or DENIED.");
 				return;
