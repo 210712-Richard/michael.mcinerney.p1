@@ -39,7 +39,7 @@ import com.revature.exceptions.IllegalApprovalAttemptException;
 
 public class RequestServiceTest {
 	private RequestService service = null;
-	private static Request request = null;
+	private Request request = null;
 	private RequestDao reqDao = null;
 	private UserDao userDao = null;
 	private DepartmentDao deptDao = null;
