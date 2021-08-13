@@ -88,6 +88,7 @@ public class UserControllerImpl implements UserController {
 		
 		//Make sure it is the correct user
 		if (loggedUser == null || !loggedUser.getUsername().equals(username)) {
+			log.info("Unauthorized attempt to delete user notifications");
 			ctx.status(403);
 			return;
 		}

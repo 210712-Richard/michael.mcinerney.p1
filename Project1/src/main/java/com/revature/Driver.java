@@ -32,6 +32,7 @@ public class Driver {
 		// Create a runnable that will check the database for expired, active requests
 		// every 30 seconds.
 		Runnable approvalRunnable = () -> {
+			log.trace(Thread.currentThread() + " has started for auto-approving expired requests.");
 			RequestService reqService = (RequestService) BeanFactory.getFactory().getObject(RequestService.class,
 					RequestServiceImpl.class);
 			while (true) {

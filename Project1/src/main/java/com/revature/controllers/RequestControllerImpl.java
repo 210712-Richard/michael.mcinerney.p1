@@ -41,6 +41,7 @@ public class RequestControllerImpl implements RequestController {
 
 		// Make sure the user is logged in
 		if (loggedUser == null) {
+			log.info("Unauthorized request creation attempted");
 			ctx.status(401);
 			return;
 		}
@@ -57,9 +58,11 @@ public class RequestControllerImpl implements RequestController {
 
 		// If the request returned had an issue
 		if (request == null) {
+			log.debug("The request was incorrect in the request body");
 			ctx.status(400);
 			ctx.html("The Reimbursement Request sent was incorrectly entered.");
 		} else { // Otherwise, return the request
+			log.debug("Request Created");
 			ctx.status(201);
 			ctx.json(request);
 		}
@@ -71,6 +74,7 @@ public class RequestControllerImpl implements RequestController {
 
 		// Make sure the user is logged in
 		if (loggedUser == null) {
+			log.info("Unauthorized attempt at changeApprovalStatus");
 			ctx.status(401);
 			return;
 		}
@@ -96,6 +100,7 @@ public class RequestControllerImpl implements RequestController {
 			if (approval == null || approval.getSupervisorApproval() == null
 					|| (!ApprovalStatus.APPROVED.equals(approval.getSupervisorApproval().getStatus())
 							&& !ApprovalStatus.DENIED.equals(approval.getSupervisorApproval().getStatus()))) {
+				log.debug("Request did not have status of APPROVED or DENIED");
 				ctx.status(400);
 				ctx.html("This request needs a status of APPROVED or DENIED.");
 				return;
@@ -105,6 +110,7 @@ public class RequestControllerImpl implements RequestController {
 			// review, then can't do a Approval yet
 			if ((!RequestStatus.ACTIVE.equals(request.getStatus())
 					&& !RequestStatus.APPROVED.equals(request.getStatus())) || request.getNeedsEmployeeReview()) {
+				log.debug("Request either isn't active, approved, or needs employee review");
 				ctx.status(409);
 				ctx.html("The request cannot be approved further at this time");
 				return;
@@ -114,7 +120,7 @@ public class RequestControllerImpl implements RequestController {
 			Approval[] approvals = request.approvalArray();
 			for (int i = 0; i < approvals.length; i++) {
 				Approval currentApproval = approvals[i];
-
+				log.debug("Current approval being evaluated: " + currentApproval);
 				// If the approval has been approved, auto approved, or bypassed already, move
 				// to the next one
 				if (ApprovalStatus.APPROVED.equals(currentApproval.getStatus())
@@ -126,6 +132,7 @@ public class RequestControllerImpl implements RequestController {
 				// If the current approval is unassigned, this means the user is not assigned to
 				// this status and need to send back a 403
 				if (currentApproval.getStatus().equals(ApprovalStatus.UNASSIGNED)) {
+					log.debug("User is not authorized to approve request");
 					ctx.status(403);
 					return;
 				}
@@ -138,13 +145,14 @@ public class RequestControllerImpl implements RequestController {
 					// If it is on BenCoApproval, set the BenCoApproval username to the current user
 					if (i == Request.BENCO_INDEX) {
 						currentApproval.setUsername(loggedUser.getUsername());
-
+						log.debug("BenCoApproval set to " + currentApproval.getUsername());
 					}
 
 					// If evaluating the final request and the final grade or final presentation
 					// have not been set yet
 					if (i == Request.FINAL_INDEX && !VERIFIER.verifyStrings(request.getFinalGrade())
 							&& !VERIFIER.verifyStrings(request.getPresFileName())) {
+						log.debug("Final grade/presentation has not been uploaded yet");
 						ctx.status(409);
 						ctx.html("Waiting for the user to get the final grade");
 						return;
@@ -157,6 +165,7 @@ public class RequestControllerImpl implements RequestController {
 
 						/// If the request returned null, then there is an issue with the Approval
 						if (request == null) {
+							log.debug("Approval was invalid: " + approval.getSupervisorApproval());
 							ctx.status(400);
 							ctx.html("Approval is invalid.");
 						} else { // Otherwise, the request was approved and send it back
@@ -172,10 +181,12 @@ public class RequestControllerImpl implements RequestController {
 					}
 				}
 			}
+			log.warn("Error with request" + request.getId());
 		}
 
 		// This status shouldn't be called, but if it is, there is an issue with the
 		// server
+
 		ctx.status(500);
 		ctx.html("The request had no more approvals to check");
 	}
@@ -186,6 +197,7 @@ public class RequestControllerImpl implements RequestController {
 
 		// Make sure the user is logged in
 		if (loggedUser == null) {
+			log.info("Unauthorized attempt at getRequest");
 			ctx.status(401);
 			return;
 		}
@@ -194,6 +206,7 @@ public class RequestControllerImpl implements RequestController {
 		log.debug("Request from the requestId" + request);
 		// Make sure the request exists
 		if (request == null) {
+			log.debug("No request found with that ID");
 			ctx.status(404);
 			ctx.html("No request with that ID");
 			return;
@@ -204,7 +217,7 @@ public class RequestControllerImpl implements RequestController {
 		// NOTE: This will not be saved, this is just for returning it
 		if (!loggedUser.getUsername().equals(request.getUsername())
 				&& !loggedUser.getUsername().equals(request.getFinalApproval().getUsername())) {
-
+			log.info("User is not allowed to see final grade or presentation");
 			request.setFinalGrade(null);
 			request.setIsPassing(null);
 			request.setPresFileName(null);
@@ -218,9 +231,11 @@ public class RequestControllerImpl implements RequestController {
 	public void cancelRequest(Context ctx) {
 		User loggedUser = ctx.sessionAttribute("loggedUser");
 		Request request = reqService.getRequest(UUID.fromString(ctx.pathParam("requestId")));
+		log.debug("Request for that ID: " + request);
 
 		// Make sure the Request was found
 		if (request == null) {
+
 			ctx.status(404);
 			ctx.html("No Request with that ID");
 			return;
@@ -405,6 +420,7 @@ public class RequestControllerImpl implements RequestController {
 
 		// If the user is not the owner of the request
 		if (!loggedUser.getUsername().equals(request.getUsername())) {
+			log.info(loggedUser.getUsername() + " is forbidden from seeing this request");
 			ctx.status(403);
 			return;
 		}
@@ -413,8 +429,10 @@ public class RequestControllerImpl implements RequestController {
 		String key = request.getId() + "/presentations/presentation." + filetype;
 		S3_INSTANCE.uploadToBucket(key, ctx.bodyAsBytes());
 		request.setPresFileName(key);
+		log.debug("Presentation File URI: " + request.getPresFileName());
 		// Update and return request
 		reqService.addFinalGrade(request, "true");
+		log.debug("Final grade on request: " + request.getFinalGrade());
 		;
 		ctx.json(request);
 
@@ -424,6 +442,7 @@ public class RequestControllerImpl implements RequestController {
 		User loggedUser = ctx.sessionAttribute("loggedUser");
 		// Make sure the user is logged in
 		if (loggedUser == null) {
+			log.info("Unauthorized attempt to get a file");
 			ctx.status(401);
 			return;
 		}
@@ -460,6 +479,7 @@ public class RequestControllerImpl implements RequestController {
 		User loggedUser = ctx.sessionAttribute("loggedUser");
 		// Make sure the user is logged in
 		if (loggedUser == null) {
+			log.info("Unauthorized attempt to get approval message");
 			ctx.status(401);
 			return;
 		}
@@ -487,6 +507,7 @@ public class RequestControllerImpl implements RequestController {
 		User loggedUser = ctx.sessionAttribute("loggedUser");
 		// Make sure the user is logged in
 		if (loggedUser == null) {
+			log.info("Unauthorized attempt to getPresentation");
 			ctx.status(401);
 			return;
 		}
@@ -504,6 +525,7 @@ public class RequestControllerImpl implements RequestController {
 		// If the user is not the request creator and is not the final approver
 		if (!loggedUser.getUsername().equals(request.getUsername())
 				&& !loggedUser.getUsername().equals(request.getFinalApproval().getUsername())) {
+			log.info(loggedUser.getUsername() + " is forbidden from seeing the presentation");
 			ctx.status(403);
 			return;
 		}
@@ -524,6 +546,7 @@ public class RequestControllerImpl implements RequestController {
 
 		// Make sure the user is logged in and is a BenCo
 		if (loggedUser == null || !UserType.BENEFITS_COORDINATOR.equals(loggedUser.getType())) {
+			log.info("Unauthorized attempt to change reimbursement");
 			ctx.status(403);
 			return;
 		}
@@ -637,6 +660,7 @@ public class RequestControllerImpl implements RequestController {
 
 		// Make sure the user is logged in
 		if (loggedUser == null) {
+			log.info("Unauthorized attempt to upload final grade");
 			ctx.status(401);
 			return;
 		}
@@ -653,6 +677,7 @@ public class RequestControllerImpl implements RequestController {
 
 		// If the user does not own the request, return a 403
 		if (!loggedUser.getUsername().equals(request.getUsername())) {
+			log.info(loggedUser.getUsername() + " is forbidden from uploading grades to this request");
 			ctx.status(403);
 			return;
 		}
@@ -683,7 +708,7 @@ public class RequestControllerImpl implements RequestController {
 			return;
 		}
 
-		//Add the final grade and return a 204
+		// Add the final grade and return a 204
 		reqService.addFinalGrade(request, grade.getFinalGrade());
 		ctx.status(204);
 	}
