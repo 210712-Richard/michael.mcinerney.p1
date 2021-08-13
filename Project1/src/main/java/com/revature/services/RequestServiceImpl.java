@@ -146,8 +146,8 @@ public class RequestServiceImpl implements RequestService {
 
 	@Override
 	public Request changeApprovalStatus(Request request, ApprovalStatus status, String reason, Integer index) {
-		
-		//The request that will be returned
+
+		// The request that will be returned
 		Request retRequest = null;
 		// Verify the objects (except reason) are not null and that the index is in the
 		// correct range
@@ -285,8 +285,8 @@ public class RequestServiceImpl implements RequestService {
 			}
 			// Clear out the notifications of the current approver
 			notDao.deleteNotification(currentApproval.getUsername(), request.getId());
-			
-			//Update the request and set the return request to the current request
+
+			// Update the request and set the return request to the current request
 			reqDao.updateRequest(request);
 			retRequest = request;
 		}
@@ -297,7 +297,7 @@ public class RequestServiceImpl implements RequestService {
 	@Override
 	public Request getRequest(UUID id) {
 
-		//The request that will be returned.
+		// The request that will be returned.
 		Request retRequest = null;
 
 		// Make sure the id isn't null
@@ -311,7 +311,7 @@ public class RequestServiceImpl implements RequestService {
 
 	@Override
 	public void updateRequest(Request request) {
-		//Make sure the request isn't null then update the request
+		// Make sure the request isn't null then update the request
 		if (request != null) {
 			reqDao.updateRequest(request);
 		}
@@ -319,8 +319,8 @@ public class RequestServiceImpl implements RequestService {
 
 	@Override
 	public void cancelRequest(Request request) {
-		
-		//Make sure the request isn't null
+
+		// Make sure the request isn't null
 		if (request == null) {
 			return;
 		}
@@ -333,15 +333,14 @@ public class RequestServiceImpl implements RequestService {
 		// Need to change the user's pending balance
 		// First need to check and see if finalReimburseAmount is set to see which
 		// reimburse amount is part of the pending balance
-		Double reimburse = (request.getFinalReimburseChanged())
-				? request.getFinalReimburseAmount()
+		Double reimburse = (request.getFinalReimburseChanged()) ? request.getFinalReimburseAmount()
 				: request.getReimburseAmount();
 		log.debug("Amount the user is losing from pendingBalance: " + reimburse);
 		// Subtract the amount from the user
 		user.alterPendingBalance(reimburse * -1.0);
 		log.debug("User's new pending balance: " + user.getPendingBalance());
-		
-		//Update the user and the request
+
+		// Update the user and the request
 		userDao.updateUser(user);
 		reqDao.updateRequest(request);
 	}
@@ -386,8 +385,8 @@ public class RequestServiceImpl implements RequestService {
 			if (!employeeAgrees) {
 				request.getBenCoApproval().setStatus(ApprovalStatus.UNASSIGNED);
 				cancelRequest(request);
-				
-				//Delete the notifications that the BenCo had for this request
+
+				// Delete the notifications that the BenCo had for this request
 				notDao.deleteNotification(request.getBenCoApproval().getUsername(), request.getId());
 			} else { // Else, update the request and send a notification to the BenCo
 				reqDao.updateRequest(request);
@@ -406,8 +405,9 @@ public class RequestServiceImpl implements RequestService {
 			request.setFinalGrade(grade);
 			request.setIsPassing(request.getGradingFormat().isPassing(grade));
 			log.debug("Final grade: " + request.getFinalGrade() + ". Is passing: " + request.getIsPassing());
-			
-			//Update the request in the database and send a new notification to the final approver
+
+			// Update the request in the database and send a new notification to the final
+			// approver
 			reqDao.updateRequest(request);
 			notDao.createNotification(new Notification(request.getFinalApproval().getUsername(), request.getId(),
 					"Final approval is ready on request"));
@@ -416,56 +416,53 @@ public class RequestServiceImpl implements RequestService {
 
 	@Override
 	public void autoApprove() {
-		
-		//Make sure other requests aren't being approved at this time
-		synchronized (RequestService.APPROVAL_LOCK) {
-			// Check the database to see if there are any requests needed to auto approve
-			List<Request> requests = reqDao.getExpiredRequests();
 
-			// If the list isn't null or empty, that means an active request has a past-due
-			// deadline
-			if (requests != null && !requests.isEmpty()) {
+		// Make sure other requests aren't being approved at this time
+		// Check the database to see if there are any requests needed to auto approve
+		List<Request> requests = reqDao.getExpiredRequests();
 
-				// Make sure the controller doesn't get the request while it is getting the
-				// request
+		// If the list isn't null or empty, that means an active request has a past-due
+		// deadline
+		if (requests != null && !requests.isEmpty()) {
 
-				for (Request request : requests) {
-					log.debug("Request being auto approved: " + request);
+			// Make sure the controller doesn't get the request while it is getting the
+			// request
 
-					// If the supervisor or dept head approval was needed, will just auto approve
-					// those
-					if (ApprovalStatus.AWAITING.equals(request.getSupervisorApproval().getStatus())
-							|| ApprovalStatus.AWAITING.equals(request.getDeptHeadApproval().getStatus())) {
-						//Figure out which one needs to be auto-approved and get the correct index
-						Integer index = ApprovalStatus.AWAITING.equals(request.getSupervisorApproval().getStatus())
-								? Request.SUPERVISOR_INDEX
-								: Request.DEPT_HEAD_INDEX;
-						
-						//Update the approval
-						changeApprovalStatus(request, ApprovalStatus.AUTO_APPROVED, null, index);
-						log.debug("Approval status changed to " + request.approvalArray()[index].getStatus());
-					}
+			for (Request request : requests) {
+				log.debug("Request being auto approved: " + request);
 
-					// If the benCo or finalApproval user didn't approve, will need to message benCo
-					// supervisor
-					else if (ApprovalStatus.AWAITING.equals(request.getBenCoApproval().getStatus())) {
-						//Reset the deadline and update the request
-						request.startDeadline();
-						reqDao.updateRequest(request);
-						
-						//Get the BenCo Supervisor and send them a notification
-						String benCoSupervisorUsername = deptDao.getDepartment("Benefits").getDeptHeadUsername();
-						log.debug("BenCo supervisor's username: " + benCoSupervisorUsername);
-						notDao.createNotification(new Notification(benCoSupervisorUsername, request.getId(),
-								"This request needs further approval."));
-					}
-					// If none of the requests are waiting, the request is most likely bad
-					else {
-						throw new IllegalApprovalAttemptException("Auto-approval attempt on Request.");
-					}
+				// If the supervisor or dept head approval was needed, will just auto approve
+				// those
+				if (ApprovalStatus.AWAITING.equals(request.getSupervisorApproval().getStatus())
+						|| ApprovalStatus.AWAITING.equals(request.getDeptHeadApproval().getStatus())) {
+					// Figure out which one needs to be auto-approved and get the correct index
+					Integer index = ApprovalStatus.AWAITING.equals(request.getSupervisorApproval().getStatus())
+							? Request.SUPERVISOR_INDEX
+							: Request.DEPT_HEAD_INDEX;
+
+					// Update the approval
+					changeApprovalStatus(request, ApprovalStatus.AUTO_APPROVED, null, index);
+					log.debug("Approval status changed to " + request.approvalArray()[index].getStatus());
+				}
+
+				// If the benCo or finalApproval user didn't approve, will need to message benCo
+				// supervisor
+				else if (ApprovalStatus.AWAITING.equals(request.getBenCoApproval().getStatus())) {
+					// Reset the deadline and update the request
+					request.startDeadline();
+					reqDao.updateRequest(request);
+
+					// Get the BenCo Supervisor and send them a notification
+					String benCoSupervisorUsername = deptDao.getDepartment("Benefits").getDeptHeadUsername();
+					log.debug("BenCo supervisor's username: " + benCoSupervisorUsername);
+					notDao.createNotification(new Notification(benCoSupervisorUsername, request.getId(),
+							"This request needs further approval."));
+				}
+				// If none of the requests are waiting, the request is most likely bad
+				else {
+					throw new IllegalApprovalAttemptException("Auto-approval attempt on Request.");
 				}
 			}
-
 		}
 	}
 }

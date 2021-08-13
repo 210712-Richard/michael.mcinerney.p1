@@ -86,114 +86,109 @@ public class RequestControllerImpl implements RequestController {
 			return;
 		}
 
-		// Get the request. If auto approve is auto approving a request right now, then
-		// need to wait
-		synchronized (RequestService.APPROVAL_LOCK) {
-			Request request = reqService.getRequest(UUID.fromString(ctx.pathParam("requestId")));
-			log.debug("Request from requestId: " + request);
+		Request request = reqService.getRequest(UUID.fromString(ctx.pathParam("requestId")));
+		log.debug("Request from requestId: " + request);
 
-			// Get the approval status from the body
-			Request approval = ctx.bodyAsClass(ReimbursementRequest.class);
-			log.debug("Request from body: " + approval);
-			// If the request was not found
-			if (request == null) {
-				ctx.status(404);
-				ctx.html("No Request with that ID found");
+		// Get the approval status from the body
+		Request approval = ctx.bodyAsClass(ReimbursementRequest.class);
+		log.debug("Request from body: " + approval);
+		// If the request was not found
+		if (request == null) {
+			ctx.status(404);
+			ctx.html("No Request with that ID found");
+			return;
+		}
+
+		// If the approval in the body is null or if the user is trying to do a status
+		// that isn't APPROVED or DENIED
+		if (approval == null || approval.getSupervisorApproval() == null
+				|| (!ApprovalStatus.APPROVED.equals(approval.getSupervisorApproval().getStatus())
+						&& !ApprovalStatus.DENIED.equals(approval.getSupervisorApproval().getStatus()))) {
+			log.debug("Request did not have status of APPROVED or DENIED");
+			ctx.status(400);
+			ctx.html("This request needs a status of APPROVED or DENIED.");
+			return;
+		}
+
+		// If the request isn't active, approved, or if the request needs employee
+		// review, then can't do a Approval yet
+		if ((!RequestStatus.ACTIVE.equals(request.getStatus()) && !RequestStatus.APPROVED.equals(request.getStatus()))
+				|| request.getNeedsEmployeeReview()) {
+			log.debug("Request either isn't active, approved, or needs employee review");
+			ctx.status(409);
+			ctx.html("The request cannot be approved further at this time");
+			return;
+		}
+
+		// Verify the user is allowed to change the approval status
+		Approval[] approvals = request.approvalArray();
+		for (int i = 0; i < approvals.length; i++) {
+			Approval currentApproval = approvals[i];
+			log.debug("Current approval being evaluated: " + currentApproval);
+			// If the approval has been approved, auto approved, or bypassed already, move
+			// to the next one
+			if (ApprovalStatus.APPROVED.equals(currentApproval.getStatus())
+					|| ApprovalStatus.AUTO_APPROVED.equals(currentApproval.getStatus())
+					|| ApprovalStatus.BYPASSED.equals(currentApproval.getStatus())) {
+				continue;
+			}
+
+			// If the current approval is unassigned, this means the user is not assigned to
+			// this status and need to send back a 403
+			if (currentApproval.getStatus().equals(ApprovalStatus.UNASSIGNED)) {
+				log.debug("User is not authorized to approve request");
+				ctx.status(403);
 				return;
 			}
 
-			// If the approval in the body is null or if the user is trying to do a status
-			// that isn't APPROVED or DENIED
-			if (approval == null || approval.getSupervisorApproval() == null
-					|| (!ApprovalStatus.APPROVED.equals(approval.getSupervisorApproval().getStatus())
-							&& !ApprovalStatus.DENIED.equals(approval.getSupervisorApproval().getStatus()))) {
-				log.debug("Request did not have status of APPROVED or DENIED");
-				ctx.status(400);
-				ctx.html("This request needs a status of APPROVED or DENIED.");
-				return;
-			}
+			// If the user is part of Benefits and is trying to access the BenCo approval or
+			// the user's username is set to the currentApproval
+			if ((i == Request.BENCO_INDEX && loggedUser.getDepartmentName().equals("Benefits"))
+					|| loggedUser.getUsername().equals(currentApproval.getUsername())) {
 
-			// If the request isn't active, approved, or if the request needs employee
-			// review, then can't do a Approval yet
-			if ((!RequestStatus.ACTIVE.equals(request.getStatus())
-					&& !RequestStatus.APPROVED.equals(request.getStatus())) || request.getNeedsEmployeeReview()) {
-				log.debug("Request either isn't active, approved, or needs employee review");
-				ctx.status(409);
-				ctx.html("The request cannot be approved further at this time");
-				return;
-			}
-
-			// Verify the user is allowed to change the approval status
-			Approval[] approvals = request.approvalArray();
-			for (int i = 0; i < approvals.length; i++) {
-				Approval currentApproval = approvals[i];
-				log.debug("Current approval being evaluated: " + currentApproval);
-				// If the approval has been approved, auto approved, or bypassed already, move
-				// to the next one
-				if (ApprovalStatus.APPROVED.equals(currentApproval.getStatus())
-						|| ApprovalStatus.AUTO_APPROVED.equals(currentApproval.getStatus())
-						|| ApprovalStatus.BYPASSED.equals(currentApproval.getStatus())) {
-					continue;
+				// If it is on BenCoApproval, set the BenCoApproval username to the current user
+				if (i == Request.BENCO_INDEX) {
+					currentApproval.setUsername(loggedUser.getUsername());
+					log.debug("BenCoApproval set to " + currentApproval.getUsername());
 				}
 
-				// If the current approval is unassigned, this means the user is not assigned to
-				// this status and need to send back a 403
-				if (currentApproval.getStatus().equals(ApprovalStatus.UNASSIGNED)) {
-					log.debug("User is not authorized to approve request");
-					ctx.status(403);
+				// If evaluating the final request and the final grade or final presentation
+				// have not been set yet
+				if (i == Request.FINAL_INDEX && !VERIFIER.verifyStrings(request.getFinalGrade())
+						&& !VERIFIER.verifyStrings(request.getPresFileName())) {
+					log.debug("Final grade/presentation has not been uploaded yet");
+					ctx.status(409);
+					ctx.html("Waiting for the user to get the final grade");
 					return;
 				}
+				try {
 
-				// If the user is part of Benefits and is trying to access the BenCo approval or
-				// the user's username is set to the currentApproval
-				if ((i == Request.BENCO_INDEX && loggedUser.getDepartmentName().equals("Benefits"))
-						|| loggedUser.getUsername().equals(currentApproval.getUsername())) {
+					// Perform the approval request
+					request = reqService.changeApprovalStatus(request, approval.getSupervisorApproval().getStatus(),
+							approval.getReason(), i);
 
-					// If it is on BenCoApproval, set the BenCoApproval username to the current user
-					if (i == Request.BENCO_INDEX) {
-						currentApproval.setUsername(loggedUser.getUsername());
-						log.debug("BenCoApproval set to " + currentApproval.getUsername());
+					/// If the request returned null, then there is an issue with the Approval
+					if (request == null) {
+						log.debug("Approval was invalid: " + approval.getSupervisorApproval());
+						ctx.status(400);
+						ctx.html("Approval is invalid.");
+					} else { // Otherwise, the request was approved and send it back
+						ctx.json(request);
 					}
-
-					// If evaluating the final request and the final grade or final presentation
-					// have not been set yet
-					if (i == Request.FINAL_INDEX && !VERIFIER.verifyStrings(request.getFinalGrade())
-							&& !VERIFIER.verifyStrings(request.getPresFileName())) {
-						log.debug("Final grade/presentation has not been uploaded yet");
-						ctx.status(409);
-						ctx.html("Waiting for the user to get the final grade");
-						return;
-					}
-					try {
-
-						// Perform the approval request
-						request = reqService.changeApprovalStatus(request, approval.getSupervisorApproval().getStatus(),
-								approval.getReason(), i);
-
-						/// If the request returned null, then there is an issue with the Approval
-						if (request == null) {
-							log.debug("Approval was invalid: " + approval.getSupervisorApproval());
-							ctx.status(400);
-							ctx.html("Approval is invalid.");
-						} else { // Otherwise, the request was approved and send it back
-							ctx.json(request);
-						}
-						return;
-						// IllegalApprovalAttemptException means an Approval was attempted that
-						// shouldn't have been, and that is on the server, so send back 500
-					} catch (IllegalApprovalAttemptException e) {
-						ctx.status(500);
-						ctx.html("Server Error");
-						return;
-					}
+					return;
+					// IllegalApprovalAttemptException means an Approval was attempted that
+					// shouldn't have been, and that is on the server, so send back 500
+				} catch (IllegalApprovalAttemptException e) {
+					ctx.status(500);
+					ctx.html("Server Error");
+					return;
 				}
 			}
-			log.warn("changeApprovalStatus made it to end of method with request: " + request);
 		}
 
 		// This status shouldn't be called, but if it is, there is an issue with the
 		// server
-
+		log.warn("changeApprovalStatus made it to end of method with request: " + request);
 		ctx.status(500);
 		ctx.html("The request had no more approvals to check");
 	}
@@ -217,9 +212,9 @@ public class RequestControllerImpl implements RequestController {
 			ctx.html("No request with that ID");
 			return;
 		}
-		
-		
-		// If the user is not the owner or is not a supervisor or BenCo, then return a 403
+
+		// If the user is not the owner or is not a supervisor or BenCo, then return a
+		// 403
 		if (!loggedUser.getUsername().equals(request.getUsername()) && UserType.EMPLOYEE.equals(loggedUser.getType())) {
 			log.info(loggedUser.getUsername() + " is forbidden from seeing this request");
 			ctx.status(403);
@@ -243,17 +238,17 @@ public class RequestControllerImpl implements RequestController {
 	@Override
 	public void cancelRequest(Context ctx) {
 		User loggedUser = ctx.sessionAttribute("loggedUser");
-		
-		//Make sure the user is logged in
+
+		// Make sure the user is logged in
 		if (loggedUser == null) {
 			log.info("User is not authorized to cancel request");
 			ctx.status(401);
 			return;
 		}
-		
+
 		Request request = reqService.getRequest(UUID.fromString(ctx.pathParam("requestId")));
 		log.debug("Request for that ID: " + request);
-		
+
 		// Make sure the Request was found
 		if (request == null) {
 			ctx.status(404);
