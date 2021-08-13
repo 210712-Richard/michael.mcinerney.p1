@@ -44,6 +44,13 @@ public interface RequestController {
 	public void uploadMessageFile(Context ctx);
 	
 	/**
+	 * Sets the amount of work that will be missed by the user
+	 * @param ctx The context<br>
+	 * Should only have a string with workTimeMissed in it
+	 */
+	public void setWorkTimeMissed(Context ctx);
+	
+	/**
 	 * Upload the final presentation
 	 * @param ctx The context
 	 */

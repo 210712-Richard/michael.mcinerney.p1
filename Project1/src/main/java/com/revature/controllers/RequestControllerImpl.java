@@ -306,17 +306,18 @@ public class RequestControllerImpl implements RequestController {
 			return;
 		}
 
-		// If the request has already been processed by a supervisor or cancelled by the
-		// user
-		if (!RequestStatus.ACTIVE.equals(request.getStatus())
-				|| !ApprovalStatus.AWAITING.equals(request.getSupervisorApproval().getStatus())) {
+		// If the user is not the owner of the request
+		if (!loggedUser.getUsername().equals(request.getUsername())) {
 			ctx.status(403);
 			return;
 		}
 
-		// If the user is not the owner of the request
-		if (!loggedUser.getUsername().equals(request.getUsername())) {
-			ctx.status(403);
+		// If the request has already been processed by a supervisor or cancelled by the
+		// user
+		if (!RequestStatus.ACTIVE.equals(request.getStatus())
+				|| !ApprovalStatus.AWAITING.equals(request.getSupervisorApproval().getStatus())) {
+			ctx.status(409);
+			ctx.html("This request cannot be edited futher.");
 			return;
 		}
 
@@ -340,6 +341,7 @@ public class RequestControllerImpl implements RequestController {
 		final String MSG = "msg";
 		// Make sure the user is logged in
 		if (loggedUser == null) {
+			log.info("This user is not authorized to upload an email");
 			ctx.status(401);
 			return;
 		}
@@ -374,7 +376,8 @@ public class RequestControllerImpl implements RequestController {
 		// the user
 		if (!RequestStatus.ACTIVE.equals(request.getStatus())
 				|| !ApprovalStatus.AWAITING.equals(request.getSupervisorApproval().getStatus())) {
-			ctx.status(403);
+			ctx.status(409);
+			ctx.html("This request cannot be edited further.");
 			return;
 		}
 
@@ -389,6 +392,68 @@ public class RequestControllerImpl implements RequestController {
 		// Return request
 		ctx.json(request);
 
+	}
+	
+	public void setWorkTimeMissed(Context ctx) {
+		User loggedUser = ctx.sessionAttribute("loggedUser");
+		String filetype = ctx.header("filetype");
+		log.debug("Filetype from header: " + filetype);
+
+		// Make sure the user is logged in
+		if (loggedUser == null) {
+			log.info("This user is not authroized to set the work time missed.");
+			ctx.status(401);
+			return;
+		}
+
+		// Get the request from the UUID in the path
+		UUID requestId = UUID.fromString(ctx.pathParam("requestId"));
+		Request request = reqService.getRequest(requestId);
+		log.debug("Request from the requestId" + request);
+
+		// If no request was found with that id
+		if (request == null) {
+			ctx.status(404);
+			ctx.html("No request with that ID");
+			return;
+		}
+
+		// If the user is not the owner of the request
+		if (!loggedUser.getUsername().equals(request.getUsername())) {
+			log.info(loggedUser.getUsername() + " is not the owner of the request");
+			ctx.status(403);
+			return;
+		}
+
+		// If the request has already been processed by the supervisor or cancelled by
+		// the user or the work time missed has already been set
+		if (!RequestStatus.ACTIVE.equals(request.getStatus())
+				|| !ApprovalStatus.AWAITING.equals(request.getSupervisorApproval().getStatus())
+				|| VERIFIER.verifyStrings(request.getWorkTimeMissed())) {
+			ctx.status(409);
+			ctx.html("This request cannot be edited further.");
+			return;
+		}
+		
+		//Get the request from the body
+		Request workTimeMissed = ctx.bodyAsClass(ReimbursementRequest.class);
+		log.debug("Request from the body: " + workTimeMissed);
+		
+		//Make sure workTimeMissed is set
+		if (!VERIFIER.verifyStrings(workTimeMissed.getWorkTimeMissed())) {
+			ctx.status(400);
+			ctx.html("The Work Time Missed was not sent correctly");
+			return;
+		}
+		
+		//Set the workTimeMissed
+		request.setWorkTimeMissed(workTimeMissed.getWorkTimeMissed());
+		log.debug("Request workTimeMissed set to: " + request.getWorkTimeMissed());
+		
+		//Update the request in the database and return the request
+		reqService.updateRequest(request);
+		ctx.json(request);
+		
 	}
 
 	@Override
@@ -438,7 +503,7 @@ public class RequestControllerImpl implements RequestController {
 				|| !ApprovalStatus.AWAITING.equals(request.getFinalApproval().getStatus())
 				|| !Format.PRESENTATION.equals(request.getGradingFormat().getFormat())) {
 			ctx.status(409);
-			ctx.html("The request cannot accept a final grade.");
+			ctx.html("The request cannot accept a presentation.");
 			return;
 		}
 

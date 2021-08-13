@@ -112,6 +112,10 @@ public class Driver {
 		app.put("/requests/:requestId/presFileName", reqControl::uploadPresentation);
 		app.get("/requests/:requestId/presFileName", reqControl::getPresentation);
 		app.put("/requests/:requestId/finalGrade", reqControl::putFinalGrade);
+		
+		//Add the optional workTimeMissed as needed
+		app.put("/requests/:requestId/workTimeMissed", reqControl::setWorkTimeMissed);
+		
 		// As a supervisor, I can accept or decline a reimbursement request.
 		// As a department head, I can accept or decline a reimbursement request.
 		// As a Benefits Coordinator, I can accept or decline a reimbursement request.
