@@ -455,7 +455,7 @@ public class RequestControllerImpl implements RequestController {
 
 	}
 
-	public void getFile(Context ctx) {
+	public void getExtraFile(Context ctx) {
 		User loggedUser = ctx.sessionAttribute("loggedUser");
 		// Make sure the user is logged in
 		if (loggedUser == null) {

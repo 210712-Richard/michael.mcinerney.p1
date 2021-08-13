@@ -53,7 +53,7 @@ public interface RequestController {
 	 * Get the file
 	 * @param ctx The context
 	 */
-	public void getFile(Context ctx);
+	public void getExtraFile(Context ctx);
 	
 	/**
 	 * Get a message file in the request
