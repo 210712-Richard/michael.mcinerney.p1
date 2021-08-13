@@ -29,10 +29,17 @@ import io.javalin.http.Context;
 public class RequestControllerImpl implements RequestController {
 	private RequestService reqService = (RequestService) BeanFactory.getFactory().getObject(RequestService.class,
 			RequestServiceImpl.class);
+	// Log
 	private static Logger log = LogManager.getLogger(RequestControllerImpl.class);
+
+	// Used to verify string and objects
 	private static final Verifier VERIFIER = new Verifier();
 
+	// Filetypes that can be uploaded with requests (Not including .msg and .pptx
+	// for emails and presentations respectively)
 	private static final String[] FILETYPES = { "pdf", "jpg", "png", "txt", "doc" };
+
+	// The S3 instance for uploading and downloading files
 	private static final S3Util S3_INSTANCE = S3Util.getInstance();
 
 	@Override
@@ -181,7 +188,7 @@ public class RequestControllerImpl implements RequestController {
 					}
 				}
 			}
-			log.warn("Error with request" + request.getId());
+			log.warn("changeApprovalStatus made it to end of method with request: " + request);
 		}
 
 		// This status shouldn't be called, but if it is, there is an issue with the
@@ -206,12 +213,18 @@ public class RequestControllerImpl implements RequestController {
 		log.debug("Request from the requestId" + request);
 		// Make sure the request exists
 		if (request == null) {
-			log.debug("No request found with that ID");
 			ctx.status(404);
 			ctx.html("No request with that ID");
 			return;
 		}
-
+		
+		
+		// If the user is not the owner or is not a supervisor or BenCo, then return a 403
+		if (!loggedUser.getUsername().equals(request.getUsername()) && UserType.EMPLOYEE.equals(loggedUser.getType())) {
+			log.info(loggedUser.getUsername() + " is forbidden from seeing this request");
+			ctx.status(403);
+			return;
+		}
 		// If the user is not authorized to see the final grade, set the final grade
 		// and presentation file name to null
 		// NOTE: This will not be saved, this is just for returning it
@@ -230,19 +243,27 @@ public class RequestControllerImpl implements RequestController {
 	@Override
 	public void cancelRequest(Context ctx) {
 		User loggedUser = ctx.sessionAttribute("loggedUser");
+		
+		//Make sure the user is logged in
+		if (loggedUser == null) {
+			log.info("User is not authorized to cancel request");
+			ctx.status(401);
+			return;
+		}
+		
 		Request request = reqService.getRequest(UUID.fromString(ctx.pathParam("requestId")));
 		log.debug("Request for that ID: " + request);
-
+		
 		// Make sure the Request was found
 		if (request == null) {
-
 			ctx.status(404);
 			ctx.html("No Request with that ID");
 			return;
 		}
 
 		// Make sure the user is logged in and owns the Request
-		if (loggedUser == null || !loggedUser.getUsername().equals(request.getUsername())) {
+		if (!loggedUser.getUsername().equals(request.getUsername())) {
+			log.info(loggedUser.getUsername() + " is forbidden from cancelling this request");
 			ctx.status(403);
 			return;
 		}
@@ -347,16 +368,17 @@ public class RequestControllerImpl implements RequestController {
 			return;
 		}
 
-		// If the request has already been processed by the supervisor or cancelled by
-		// the user
-		if (!RequestStatus.ACTIVE.equals(request.getStatus())
-				|| !ApprovalStatus.AWAITING.equals(request.getSupervisorApproval().getStatus())) {
+		// If the user is not the owner of the request
+		if (!loggedUser.getUsername().equals(request.getUsername())) {
+			log.info(loggedUser.getUsername() + " is not the owner of the request");
 			ctx.status(403);
 			return;
 		}
 
-		// If the user is not the owner of the request
-		if (!loggedUser.getUsername().equals(request.getUsername())) {
+		// If the request has already been processed by the supervisor or cancelled by
+		// the user
+		if (!RequestStatus.ACTIVE.equals(request.getStatus())
+				|| !ApprovalStatus.AWAITING.equals(request.getSupervisorApproval().getStatus())) {
 			ctx.status(403);
 			return;
 		}
@@ -408,6 +430,13 @@ public class RequestControllerImpl implements RequestController {
 			return;
 		}
 
+		// If the user is not the owner of the request
+		if (!loggedUser.getUsername().equals(request.getUsername())) {
+			log.info(loggedUser.getUsername() + " is forbidden from seeing this request");
+			ctx.status(403);
+			return;
+		}
+
 		// If the request has not been approved or if the final approval is not ready or
 		// if the request doesn't need a presentation, send back a 406
 		if (!RequestStatus.APPROVED.equals(request.getStatus())
@@ -415,13 +444,6 @@ public class RequestControllerImpl implements RequestController {
 				|| !Format.PRESENTATION.equals(request.getGradingFormat().getFormat())) {
 			ctx.status(409);
 			ctx.html("The request cannot accept a final grade.");
-			return;
-		}
-
-		// If the user is not the owner of the request
-		if (!loggedUser.getUsername().equals(request.getUsername())) {
-			log.info(loggedUser.getUsername() + " is forbidden from seeing this request");
-			ctx.status(403);
 			return;
 		}
 
@@ -635,6 +657,7 @@ public class RequestControllerImpl implements RequestController {
 		// If the user is not the owner of the request or the request does not need
 		// their review
 		if (!loggedUser.getUsername().equals(request.getUsername()) || !request.getNeedsEmployeeReview()) {
+			log.info(loggedUser.getUsername() + " cannot agree to this request");
 			ctx.status(403);
 			return;
 		}
@@ -651,6 +674,7 @@ public class RequestControllerImpl implements RequestController {
 		}
 
 		reqService.changeEmployeeAgrees(request, review.getEmployeeAgrees());
+		log.debug("Employee agrees status: " + request.getEmployeeAgrees());
 		ctx.status(204);
 	}
 
@@ -710,6 +734,7 @@ public class RequestControllerImpl implements RequestController {
 
 		// Add the final grade and return a 204
 		reqService.addFinalGrade(request, grade.getFinalGrade());
-		ctx.status(204);
+		log.debug("Request final grade is now: " + request.getFinalGrade());
+		ctx.json(request);
 	}
 }

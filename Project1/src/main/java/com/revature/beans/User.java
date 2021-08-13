@@ -31,10 +31,6 @@ public class User {
 	// The List of Notifications the user has to read
 	private List<Notification> notifications;
 
-	/**
-	 * Generates a random id and sets the balances to 0 and the Request Lists to a
-	 * empty Lists
-	 */
 	public User() {
 		super();
 		this.pendingBalance = 0.00;
@@ -135,6 +131,14 @@ public class User {
 		this.awardedBalance = awardedBalance;
 	}
 
+	public void alterPendingBalance(Double cost) {
+		this.pendingBalance += cost;
+	}
+
+	public void alterAwardedBalance(Double cost) {
+		this.awardedBalance += cost;
+	}
+
 	public Double getTotalBalance() {
 		return pendingBalance + awardedBalance;
 	}
@@ -186,14 +190,6 @@ public class User {
 				&& Objects.equals(pendingBalance, other.pendingBalance) && Objects.equals(requests, other.requests)
 				&& Objects.equals(supervisorUsername, other.supervisorUsername) && type == other.type
 				&& Objects.equals(username, other.username);
-	}
-
-	public void alterPendingBalance(Double cost) {
-		this.pendingBalance += cost;
-	}
-
-	public void alterAwardedBalance(Double cost) {
-		this.awardedBalance += cost;
 	}
 
 }
