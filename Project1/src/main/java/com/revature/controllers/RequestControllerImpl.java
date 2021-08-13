@@ -305,7 +305,7 @@ public class RequestControllerImpl implements RequestController {
 		}
 
 		// Generate the key and upload to the bucket
-		String key = request.getId() + "/files/" + request.getFileURIs().size() + "." + filetype;
+		String key = request.getId() + "/files/file" + request.getFileURIs().size() + "." + filetype;
 		S3_INSTANCE.uploadToBucket(key, ctx.bodyAsBytes());
 
 		// Add the key to the request, update database, and return request
