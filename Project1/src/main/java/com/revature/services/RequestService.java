@@ -11,8 +11,6 @@ import com.revature.beans.Request;
 
 public interface RequestService {
 	
-	Object APPROVAL_LOCK = new Object();
-	
 	/**
 	 * Creates a request with the parameters
 	 * @param username The username of the user
