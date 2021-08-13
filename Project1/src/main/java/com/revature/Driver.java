@@ -131,6 +131,7 @@ public class Driver {
 	/**
 	 * Used to setup the initial tables and populate with default rows
 	 */
+	@SuppressWarnings("unused")
 	private static void setupDatabase() {
 		DatabaseCreator.dropTables();
 		try {
