@@ -400,7 +400,7 @@ public class RequestServiceImpl implements RequestService {
 
 	@Override
 	public void addFinalGrade(Request request, String grade) {
-		if (VERIFIER.verifyNotNull(request) && VERIFIER.verifyStrings(grade)) {
+		if (request != null && VERIFIER.verifyStrings(grade)) {
 
 			// Set the grade and make sure it is passing
 			request.setFinalGrade(grade);
