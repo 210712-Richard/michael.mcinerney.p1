@@ -14,7 +14,7 @@ A system that allows employees of a company to request reimbursements. The reimb
 ## Features
 * Submit reimbursement requests
 * Approve reimbursements
-* Auto=escalate approvals based on next approvee
+* Auto-escalate approvals based on next approvee
 * Add files to the request
 * Auto-approve requests after a time limit
 * Receive notifications on the state of the request
